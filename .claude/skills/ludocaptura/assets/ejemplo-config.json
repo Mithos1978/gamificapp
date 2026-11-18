@@ -1,0 +1,146 @@
+{
+  "id": "ejemplo-tipos-de-jugadores",
+  "titulo": "Ludocaptura: Tipos de jugadores",
+  "tema": "Sala de la Oca · Introducción a los tipos de jugadores de Bartle y a los elementos básicos de la gamificación.",
+  "nombreCriatura": { "singular": "Ludobicho", "plural": "Ludobichos" },
+  "nombreBola": "Ludobola",
+  "mensajeFinal": "Vuelve al tablero de La Oca para lucirlas.",
+  "puntos": {
+    "modo": "suave",
+    "etiqueta": "puntos de La Oca",
+    "umbrales": { "comun": 0, "raro": 30, "epico": 80, "legendario": 150 }
+  },
+  "zonas": [
+    { "nombre": "Prado de los Jugadores", "criaturas": ["exploron", "sociabel", "trofeon"] },
+    { "nombre": "Claro de las Mecánicas", "criaturas": ["puntix", "nivelux"] },
+    { "nombre": "Bosque del Fluir", "criaturas": ["fluxor"] }
+  ],
+  "criaturas": [
+    {
+      "id": "exploron",
+      "nombre": "Explorón",
+      "rareza": "comun",
+      "descripcion": "Olfatea cada rincón del mapa.",
+      "medalla": { "nombre": "Explorador", "emoji": "🧭", "color": "#3fa7a0" },
+      "preguntas": [
+        {
+          "texto": "Según Bartle, ¿qué motiva sobre todo a un jugador «explorador»?",
+          "opciones": ["Descubrir los secretos y rincones del juego", "Vencer a otros jugadores", "Acumular más puntos que nadie", "Conversar con el resto de jugadores"],
+          "correcta": 0,
+          "explicacion": "El explorador disfruta descubriendo el mundo del juego y cómo funciona."
+        },
+        {
+          "texto": "¿Qué elemento encaja mejor con un jugador explorador?",
+          "opciones": ["Una tabla de clasificación", "Contenido oculto y huevos de pascua", "Duelos uno contra uno", "Un chat de equipo"],
+          "correcta": 1,
+          "explicacion": "Los contenidos ocultos premian la curiosidad, que es lo que mueve al explorador."
+        }
+      ]
+    },
+    {
+      "id": "sociabel",
+      "nombre": "Sociabel",
+      "rareza": "comun",
+      "descripcion": "Nunca juega solo.",
+      "medalla": { "nombre": "Socializador", "emoji": "💬", "color": "#e58a3c" },
+      "preguntas": [
+        {
+          "texto": "El jugador «socializador» de Bartle juega principalmente para…",
+          "opciones": ["Relacionarse con otras personas", "Completar todos los logros", "Dominar a los demás", "Descubrir el mapa"],
+          "correcta": 0,
+          "explicacion": "Para el socializador, el juego es sobre todo un lugar de encuentro."
+        },
+        {
+          "texto": "¿Qué dinámica favorece más a los socializadores?",
+          "opciones": ["Retos cooperativos en equipo", "Rankings individuales", "Contrarreloj en solitario", "Eliminación directa"],
+          "correcta": 0,
+          "explicacion": "La cooperación da a los socializadores un motivo para interactuar."
+        }
+      ]
+    },
+    {
+      "id": "trofeon",
+      "nombre": "Trofeón",
+      "rareza": "raro",
+      "descripcion": "Colecciona todo lo que brilla.",
+      "medalla": { "nombre": "Triunfador", "emoji": "🏆", "color": "#d9a514" },
+      "preguntas": [
+        {
+          "texto": "¿Qué tipo de jugador de Bartle busca sobre todo logros, puntos y estatus?",
+          "opciones": ["Triunfador (achiever)", "Explorador", "Socializador", "Asesino (killer)"],
+          "correcta": 0,
+          "explicacion": "El triunfador quiere superar los retos que propone el juego y que se note."
+        },
+        {
+          "texto": "¿En qué se diferencia el «asesino» (killer) del «triunfador»?",
+          "opciones": ["El asesino quiere imponerse a otros jugadores; el triunfador, superar los retos del juego", "El asesino explora más", "El triunfador no usa puntos", "No hay diferencia"],
+          "correcta": 0,
+          "explicacion": "Ambos son competitivos, pero uno actúa sobre los jugadores y el otro sobre el mundo del juego."
+        }
+      ]
+    },
+    {
+      "id": "puntix",
+      "nombre": "Puntix",
+      "rareza": "comun",
+      "descripcion": "Deja un rastro de puntitos al caminar.",
+      "medalla": { "nombre": "PBL", "emoji": "🔢", "color": "#5b8def" },
+      "preguntas": [
+        {
+          "texto": "En gamificación, ¿qué significan las siglas PBL?",
+          "opciones": ["Points, Badges, Leaderboards", "Play, Build, Learn", "Players, Bosses, Levels", "Problem Based Learning"],
+          "correcta": 0,
+          "explicacion": "Puntos, insignias y clasificaciones: la tríada más básica (y más abusada) de la gamificación."
+        },
+        {
+          "texto": "¿Cuál es el riesgo de gamificar usando solo puntos, medallas y rankings?",
+          "opciones": ["Que la motivación dependa solo de la recompensa externa", "Que el juego sea demasiado difícil", "Que no se puedan contar los puntos", "Ninguno"],
+          "correcta": 0,
+          "explicacion": "Si todo es recompensa extrínseca, al retirarla la motivación suele caer."
+        }
+      ]
+    },
+    {
+      "id": "nivelux",
+      "nombre": "Nivelux",
+      "rareza": "epico",
+      "descripcion": "Crece un poco cada vez que aprende algo.",
+      "medalla": { "nombre": "Motivación", "emoji": "🌱", "color": "#8a45c9" },
+      "preguntas": [
+        {
+          "texto": "Según la teoría de la autodeterminación (Deci y Ryan), ¿cuáles son las tres necesidades psicológicas básicas?",
+          "opciones": ["Autonomía, competencia y relación", "Puntos, medallas y rankings", "Reto, premio y castigo", "Atención, memoria y práctica"],
+          "correcta": 0,
+          "explicacion": "Cuando se satisfacen autonomía, competencia y relación, florece la motivación intrínseca."
+        },
+        {
+          "texto": "¿Cuál de estos es un ejemplo de motivación intrínseca?",
+          "opciones": ["Jugar porque la actividad en sí resulta interesante", "Jugar para ganar un premio", "Jugar para evitar un castigo", "Jugar para subir en el ranking"],
+          "correcta": 0,
+          "explicacion": "Es intrínseca cuando la recompensa es la propia actividad."
+        }
+      ]
+    },
+    {
+      "id": "fluxor",
+      "nombre": "Fluxor",
+      "rareza": "legendario",
+      "descripcion": "Dicen que quien lo ve pierde la noción del tiempo.",
+      "medalla": { "nombre": "Flow", "emoji": "🌊", "color": "#1f6fb5" },
+      "preguntas": [
+        {
+          "texto": "Según Csikszentmihalyi, el estado de «flow» aparece cuando…",
+          "opciones": ["El reto está equilibrado con la habilidad de la persona", "El reto es muy inferior a la habilidad", "El reto supera con mucho a la habilidad", "No hay ningún reto"],
+          "correcta": 0,
+          "explicacion": "Demasiado reto genera ansiedad; demasiado poco, aburrimiento. El flow está en el equilibrio."
+        },
+        {
+          "texto": "Si una tarea es demasiado fácil para la habilidad del jugador, lo más probable es que sienta…",
+          "opciones": ["Aburrimiento", "Ansiedad", "Flow", "Frustración"],
+          "correcta": 0,
+          "explicacion": "Por eso los buenos juegos suben la dificultad a medida que el jugador mejora."
+        }
+      ]
+    }
+  ]
+}

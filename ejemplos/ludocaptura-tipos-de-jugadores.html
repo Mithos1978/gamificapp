@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Ludocaptura</title>
+<style>
+:root{--bg:#14231c;--panel:#fffaf0;--ink:#22302a;--accent:#7a4fd0;--accent2:#ffc83d;--ok:#2e9e5b;--bad:#d2493f}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+#app{max-width:720px;margin:0 auto;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:100%}
+#hud{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border-radius:12px;padding:8px 12px;font-size:14px}
+#hud b{font-size:15px}
+#hud .sp{flex:1}
+.chip{background:#eee6d3;border-radius:999px;padding:3px 10px;white-space:nowrap}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:8px 14px;background:var(--accent);color:#fff;font-weight:600}
+button.sec{background:#e4dcc8;color:var(--ink)}
+button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+#stage{position:relative;border-radius:12px;overflow:hidden;background:#000;line-height:0}
+canvas{width:100%;height:auto;display:block;image-rendering:auto;touch-action:none}
+#toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:#000a;color:#fff;padding:6px 14px;border-radius:999px;font-size:14px;line-height:1.3;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1}
+#pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,56px);gap:4px;margin:0 auto;touch-action:none;user-select:none}
+#pad button{padding:0;font-size:22px;background:#2f4a3c}
+#pad .u{grid-area:1/2}#pad .l{grid-area:2/1}#pad .r{grid-area:2/3}#pad .d{grid-area:3/2}
+@media (hover:hover) and (pointer:fine){#pad{display:none}}
+.ov{position:fixed;inset:0;background:#0b1410d9;display:none;align-items:center;justify-content:center;padding:12px;z-index:5;overflow:auto}
+.ov.on{display:flex}
+.card{background:var(--panel);border-radius:16px;padding:18px;width:100%;max-width:560px;max-height:100%;overflow:auto;line-height:1.4}
+.card h1{margin:0 0 6px;font-size:24px}.card h2{margin:0 0 8px;font-size:19px}
+.card p{margin:6px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+input[type=number]{font:inherit;padding:8px;border-radius:10px;border:2px solid #cbbf9f;width:110px}
+/* --- combate --- */
+#arena{position:relative;height:190px;border-radius:12px;overflow:hidden;background:linear-gradient(#bfe8ff 0 55%,#8fd27a 55% 100%)}
+.cr{--col:#888;position:absolute;left:50%;top:26px;width:110px;height:110px;margin-left:-55px;border-radius:50%;
+ background:radial-gradient(circle at 32% 26%,#fff9,transparent 42%),var(--col);background-size:cover;background-position:center;
+ border:6px solid #0003;box-shadow:0 0 0 3px #fff8 inset;transition:transform .35s,opacity .35s;animation:bob 1.6s ease-in-out infinite}
+.cr::before,.cr::after{content:"";position:absolute;bottom:-14px;width:26px;height:16px;border-radius:50%;background:var(--col);filter:brightness(.75)}
+.cr::before{left:16px}.cr::after{right:16px}
+.cr .eyes{position:absolute;top:22px;left:0;right:0;display:flex;justify-content:center;gap:14px}
+.cr .eyes i{width:18px;height:20px;border-radius:50%;background:#fff;position:relative;border:2px solid #0004}
+.cr .eyes i::after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#222;left:5px;top:6px}
+.cr .em{position:absolute;left:0;right:0;top:48px;text-align:center;font-size:34px;line-height:1}
+.cr.img .em{display:none}
+.cr.leg{box-shadow:0 0 0 3px #fff8 inset,0 0 22px 6px #ffd54a}
+.cr.in{transform:scale(0);opacity:0}
+.cr.flee{transform:translateX(320px) rotate(40deg);opacity:0;animation:none}
+.cr.sil{filter:brightness(0) opacity(.55);animation:none}
+@keyframes bob{50%{margin-top:-8px}}
+#ball{position:absolute;left:8%;bottom:8px;width:34px;height:34px;border-radius:50%;
+ background:radial-gradient(circle at 50% 50%,#fff 0 5px,transparent 6px),linear-gradient(135deg,var(--accent) 0 50%,var(--accent2) 50% 100%);
+ border:3px solid #2b1d52;opacity:0}
+#ball.throw{opacity:1;animation:throw .6s cubic-bezier(.3,.6,.6,1) forwards}
+#ball.wob{opacity:1;left:calc(50% - 17px);bottom:70px;animation:wob .45s ease-in-out 3}
+#ball.miss{opacity:1;animation:miss .8s ease-in forwards}
+#ball.held{opacity:1;left:calc(50% - 17px);bottom:70px}
+@keyframes throw{0%{left:8%;bottom:8px;transform:rotate(0)}60%{bottom:170px}100%{left:calc(50% - 17px);bottom:70px;transform:rotate(720deg)}}
+@keyframes miss{0%{left:8%;bottom:8px}45%{left:calc(50% - 17px);bottom:90px}100%{left:10%;bottom:210px;transform:rotate(-540deg);opacity:0}}
+@keyframes wob{25%{transform:rotate(-22deg)}75%{transform:rotate(22deg)}}
+#stars{position:absolute;left:50%;top:60px;font-size:30px;transform:translateX(-50%);opacity:0;white-space:nowrap}
+#stars.on{animation:stars .9s ease-out forwards}
+@keyframes stars{0%{opacity:1;letter-spacing:-10px}100%{opacity:0;letter-spacing:26px;top:20px}}
+.rar{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.04em}
+.rar.comun{background:#5d8a6a}.rar.raro{background:#2f7fd1}.rar.epico{background:#8a45c9}.rar.legendario{background:#c9920a}
+#q{font-size:17px;font-weight:600;margin:12px 0 8px}
+#opts{display:grid;gap:8px}
+#opts button{background:#efe7d2;color:var(--ink);text-align:left;font-weight:500;border:2px solid #d9cfb4}
+#opts button:hover:not(:disabled){border-color:var(--accent)}
+#opts button.ok{background:#d4f2df;border-color:var(--ok)}
+#opts button.no{background:#f8d9d5;border-color:var(--bad)}
+#opts button:disabled{cursor:default}
+#fb{min-height:22px;margin-top:10px}
+/* --- album --- */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
+.slot{background:#efe7d2;border-radius:12px;padding:8px;text-align:center;font-size:13px}
+.slot .mini{position:relative;height:96px}
+.slot .cr{top:6px;width:76px;height:76px;margin-left:-38px;border-width:4px;animation:none}
+.slot .cr .eyes{top:12px;gap:9px}.slot .cr .eyes i{width:13px;height:14px}.slot .cr .eyes i::after{width:6px;height:6px;left:3px;top:4px}
+.slot .cr .em{top:32px;font-size:24px}
+.slot .cr::before,.slot .cr::after{bottom:-10px;width:18px;height:11px}.slot .cr::before{left:10px}.slot .cr::after{right:10px}
+.slot b{display:block;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <b id="hTitle"></b><span class="sp"></span>
+    <span class="chip" id="hZone" hidden></span>
+    <span class="chip" id="hPts" hidden></span>
+    <span class="chip" id="hCount"></span>
+    <button class="sec" id="bAlbum">Álbum</button>
+  </div>
+  <div id="stage"><canvas id="c" width="600" height="440" aria-label="Mapa del juego"></canvas><div id="toast"></div></div>
+  <div id="pad" aria-label="Controles">
+    <button class="u" data-k="up" aria-label="Arriba">▲</button><button class="l" data-k="left" aria-label="Izquierda">◀</button>
+    <button class="r" data-k="right" aria-label="Derecha">▶</button><button class="d" data-k="down" aria-label="Abajo">▼</button>
+  </div>
+</div>
+
+<div class="ov" id="oStart"><div class="card">
+  <h1 id="sTitle"></h1><p id="sTema"></p><p id="sHow"></p>
+  <div id="sPts" hidden><p id="sPtsTxt"></p><input type="number" id="iPts" min="0" inputmode="numeric" placeholder="0"></div>
+  <div class="row"><button id="bGo">¡A explorar!</button></div>
+</div></div>
+
+<div class="ov" id="oBattle"><div class="card">
+  <div id="arena"><div class="cr" id="bCr"><div class="eyes"><i></i><i></i></div><div class="em"></div></div><div id="ball"></div><div id="stars">✨⭐✨</div></div>
+  <p style="margin-top:10px"><b id="bName"></b> <span class="rar" id="bRar"></span></p>
+  <p id="bMsg"></p>
+  <div id="q"></div><div id="opts"></div><div id="fb" aria-live="polite"></div>
+  <div class="row"><button id="bClose" hidden>Seguir explorando</button></div>
+</div></div>
+
+<div class="ov" id="oAlbum"><div class="card">
+  <h2 id="aTitle"></h2><p id="aSub"></p><div id="grid"></div>
+  <div class="row"><button id="bAClose">Volver al mapa</button><span class="sp" style="flex:1"></span><button class="sec" id="bReset">Reiniciar partida</button></div>
+</div></div>
+
+<script>
+const CFG = {"id": "ejemplo-tipos-de-jugadores", "titulo": "Ludocaptura: Tipos de jugadores", "tema": "Sala de la Oca · Introducción a los tipos de jugadores de Bartle y a los elementos básicos de la gamificación.", "nombreCriatura": {"singular": "Ludobicho", "plural": "Ludobichos"}, "nombreBola": "Ludobola", "mensajeFinal": "Vuelve al tablero de La Oca para lucirlas.", "puntos": {"modo": "suave", "etiqueta": "puntos de La Oca", "umbrales": {"comun": 0, "raro": 30, "epico": 80, "legendario": 150}}, "zonas": [{"nombre": "Prado de los Jugadores", "criaturas": ["exploron", "sociabel", "trofeon"]}, {"nombre": "Claro de las Mecánicas", "criaturas": ["puntix", "nivelux"]}, {"nombre": "Bosque del Fluir", "criaturas": ["fluxor"]}], "criaturas": [{"id": "exploron", "nombre": "Explorón", "rareza": "comun", "descripcion": "Olfatea cada rincón del mapa.", "medalla": {"nombre": "Explorador", "emoji": "🧭", "color": "#3fa7a0"}, "preguntas": [{"texto": "Según Bartle, ¿qué motiva sobre todo a un jugador «explorador»?", "opciones": ["Descubrir los secretos y rincones del juego", "Vencer a otros jugadores", "Acumular más puntos que nadie", "Conversar con el resto de jugadores"], "correcta": 0, "explicacion": "El explorador disfruta descubriendo el mundo del juego y cómo funciona."}, {"texto": "¿Qué elemento encaja mejor con un jugador explorador?", "opciones": ["Una tabla de clasificación", "Contenido oculto y huevos de pascua", "Duelos uno contra uno", "Un chat de equipo"], "correcta": 1, "explicacion": "Los contenidos ocultos premian la curiosidad, que es lo que mueve al explorador."}]}, {"id": "sociabel", "nombre": "Sociabel", "rareza": "comun", "descripcion": "Nunca juega solo.", "medalla": {"nombre": "Socializador", "emoji": "💬", "color": "#e58a3c"}, "preguntas": [{"texto": "El jugador «socializador» de Bartle juega principalmente para…", "opciones": ["Relacionarse con otras personas", "Completar todos los logros", "Dominar a los demás", "Descubrir el mapa"], "correcta": 0, "explicacion": "Para el socializador, el juego es sobre todo un lugar de encuentro."}, {"texto": "¿Qué dinámica favorece más a los socializadores?", "opciones": ["Retos cooperativos en equipo", "Rankings individuales", "Contrarreloj en solitario", "Eliminación directa"], "correcta": 0, "explicacion": "La cooperación da a los socializadores un motivo para interactuar."}]}, {"id": "trofeon", "nombre": "Trofeón", "rareza": "raro", "descripcion": "Colecciona todo lo que brilla.", "medalla": {"nombre": "Triunfador", "emoji": "🏆", "color": "#d9a514"}, "preguntas": [{"texto": "¿Qué tipo de jugador de Bartle busca sobre todo logros, puntos y estatus?", "opciones": ["Triunfador (achiever)", "Explorador", "Socializador", "Asesino (killer)"], "correcta": 0, "explicacion": "El triunfador quiere superar los retos que propone el juego y que se note."}, {"texto": "¿En qué se diferencia el «asesino» (killer) del «triunfador»?", "opciones": ["El asesino quiere imponerse a otros jugadores; el triunfador, superar los retos del juego", "El asesino explora más", "El triunfador no usa puntos", "No hay diferencia"], "correcta": 0, "explicacion": "Ambos son competitivos, pero uno actúa sobre los jugadores y el otro sobre el mundo del juego."}]}, {"id": "puntix", "nombre": "Puntix", "rareza": "comun", "descripcion": "Deja un rastro de puntitos al caminar.", "medalla": {"nombre": "PBL", "emoji": "🔢", "color": "#5b8def"}, "preguntas": [{"texto": "En gamificación, ¿qué significan las siglas PBL?", "opciones": ["Points, Badges, Leaderboards", "Play, Build, Learn", "Players, Bosses, Levels", "Problem Based Learning"], "correcta": 0, "explicacion": "Puntos, insignias y clasificaciones: la tríada más básica (y más abusada) de la gamificación."}, {"texto": "¿Cuál es el riesgo de gamificar usando solo puntos, medallas y rankings?", "opciones": ["Que la motivación dependa solo de la recompensa externa", "Que el juego sea demasiado difícil", "Que no se puedan contar los puntos", "Ninguno"], "correcta": 0, "explicacion": "Si todo es recompensa extrínseca, al retirarla la motivación suele caer."}]}, {"id": "nivelux", "nombre": "Nivelux", "rareza": "epico", "descripcion": "Crece un poco cada vez que aprende algo.", "medalla": {"nombre": "Motivación", "emoji": "🌱", "color": "#8a45c9"}, "preguntas": [{"texto": "Según la teoría de la autodeterminación (Deci y Ryan), ¿cuáles son las tres necesidades psicológicas básicas?", "opciones": ["Autonomía, competencia y relación", "Puntos, medallas y rankings", "Reto, premio y castigo", "Atención, memoria y práctica"], "correcta": 0, "explicacion": "Cuando se satisfacen autonomía, competencia y relación, florece la motivación intrínseca."}, {"texto": "¿Cuál de estos es un ejemplo de motivación intrínseca?", "opciones": ["Jugar porque la actividad en sí resulta interesante", "Jugar para ganar un premio", "Jugar para evitar un castigo", "Jugar para subir en el ranking"], "correcta": 0, "explicacion": "Es intrínseca cuando la recompensa es la propia actividad."}]}, {"id": "fluxor", "nombre": "Fluxor", "rareza": "legendario", "descripcion": "Dicen que quien lo ve pierde la noción del tiempo.", "medalla": {"nombre": "Flow", "emoji": "🌊", "color": "#1f6fb5"}, "preguntas": [{"texto": "Según Csikszentmihalyi, el estado de «flow» aparece cuando…", "opciones": ["El reto está equilibrado con la habilidad de la persona", "El reto es muy inferior a la habilidad", "El reto supera con mucho a la habilidad", "No hay ningún reto"], "correcta": 0, "explicacion": "Demasiado reto genera ansiedad; demasiado poco, aburrimiento. El flow está en el equilibrio."}, {"texto": "Si una tarea es demasiado fácil para la habilidad del jugador, lo más probable es que sienta…", "opciones": ["Aburrimiento", "Ansiedad", "Flow", "Frustración"], "correcta": 0, "explicacion": "Por eso los buenos juegos suben la dificultad a medida que el jugador mejora."}]}]};
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+if(!CFG){document.body.innerHTML='<p style="color:#fff;padding:20px">Plantilla sin configurar: genera el juego con scripts/build.py.</p>';return;}
+
+// ---------- configuración ----------
+const NC=Object.assign({singular:"Ludobicho",plural:"Ludobichos"},CFG.nombreCriatura||{});
+const BOLA=CFG.nombreBola||"Ludobola";
+const RAR={comun:{t:"Común",w:50},raro:{t:"Raro",w:30},epico:{t:"Épico",w:15},legendario:{t:"Legendario",w:8}};
+const PT=Object.assign({modo:"off",etiqueta:"puntos",umbrales:{}},CFG.puntos||{});
+PT.umbrales=Object.assign({comun:0,raro:0,epico:0,legendario:0},PT.umbrales);
+const CRS=CFG.criaturas, byId=Object.fromEntries(CRS.map(c=>[c.id,c]));
+let zonas=CFG.zonas;
+if(!zonas||!zonas.length){zonas=[];const per=CRS.length<=4?2:3;for(let i=0;i<CRS.length;i+=per)zonas.push({nombre:"Pradera "+(zonas.length+1),criaturas:CRS.slice(i,i+per).map(c=>c.id)});}
+
+// ---------- persistencia ----------
+const KEY="ludocaptura:"+CFG.id;
+let save={caught:[],qi:{},pts:null};
+try{Object.assign(save,JSON.parse(localStorage.getItem(KEY)||"{}"));}catch(e){}
+save.caught=save.caught.filter(id=>byId[id]);
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){}};
+const notify=(tipo,extra)=>{try{if(window.parent!==window)window.parent.postMessage(Object.assign({origen:"ludocaptura",juego:CFG.id,tipo,capturados:save.caught.slice(),total:CRS.length},extra||{}),"*");}catch(e){}};
+
+// ---------- puntos ----------
+let puntos=null;
+(function(){const u=new URLSearchParams(location.search).get("puntos");
+  if(u!==null&&u!==""&&!isNaN(+u))puntos=Math.max(0,+u);
+  else if(PT.claveLocalStorage){try{const v=localStorage.getItem(PT.claveLocalStorage);if(v!==null&&!isNaN(+v))puntos=Math.max(0,+v);}catch(e){}}
+  if(puntos===null&&save.pts!==null)puntos=save.pts;})();
+const gated=PT.modo==="suave"||PT.modo==="estricto";
+const umbral=c=>PT.umbrales[c.rareza]||0;
+const alcanza=c=>!gated||(puntos||0)>=umbral(c);
+
+// ---------- mapa ----------
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let h=2166136261;for(const ch of String(CFG.id)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}
+const R=rng(h);
+const T=40,VW=15,VH=11,W=Math.max(22,Math.min(40,14+zonas.length*4)),H=Math.max(16,Math.min(28,10+zonas.length*3));
+const G=0,GRASS=1,TREE=2,WATER=3,FLOWER=4;
+const map=[],zone=[];
+for(let y=0;y<H;y++){map.push(new Array(W).fill(G));zone.push(new Array(W).fill(-1));}
+const cols=Math.ceil(Math.sqrt(zonas.length*W/H)),rows=Math.ceil(zonas.length/cols);
+zonas.forEach((z,i)=>{
+  const cw=(W-4)/cols,chh=(H-4)/rows;
+  let x=Math.floor(2+cw*(i%cols)+cw/2+(R()-.5)*cw*.3),y=Math.floor(2+chh*Math.floor(i/cols)+chh/2+(R()-.5)*chh*.3);
+  const x0=x,y0=y;
+  for(let s=0;s<38;s++){
+    for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){const xx=x+dx,yy=y+dy;
+      if(xx>1&&yy>1&&xx<W-2&&yy<H-2&&(zone[yy][xx]===-1||zone[yy][xx]===i)){map[yy][xx]=GRASS;zone[yy][xx]=i;}}
+    const d=[[1,0],[-1,0],[0,1],[0,-1]][Math.floor(R()*4)];x+=d[0];y+=d[1];
+    if(Math.abs(x-x0)>3||Math.abs(y-y0)>2||x<2||y<2||x>W-4||y>H-4){x=x0;y=y0;}
+  }
+});
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+  if(x===0||y===0||x===W-1||y===H-1){map[y][x]=TREE;continue;}
+  if(map[y][x]!==G)continue;const r=R();
+  map[y][x]=r<.06?TREE:r<.085?WATER:r<.17?FLOWER:G;
+}
+const solid=t=>t===TREE||t===WATER;
+const P={x:Math.floor(W/2),y:Math.floor(H/2),fx:0,fy:0,dir:"down",moving:false,t0:0,sx:0,sy:0};
+if(solid(map[P.y][P.x]))map[P.y][P.x]=G;
+(function(){for(let it=0;it<60;it++){
+  const seen=Array.from({length:H},()=>new Array(W).fill(false)),st=[[P.x,P.y]];seen[P.y][P.x]=true;
+  while(st.length){const[x,y]=st.pop();for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;
+    if(nx>0&&ny>0&&nx<W-1&&ny<H-1&&!seen[ny][nx]&&!solid(map[ny][nx])){seen[ny][nx]=true;st.push([nx,ny]);}}}
+  let bad=false;for(let y=1;y<H-1&&!bad;y++)for(let x=1;x<W-1;x++)if(map[y][x]===GRASS&&!seen[y][x]){bad=true;break;}
+  if(!bad)return;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(solid(map[y][x])&&((seen[y][x-1]||seen[y][x+1]||seen[y-1][x]||seen[y+1][x])))map[y][x]=G;
+}})();
+const zoneDone=i=>zonas[i].criaturas.every(id=>save.caught.includes(id));
+
+// ---------- dibujo ----------
+const cv=$("c"),g=cv.getContext("2d");
+let bang=0;
+function draw(now){
+  const px=P.x+P.fx,py=P.y+P.fy;
+  const cx=Math.max(0,Math.min(W-VW,px-VW/2+.5)),cy=Math.max(0,Math.min(H-VH,py-VH/2+.5));
+  const x0=Math.floor(cx),y0=Math.floor(cy);
+  for(let y=y0;y<=y0+VH&&y<H;y++)for(let x=x0;x<=x0+VW&&x<W;x++){
+    const sx=Math.round((x-cx)*T),sy=Math.round((y-cy)*T),t=map[y][x];
+    g.fillStyle=(x+y)%2?"#9bd67f":"#93d077";g.fillRect(sx,sy,T,T);
+    if(t===GRASS){
+      const done=zoneDone(zone[y][x]);
+      g.fillStyle=done?"#7fbf6b":"#3f9a4c";g.fillRect(sx,sy,T,T);
+      g.strokeStyle=done?"#5fa457":"#1f6e33";g.lineWidth=3;g.lineCap="round";
+      const near=(x===P.x&&y===P.y)?3:0;
+      for(let k=0;k<4;k++){const bx=sx+6+k*9,sw=Math.sin(now/420+x*1.7+y+k)*(2+near);
+        g.beginPath();g.moveTo(bx,sy+T-4);g.lineTo(bx+sw,sy+12+(k%2)*6);g.stroke();}
+      if(done&&(x*7+y*3)%5===0){g.fillStyle="#fff8";g.font="12px sans-serif";g.fillText("✦",sx+14,sy+22);}
+    }else if(t===TREE){
+      g.fillStyle="#7a5230";g.fillRect(sx+16,sy+22,8,16);
+      g.fillStyle="#256b3a";g.beginPath();g.arc(sx+20,sy+16,15,0,7);g.fill();
+      g.fillStyle="#2f8648";g.beginPath();g.arc(sx+16,sy+12,8,0,7);g.fill();
+    }else if(t===WATER){
+      g.fillStyle="#5fb4e8";g.fillRect(sx,sy,T,T);g.strokeStyle="#c9ecff";g.lineWidth=2;
+      const o=Math.sin(now/600+x)*3;g.beginPath();g.moveTo(sx+8+o,sy+14);g.lineTo(sx+20+o,sy+14);g.moveTo(sx+18-o,sy+28);g.lineTo(sx+32-o,sy+28);g.stroke();
+    }else if(t===FLOWER){
+      g.fillStyle=["#ff8fa3","#ffd54a","#fff"][(x*3+y)%3];
+      g.beginPath();g.arc(sx+12,sy+14,3,0,7);g.arc(sx+28,sy+26,3,0,7);g.fill();
+    }
+  }
+  // jugador
+  const jx=(px-cx)*T+T/2,jy=(py-cy)*T+T/2,step=P.moving?Math.sin(now/60)*3:0;
+  g.fillStyle="#0003";g.beginPath();g.ellipse(jx,jy+15,11,4,0,0,7);g.fill();
+  g.fillStyle="#2b3a67";g.fillRect(jx-7,jy+6,5,9+step);g.fillRect(jx+2,jy+6,5,9-step);
+  g.fillStyle="#7a4fd0";g.beginPath();g.roundRect(jx-10,jy-8,20,17,5);g.fill();
+  g.fillStyle="#f3c9a0";g.beginPath();g.arc(jx,jy-14,9,0,7);g.fill();
+  g.fillStyle="#ffc83d";g.beginPath();g.arc(jx,jy-17,9,Math.PI,0);g.fill();g.fillRect(jx-10,jy-18,20,3);
+  g.fillStyle="#222";
+  if(P.dir!=="up"){const ex=P.dir==="left"?-3:P.dir==="right"?3:0;g.fillRect(jx-4+ex,jy-14,2,3);g.fillRect(jx+2+ex,jy-14,2,3);}
+  if(bang>now){g.fillStyle="#fff";g.beginPath();g.arc(jx,jy-38,11,0,7);g.fill();g.fillStyle="#d2493f";g.font="bold 18px sans-serif";g.textAlign="center";g.fillText("!",jx,jy-32);g.textAlign="start";}
+}
+
+// ---------- movimiento ----------
+const held={};let busy=true,dry=0,lastZone=-1;
+const DIR={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+const KEYS={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",w:"up",s:"down",a:"left",d:"right",W:"up",S:"down",A:"left",D:"right"};
+addEventListener("keydown",e=>{const k=KEYS[e.key];if(k&&!busy){held[k]=true;e.preventDefault();}});
+addEventListener("keyup",e=>{const k=KEYS[e.key];if(k)held[k]=false;});
+addEventListener("blur",()=>{for(const k in held)held[k]=false;});
+document.querySelectorAll("#pad button").forEach(b=>{const k=b.dataset.k;
+  b.addEventListener("pointerdown",e=>{e.preventDefault();held[k]=true;});
+  for(const ev of["pointerup","pointerleave","pointercancel"])b.addEventListener(ev,()=>held[k]=false);});
+const STEP=150;
+function tick(now){
+  if(P.moving){const k=Math.min(1,(now-P.t0)/STEP);P.fx=P.sx*(k-1);P.fy=P.sy*(k-1);if(k>=1){P.moving=false;P.fx=P.fy=0;arrive(now);}}
+  if(!P.moving&&!busy){for(const k of["up","down","left","right"])if(held[k]){P.dir=k;const[dx,dy]=DIR[k],nx=P.x+dx,ny=P.y+dy;
+    if(!solid(map[ny][nx])){P.x=nx;P.y=ny;P.sx=dx;P.sy=dy;P.fx=-dx;P.fy=-dy;P.moving=true;P.t0=now;}break;}}
+  draw(now);requestAnimationFrame(tick);
+}
+function arrive(now){
+  const zi=zone[P.y][P.x];
+  if(zi!==lastZone){lastZone=zi;const hz=$("hZone");if(zi>=0){hz.hidden=false;hz.textContent=zonas[zi].nombre+(zoneDone(zi)?" ✓":"");}else hz.hidden=true;}
+  if(zi<0)return;
+  const pend=zonas[zi].criaturas.map(id=>byId[id]).filter(c=>c&&!save.caught.includes(c.id));
+  if(!pend.length)return;
+  dry++;const p=(CFG.probEncuentro||0.18)+Math.max(0,dry-6)*0.08;
+  if(Math.random()>p)return;
+  dry=0;busy=true;for(const k in held)held[k]=false;bang=now+450;
+  let tot=pend.reduce((s,c)=>s+RAR[c.rareza].w,0),r=Math.random()*tot,pick=pend[0];
+  for(const c of pend){r-=RAR[c.rareza].w;if(r<=0){pick=c;break;}}
+  setTimeout(()=>battle(pick),450);
+}
+
+// ---------- utilidades UI ----------
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let tt;function toast(s){const t=$("toast");t.textContent=s;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2600);}
+function paint(el,c,sil){
+  el.className="cr"+(c.rareza==="legendario"?" leg":"")+(sil?" sil":"");
+  const m=c.medalla||{};el.style.setProperty("--col",m.color||"#7a9");
+  if(m.imagen){el.classList.add("img");el.style.backgroundImage="url("+JSON.stringify(m.imagen)+")";}else el.style.backgroundImage="";
+  el.querySelector(".em").textContent=m.emoji||"★";
+}
+function hud(){
+  $("hCount").textContent=save.caught.length+" / "+CRS.length+" "+NC.plural;
+  const hp=$("hPts");if(gated){hp.hidden=false;hp.textContent=(puntos||0)+" "+PT.etiqueta;}
+}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ---------- combate ----------
+let B=null;
+function nextQ(c){const i=(save.qi[c.id]||0)%c.preguntas.length;save.qi[c.id]=i+1;persist();return c.preguntas[i];}
+function battle(c){
+  B={c,need:1,got:0};
+  const el=$("bCr"),ball=$("ball");paint(el,c);ball.className="";$("stars").className="";
+  $("bName").textContent=c.nombre;const rr=$("bRar");rr.className="rar "+c.rareza;rr.textContent=RAR[c.rareza].t;
+  $("fb").textContent="";$("bClose").hidden=true;$("q").textContent="";$("opts").innerHTML="";
+  $("oBattle").classList.add("on");
+  let msg="¡Un "+NC.singular+" ha saltado del pasto! Responde bien para lanzarle tu "+BOLA+".";
+  if(!alcanza(c)){
+    if(PT.modo==="estricto"){
+      $("bMsg").textContent=c.nombre+" es demasiado poderoso todavía: necesitas "+umbral(c)+" "+PT.etiqueta+" (tienes "+(puntos||0)+"). Seguirá en este pasto esperándote.";
+      el.classList.add("sil");$("bClose").hidden=false;$("bClose").focus();return;
+    }
+    B.need=Math.min(2,c.preguntas.length);
+    if(B.need>1)msg="Este "+NC.singular+" supera tu nivel ("+umbral(c)+" "+PT.etiqueta+"). Puedes capturarlo igual, pero tendrás que acertar "+B.need+" preguntas seguidas.";
+  }
+  $("bMsg").textContent=msg;ask();
+}
+function ask(){
+  const c=B.c,q=nextQ(c),box=$("opts");$("q").textContent=q.texto;box.innerHTML="";
+  shuffle(q.opciones.map((t,i)=>({t,ok:i===q.correcta}))).forEach(o=>{
+    const b=document.createElement("button");b.textContent=o.t;b.dataset.ok=o.ok?"1":"";
+    b.onclick=()=>answer(b,o.ok,q);box.appendChild(b);});
+  const f=box.querySelector("button");if(f)f.focus();
+}
+async function answer(btn,ok,q){
+  const all=[...$("opts").children];all.forEach(b=>b.disabled=true);
+  const c=B.c,ball=$("ball"),el=$("bCr"),fb=$("fb");
+  btn.classList.add(ok?"ok":"no");
+  if(ok){
+    B.got++;
+    if(B.got<B.need){fb.textContent="¡Correcto! Una más para dominarlo…";await sleep(1100);fb.textContent="";ask();return;}
+    fb.textContent="¡Correcto! Lanzas la "+BOLA+"…";
+    ball.className="throw";await sleep(620);el.classList.add("in");ball.className="held";await sleep(250);
+    ball.className="wob";await sleep(1400);ball.className="held";$("stars").className="on";
+    save.caught.push(c.id);persist();hud();lastZone=-2;
+    const m=c.medalla&&c.medalla.nombre;
+    fb.innerHTML="";const s=document.createElement("b");s.textContent="¡"+c.nombre+" capturado!"+(m?" Ganas la medalla «"+m+"».":"");fb.appendChild(s);
+    if(q.explicacion){const p=document.createElement("p");p.textContent=q.explicacion;fb.appendChild(p);}
+    notify("captura",{criatura:c.id,medalla:m||null});
+  }else{
+    if(CFG.mostrarCorrecta!==false)all.forEach(b=>{if(b.dataset.ok)b.classList.add("ok");});
+    ball.className="miss";await sleep(500);el.classList.add("flee");
+    fb.innerHTML="";const s=document.createElement("b");s.textContent=c.nombre+" esquivó la "+BOLA+" y volvió al pasto. ¡Búscalo de nuevo!";fb.appendChild(s);
+    if(q.explicacion&&CFG.mostrarCorrecta!==false){const p=document.createElement("p");p.textContent=q.explicacion;fb.appendChild(p);}
+  }
+  $("bClose").hidden=false;$("bClose").focus();
+}
+$("bClose").onclick=()=>{
+  $("oBattle").classList.remove("on");
+  if(save.caught.length===CRS.length&&!save.won){save.won=true;persist();notify("completado");album(true);return;}
+  busy=false;
+};
+
+// ---------- álbum ----------
+function album(win){
+  busy=true;
+  $("aTitle").textContent=win?"🏆 ¡Los tienes a todos!":"Álbum de "+NC.plural;
+  $("aSub").textContent=win?"Has capturado los "+CRS.length+" "+NC.plural+" y todas sus medallas. "+(CFG.mensajeFinal||""):save.caught.length+" de "+CRS.length+" capturados. Las siluetas te dicen en qué pasto buscar.";
+  const gr=$("grid");gr.innerHTML="";
+  CRS.forEach(c=>{
+    const has=save.caught.includes(c.id),z=zonas.find(z=>z.criaturas.includes(c.id));
+    const d=document.createElement("div");d.className="slot";
+    d.innerHTML='<div class="mini"><div class="cr"><div class="eyes"><i></i><i></i></div><div class="em"></div></div></div><span class="rar"></span><b></b><span></span>';
+    paint(d.querySelector(".cr"),c,!has);
+    const r=d.querySelector(".rar");r.className="rar "+c.rareza;r.textContent=RAR[c.rareza].t;
+    d.querySelector("b").textContent=has?c.nombre:"???";
+    let info=has?(c.medalla&&c.medalla.nombre?"Medalla: "+c.medalla.nombre:(c.descripcion||"")):(z?z.nombre:"");
+    if(!has&&gated&&umbral(c)>0)info+=" · "+umbral(c)+" "+PT.etiqueta;
+    d.lastChild.textContent=info;gr.appendChild(d);
+  });
+  $("oAlbum").classList.add("on");$("bAClose").focus();
+}
+$("bAlbum").onclick=()=>{if(!busy)album(false);};
+$("bAClose").onclick=()=>{$("oAlbum").classList.remove("on");busy=false;};
+$("bReset").onclick=()=>{if(confirm("¿Borrar todas las capturas y empezar de cero?")){save={caught:[],qi:{},pts:save.pts};persist();location.reload();}};
+
+// ---------- inicio ----------
+document.title=CFG.titulo;$("hTitle").textContent=CFG.titulo;$("sTitle").textContent=CFG.titulo;
+$("sTema").textContent=CFG.tema||"";
+$("sHow").textContent="Muévete con las flechas, WASD o el mando táctil. Entre el pasto alto se esconden "+CRS.length+" "+NC.plural+": cuando salte uno, responde bien a su pregunta para atraparlo con tu "+BOLA+" y ganar su medalla.";
+if(gated&&puntos===null){$("sPts").hidden=false;$("sPtsTxt").textContent="¿Cuántos "+PT.etiqueta+" llevas? Los "+NC.plural+" más raros exigen más "+PT.etiqueta+".";}
+$("bGo").onclick=()=>{
+  if(gated&&puntos===null){puntos=Math.max(0,+$("iPts").value||0);save.pts=puntos;persist();}
+  $("oStart").classList.remove("on");busy=false;hud();
+  toast(save.caught.length?"¡Sigue buscando!":"Camina por el pasto alto…");
+};
+hud();$("oStart").classList.add("on");$("bGo").focus();
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
