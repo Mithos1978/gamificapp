@@ -4,9 +4,11 @@
 Uso: python build.py config.json -o juego.html
 """
 import argparse
+import base64
 import json
 import re
 import sys
+from urllib.parse import quote
 from pathlib import Path
 
 RAREZAS = ("comun", "raro", "epico", "legendario")
@@ -92,6 +94,11 @@ def main():
     marca = "/*__CONFIG__*/null/*__FIN__*/"
     if marca not in plantilla:
         sys.exit("ERROR: la plantilla no contiene el marcador de configuración.")
+    # La palabra clave no viaja legible: se ofusca como en los demás juegos de la Oca (no es un secreto fuerte).
+    fin = cfg.get("final") or {}
+    if fin.get("palabra"):
+        txt, k = quote(str(fin.pop("palabra"))), "ludo:" + cfg["id"]
+        fin["clave"] = base64.b64encode(bytes(ord(c) ^ ord(k[i % len(k)]) for i, c in enumerate(txt))).decode()
     datos = json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")
     html = plantilla.replace(marca, datos)
     Path(a.salida).write_text(html, encoding="utf-8")

@@ -96,7 +96,7 @@ una línea. Los `umbrales` van por rareza y deben crecer (común ≤ raro ≤ é
 legendario); ajústalos a la escala real de puntos del tablero y deja `comun` en 0 para que
 siempre haya algo capturable.
 
-El juego obtiene los puntos del jugador, por orden: parámetro de URL `?puntos=120`, la
+El juego obtiene los puntos del jugador, por orden: `puntos.api` (ver Integración), parámetro de URL `?puntos=120`, la
 clave de `localStorage` indicada en `puntos.claveLocalStorage` (útil si el juego se sirve
 desde el mismo origen que La Oca), o preguntándoselo al jugador en la pantalla inicial.
 
@@ -110,6 +110,19 @@ desde el mismo origen que La Oca), o preguntándoselo al jugador en la pantalla 
   `postMessage({origen:"ludocaptura", juego, tipo:"captura"|"completado", criatura, medalla, capturados, total})`,
   para que el tablero pueda otorgar la medalla real.
 
+- **Palabra clave del final** (`final.palabra`): si se indica, al completar el álbum el
+  juego muestra esa palabra para que el jugador la escriba en la plataforma y sume sus
+  puntos. `build.py` la ofusca en el HTML (no es un secreto fuerte, solo evita leerla de un
+  vistazo en el código), así que el `config.json` con la palabra legible no debe quedar en
+  un sitio público.
+- **Puntos desde el tablero** (`puntos.api`): URL del mismo origen que devuelve JSON
+  `{"total": 120, "libre": false}`. Tiene prioridad sobre las demás fuentes; `libre: true`
+  exime de los umbrales (cuentas docentes que proyectan el juego).
+
+Si el juego es para **La Oca de la Sabiduría** (repositorio `oca-de-la-sabiduria`), lee
+`references/oca-de-la-sabiduria.md` antes de empezar: dice de dónde sacar el contenido de
+cada tema, qué monedas existen, dónde se guarda el juego y cómo se añade a una clase.
+
 ## Referencia rápida de `config.json`
 
 ```
@@ -121,7 +134,8 @@ nombreBola    por defecto "Ludobola"
 mensajeFinal  frase extra al completar el álbum
 probEncuentro probabilidad por paso en pasto (0.18 por defecto)
 mostrarCorrecta  false para no revelar la respuesta al fallar
-puntos        {modo, etiqueta, umbrales:{comun,raro,epico,legendario}, claveLocalStorage}
+puntos        {modo, etiqueta, umbrales:{comun,raro,epico,legendario}, api, claveLocalStorage}
+final         {palabra, instruccion}  palabra clave que se muestra al completar el álbum
 zonas         [{nombre, criaturas:[ids]}]
 criaturas     [{id, nombre, rareza, descripcion,
                 medalla:{nombre, emoji, color, imagen},

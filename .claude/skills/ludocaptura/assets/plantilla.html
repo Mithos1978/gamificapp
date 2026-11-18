@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
 <title>Ludocaptura</title>
 <style>
 :root{--bg:#14231c;--panel:#fffaf0;--ink:#22302a;--accent:#7a4fd0;--accent2:#ffc83d;--ok:#2e9e5b;--bad:#d2493f}
@@ -43,6 +44,8 @@ input[type=number]{font:inherit;padding:8px;border-radius:10px;border:2px solid 
 .cr .eyes i::after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:#222;left:5px;top:6px}
 .cr .em{position:absolute;left:0;right:0;top:48px;text-align:center;font-size:34px;line-height:1}
 .cr.img .em{display:none}
+.cr.img .eyes{top:-12px}
+.slot .cr.img .eyes{top:-9px}
 .cr.leg{box-shadow:0 0 0 3px #fff8 inset,0 0 22px 6px #ffd54a}
 .cr.in{transform:scale(0);opacity:0}
 .cr.flee{transform:translateX(320px) rotate(40deg);opacity:0;animation:none}
@@ -80,6 +83,7 @@ input[type=number]{font:inherit;padding:8px;border-radius:10px;border:2px solid 
 .slot .cr .em{top:32px;font-size:24px}
 .slot .cr::before,.slot .cr::after{bottom:-10px;width:18px;height:11px}.slot .cr::before{left:10px}.slot .cr::after{right:10px}
 .slot b{display:block;margin-top:4px}
+.clave{font-size:30px;font-weight:800;letter-spacing:5px;text-align:center;margin:8px 0;padding:8px;border:3px dashed var(--accent);border-radius:10px;background:#fff;user-select:text;-webkit-user-select:text}
 </style>
 </head>
 <body>
@@ -113,7 +117,7 @@ input[type=number]{font:inherit;padding:8px;border-radius:10px;border:2px solid 
 </div></div>
 
 <div class="ov" id="oAlbum"><div class="card">
-  <h2 id="aTitle"></h2><p id="aSub"></p><div id="grid"></div>
+  <h2 id="aTitle"></h2><p id="aSub"></p><div id="aClave" hidden><p><b>Tu palabra clave:</b></p><div class="clave" id="aPal"></div><p id="aIns"></p></div><div id="grid"></div>
   <div class="row"><button id="bAClose">Volver al mapa</button><span class="sp" style="flex:1"></span><button class="sec" id="bReset">Reiniciar partida</button></div>
 </div></div>
 
@@ -143,14 +147,22 @@ const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){
 const notify=(tipo,extra)=>{try{if(window.parent!==window)window.parent.postMessage(Object.assign({origen:"ludocaptura",juego:CFG.id,tipo,capturados:save.caught.slice(),total:CRS.length},extra||{}),"*");}catch(e){}};
 
 // ---------- puntos ----------
-let puntos=null;
+let puntos=null,libre=false;
 (function(){const u=new URLSearchParams(location.search).get("puntos");
   if(u!==null&&u!==""&&!isNaN(+u))puntos=Math.max(0,+u);
   else if(PT.claveLocalStorage){try{const v=localStorage.getItem(PT.claveLocalStorage);if(v!==null&&!isNaN(+v))puntos=Math.max(0,+v);}catch(e){}}
   if(puntos===null&&save.pts!==null)puntos=save.pts;})();
 const gated=PT.modo==="suave"||PT.modo==="estricto";
 const umbral=c=>PT.umbrales[c.rareza]||0;
-const alcanza=c=>!gated||(puntos||0)>=umbral(c);
+const alcanza=c=>!gated||libre||(puntos||0)>=umbral(c);
+// Con puntos.api, el tablero es quien dice los puntos (JSON {total, libre}); "libre" exime del umbral (docentes).
+async function cargarPuntos(){
+  if(!gated||!PT.api)return;
+  try{const r=await fetch(PT.api,{credentials:"same-origin",cache:"no-store"});if(!r.ok)return;const d=await r.json();
+    if(d.libre){libre=true;return;}
+    if(typeof d.total==="number"){puntos=Math.max(0,d.total);save.pts=puntos;persist();}}catch(e){}
+}
+const palabra=()=>{try{const b=atob(CFG.final.clave),k="ludo:"+CFG.id;let s="";for(let i=0;i<b.length;i++)s+=String.fromCharCode(b.charCodeAt(i)^k.charCodeAt(i%k.length));return decodeURIComponent(s);}catch(e){return "";}};
 
 // ---------- mapa ----------
 function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -274,7 +286,7 @@ function paint(el,c,sil){
 }
 function hud(){
   $("hCount").textContent=save.caught.length+" / "+CRS.length+" "+NC.plural;
-  const hp=$("hPts");if(gated){hp.hidden=false;hp.textContent=(puntos||0)+" "+PT.etiqueta;}
+  const hp=$("hPts");if(gated&&!libre){hp.hidden=false;hp.textContent=(puntos||0)+" "+PT.etiqueta;}
 }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -339,6 +351,9 @@ function album(win){
   busy=true;
   $("aTitle").textContent=win?"🏆 ¡Los tienes a todos!":"Álbum de "+NC.plural;
   $("aSub").textContent=win?"Has capturado los "+CRS.length+" "+NC.plural+" y todas sus medallas. "+(CFG.mensajeFinal||""):save.caught.length+" de "+CRS.length+" capturados. Las siluetas te dicen en qué pasto buscar.";
+  const pal=save.caught.length===CRS.length&&CFG.final&&CFG.final.clave?palabra():"";
+  $("aClave").hidden=!pal;$("aPal").textContent=pal;
+  $("aIns").textContent=(CFG.final&&CFG.final.instruccion)||"Escríbela en la casilla «Palabra clave del final» de esta página para sumar tus puntos.";
   const gr=$("grid");gr.innerHTML="";
   CRS.forEach(c=>{
     const has=save.caught.includes(c.id),z=zonas.find(z=>z.criaturas.includes(c.id));
@@ -348,10 +363,10 @@ function album(win){
     const r=d.querySelector(".rar");r.className="rar "+c.rareza;r.textContent=RAR[c.rareza].t;
     d.querySelector("b").textContent=has?c.nombre:"???";
     let info=has?(c.medalla&&c.medalla.nombre?"Medalla: "+c.medalla.nombre:(c.descripcion||"")):(z?z.nombre:"");
-    if(!has&&gated&&umbral(c)>0)info+=" · "+umbral(c)+" "+PT.etiqueta;
+    if(!has&&gated&&!libre&&umbral(c)>0)info+=" · "+umbral(c)+" "+PT.etiqueta;
     d.lastChild.textContent=info;gr.appendChild(d);
   });
-  $("oAlbum").classList.add("on");$("bAClose").focus();
+  $("oAlbum").classList.add("on");$("bAClose").focus({preventScroll:true});$("oAlbum").querySelector(".card").scrollTop=0;$("oAlbum").scrollTop=0;
 }
 $("bAlbum").onclick=()=>{if(!busy)album(false);};
 $("bAClose").onclick=()=>{$("oAlbum").classList.remove("on");busy=false;};
@@ -361,13 +376,15 @@ $("bReset").onclick=()=>{if(confirm("¿Borrar todas las capturas y empezar de ce
 document.title=CFG.titulo;$("hTitle").textContent=CFG.titulo;$("sTitle").textContent=CFG.titulo;
 $("sTema").textContent=CFG.tema||"";
 $("sHow").textContent="Muévete con las flechas, WASD o el mando táctil. Entre el pasto alto se esconden "+CRS.length+" "+NC.plural+": cuando salte uno, responde bien a su pregunta para atraparlo con tu "+BOLA+" y ganar su medalla.";
-if(gated&&puntos===null){$("sPts").hidden=false;$("sPtsTxt").textContent="¿Cuántos "+PT.etiqueta+" llevas? Los "+NC.plural+" más raros exigen más "+PT.etiqueta+".";}
+cargarPuntos().then(()=>{
+if(gated&&!libre&&puntos===null){$("sPts").hidden=false;$("sPtsTxt").textContent="¿Cuántos "+PT.etiqueta+" llevas? Los "+NC.plural+" más raros exigen más "+PT.etiqueta+".";}
 $("bGo").onclick=()=>{
-  if(gated&&puntos===null){puntos=Math.max(0,+$("iPts").value||0);save.pts=puntos;persist();}
+  if(gated&&!libre&&puntos===null){puntos=Math.max(0,+$("iPts").value||0);save.pts=puntos;persist();}
   $("oStart").classList.remove("on");busy=false;hud();
   toast(save.caught.length?"¡Sigue buscando!":"Camina por el pasto alto…");
 };
 hud();$("oStart").classList.add("on");$("bGo").focus();
+});
 requestAnimationFrame(tick);
 })();
 </script>
