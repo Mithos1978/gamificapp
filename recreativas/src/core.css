@@ -22,7 +22,7 @@ button[disabled]{opacity:.45;cursor:not-allowed}
 button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #botones button{font-size:12px;padding:4px 8px}
 #escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
-#lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
+#lienzo{box-sizing:content-box;display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
 #avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
 .aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
 #herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
