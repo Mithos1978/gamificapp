@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{{TITULO}} · Obsoletus y la Gran Oca del Saber</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="barra">
+    <h1 id="titulo"></h1>
+    <div id="hud"></div>
+    <div id="botones">
+      <button type="button" id="bPausa">Pausa</button>
+      <button type="button" id="bReiniciar">Reiniciar</button>
+      <button type="button" id="bSonido" aria-pressed="false">Sonido: no</button>
+      <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
+    </div>
+  </header>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas><div id="avisos" aria-live="polite"></div></main>
+  <div id="herramientas"></div>
+  <div id="cruceta"></div>
+  <div id="acciones"></div>
+  <div id="capa" hidden><div id="panel" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+</div>
+<script>
+{{CORE}}
+</script>
+<script>
+{{JUEGO}}
+</script>
+</body>
+</html>
