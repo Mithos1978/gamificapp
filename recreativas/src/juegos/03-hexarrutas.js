@@ -1,0 +1,548 @@
+/* 03 · Hexarrutas: el laberinto de las motivaciones */
+(function () {
+  'use strict';
+  var A = Arcade, C = A.C, W = 360, H = 440, TOP = 28, VJ = 118, CX = 180, CY = 212, LIMITE = 40;
+  var S, D;
+
+  var PORT = [
+    { id: 'fil', nombre: 'Filántropo', lema: 'ayudar a otro personaje', x: 180, y: 80, franja: 'Lleva los 2 pollitos al nido',
+      reto: 'Dos pollitos se han perdido entre los vigilantes de Obsoletus. Ve a por ellos (te seguirán) y acompáñalos hasta el nido de abajo. Si un vigilante te toca, se asustan y te esperan donde estaban.' },
+    { id: 'soc', nombre: 'Socializador', lema: 'coordinarse con alguien', x: 288, y: 146, franja: 'Tu placa abre la puerta de Brisa',
+      reto: 'Brisa, una compañera guiada por el juego, sube por el pasillo de al lado. Tu placa abre su puerta y la suya abre la tuya: espera en tu placa hasta que pase, esquiva a los vigilantes de tu pasillo y llegad arriba.' },
+    { id: 'lib', nombre: 'Espíritu libre', lema: 'explorar a tu aire', x: 288, y: 278, franja: 'Busca muros agrietados',
+      reto: 'No hay puertas a la vista. Algunos muros tienen grietas y se pueden atravesar: explora a tu aire, descubre salas y encuentra la estrella escondida. Hay dos hallazgos opcionales.' },
+    { id: 'tri', nombre: 'Triunfador', lema: 'superar un reto de dominio', x: 180, y: 344, franja: 'Esquiva las 3 oleadas',
+      reto: 'Caen bloques de «temario» en tres oleadas cada vez más rápidas. El patrón se repite: obsérvalo, esquiva y aguanta 21 segundos para dominar los tres niveles.' },
+    { id: 'jug', nombre: 'Jugador', lema: 'conseguir recompensas explícitas', x: 72, y: 278, franja: 'Reúne 150 y abre el cofre',
+      reto: 'Cada moneda lleva su valor a la vista (10, 20 o 50). Reúne 150 para abrir el cofre del centro y recógelo sin que te alcancen los vigilantes. Las monedas solo cuentan dentro de este portal.' },
+    { id: 'dis', nombre: 'Disruptor', lema: 'cambiar una regla', x: 72, y: 146, franja: '',
+      reto: 'Las franjas rayadas te empujan y, con la regla actual, es imposible cruzarlas. Acércate a una palanca y pulsa Acción (Espacio) para invertir la regla. Llega a la salida de arriba.' }
+  ];
+  var PREF = ['Sí, me atrajo', 'A medias', 'No especialmente'];
+
+  function hechos() { return S.orden.length; }
+  function dist(a, b) { return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
+  function robot(x, y, vx, vy, x0, x1, y0, y1) {
+    return { x: x, y: y, vx: vx, vy: vy, x0: x0 == null ? 16 : x0, x1: x1 == null ? 344 : x1, y0: y0 == null ? y : y0, y1: y1 == null ? y : y1 };
+  }
+  function moverRobots(dt, api) {
+    var f = api.vel * D.dif, j = S.j, toca = false;
+    D.robots.forEach(function (r) {
+      r.x += r.vx * f * dt; r.y += r.vy * f * dt;
+      if (r.x < r.x0) { r.x = r.x0; r.vx = Math.abs(r.vx); } else if (r.x > r.x1) { r.x = r.x1; r.vx = -Math.abs(r.vx); }
+      if (r.y < r.y0) { r.y = r.y0; r.vy = Math.abs(r.vy); } else if (r.y > r.y1) { r.y = r.y1; r.vy = -Math.abs(r.vy); }
+      if (Math.abs(r.x - j.x) < 17 && Math.abs(r.y - j.y) < 17) toca = true;
+    });
+    return toca;
+  }
+  function choque(x, y) {
+    if (!D || !D.muros) return false;
+    var r = { x: x - 7, y: y - 7, w: 14, h: 14 };
+    for (var i = 0; i < D.muros.length; i++) if (!D.muros[i].abierto && A.choca(r, D.muros[i])) return true;
+    return false;
+  }
+  function moverJugador(dt, api, y0, y1) {
+    var t = api.teclas, j = S.j, dx = (t.der ? 1 : 0) - (t.izq ? 1 : 0), dy = (t.abajo ? 1 : 0) - (t.arriba ? 1 : 0);
+    j.mov = !!(dx || dy);
+    if (!j.mov) return;
+    if (dx) j.mira = dx;
+    var n = dx && dy ? 0.7071 : 1, atascado = choque(j.x, j.y);
+    var nx = A.limitar(j.x + dx * n * VJ * dt, 9, W - 9), ny = A.limitar(j.y + dy * n * VJ * dt, y0 == null ? TOP + 9 : y0, y1 == null ? H - 9 : y1);
+    if (atascado || !choque(nx, j.y)) j.x = nx;
+    if (atascado || !choque(j.x, ny)) j.y = ny;
+  }
+
+  /* ---------- Sala central y flujo ---------- */
+  function volverSala(api, i) {
+    var p = PORT[i], d = dist(p, { x: CX, y: CY });
+    S.modo = 'sala'; D = null;
+    S.j.x = p.x + (CX - p.x) / d * 46; S.j.y = p.y + (CY - p.y) / d * 46; S.j.mov = false;
+    S.armada = false; S.activa = true;
+  }
+  function abrirPortal(api, i) {
+    var p = PORT[i];
+    S.activa = false;
+    api.elegir({
+      titulo: 'Portal · ' + p.nombre,
+      texto: 'Motivación de diseño: ' + p.lema + '.\n' + p.reto + '\nSuperarlo vale 100 puntos, igual que cualquier otro portal.' +
+        (S.hecho[p.id] ? '\nYa lo superaste en esta partida: puedes rejugarlo, pero no suma más puntos.' : ''),
+      opciones: [{ etiqueta: S.hecho[p.id] ? 'Jugar otra vez' : 'Entrar al desafío' }, { etiqueta: 'Volver a la sala central' }]
+    }).then(function (r) { if (r.i === 0) empezar(api, i); else volverSala(api, i); });
+  }
+  function empezar(api, i) {
+    var p = PORT[i];
+    D = { i: i, id: p.id, vidas: 3, tiempo: LIMITE, conTiempo: true, inmune: 1, dif: Math.min(1.3, 1 + 0.06 * hechos()), robots: [], muros: null, cp: null };
+    RETO[p.id].montar(api);
+    S.j.x = D.cp.x; S.j.y = D.cp.y; S.j.mov = false; S.j.mira = 1;
+    S.modo = 'reto'; S.activa = true;
+  }
+  function golpe(api, aviso) {
+    if (D.inmune > 0) return false;
+    D.vidas--; api.sonido('golpe');
+    if (D.vidas <= 0) { derrota(api, 'Te has quedado sin energía'); return true; }
+    if (D.cp) { S.j.x = D.cp.x; S.j.y = D.cp.y; }
+    D.inmune = 1.6;
+    api.mensaje(aviso || 'Un vigilante te ha alcanzado: vuelves al último punto seguro.');
+    return true;
+  }
+  function derrota(api, motivo) {
+    var i = D.i;
+    S.activa = false; S.intentos++;
+    api.sonido('error');
+    api.elegir({
+      titulo: motivo,
+      texto: 'No pasa nada: puedes repetir este desafío las veces que quieras. Conservas los portales superados y tus puntos.',
+      opciones: [{ etiqueta: 'Reintentar el desafío' },
+        { etiqueta: 'Reintentar en modo tranquilo', detalle: 'Sin límite de tiempo y con obstáculos más lentos.' },
+        { etiqueta: 'Volver a la sala central', detalle: 'Para elegir otro portal.' }]
+    }).then(function (r) {
+      if (r.i === 2) { volverSala(api, i); return; }
+      if (r.i === 1) api.activarTranquilo();
+      empezar(api, i);
+    });
+  }
+  function superar(api) {
+    var i = D.i, p = PORT[i], nuevo = !S.hecho[p.id];
+    S.activa = false; api.sonido('ok');
+    if (nuevo) { S.hecho[p.id] = true; S.orden.push(p.id); S.puntos += 100; }
+    api.elegir({
+      titulo: '¿Me resultó atractivo este desafío?',
+      texto: 'Portal «' + p.nombre + '» superado' + (nuevo ? ' (+100 puntos, como cualquier otro portal).' : ' de nuevo.') +
+        ' Responde solo por lo que has sentido en este rato de juego: no hay respuesta mejor ni peor.',
+      opciones: PREF
+    }).then(function (r) {
+      S.pref[p.id] = r.i;
+      api.registrar('Portal «' + p.nombre + '» (' + p.lema + ')' + (nuevo ? '' : ', rejugado') + ': ¿me resultó atractivo? «' + PREF[r.i] + '».');
+      volverSala(api, i);
+      if (hechos() === 6 && nuevo) salida(api);
+      else if (hechos() === 3 && nuevo) api.mensaje('Salida abierta en el centro de la sala. También puedes seguir explorando portales.', 4500);
+    });
+  }
+  function salida(api) {
+    var n = hechos();
+    S.activa = false;
+    api.elegir({
+      titulo: 'Salida del laberinto',
+      texto: n === 6 ? 'Has explorado los seis portales. Puedes ver ya el resumen de esta partida.'
+        : 'Has superado ' + n + ' de 6 portales. Puedes terminar ahora o seguir explorando los que te quedan.',
+      opciones: [{ etiqueta: 'Terminar y ver el resumen' }, { etiqueta: n === 6 ? 'Quedarme en la sala' : 'Seguir explorando portales' }]
+    }).then(function (r) {
+      if (r.i === 0) cierre(api); else { S.armada = false; S.activa = true; }
+    });
+  }
+  function cierre(api) {
+    var n = hechos(), atr = [], html = '<h3>Portales de esta partida</h3><ul>';
+    PORT.forEach(function (p) {
+      var k = S.orden.indexOf(p.id);
+      html += '<li><b>' + A.esc(p.nombre) + '</b> (' + A.esc(p.lema) + '): ' +
+        (k < 0 ? 'no elegido en esta partida.' : 'elegido en ' + (k + 1) + '.º lugar · ¿atractivo? «' + A.esc(PREF[S.pref[p.id]]) + '»') + '</li>';
+      if (k >= 0 && S.pref[p.id] === 0) atr.push(p.nombre);
+    });
+    html += '</ul><p><b>No es un test validado ni define tu tipo de jugador.</b> Solo recoge los portales que elegiste y lo que dijiste DURANTE ESTA PARTIDA. ' +
+      'Los seis nombres son motivaciones de diseño (inspiradas en el modelo Hexad), no diagnósticos.</p>' +
+      '<p>Un mismo alumno o alumna puede responder a varios diseños a la vez, y lo que hoy le atrae puede cambiar con la tarea, el día o el grupo. ' +
+      'Por eso conviene ofrecer diversidad de propuestas en lugar de diseñar para un único «tipo».</p>';
+    api.terminar({
+      titulo: '¡Hexarrutas completado!', puntos: S.puntos, html: html,
+      feedback: 'En esta partida elegiste ' + n + ' de 6 portales. ' +
+        (atr.length ? 'Señalaste como atractivos: ' + atr.join(', ') + '. ' : 'No señalaste ninguno como claramente atractivo, y también es una respuesta válida. ') +
+        'Es la impresión de un rato concreto de juego, no una descripción de ti: en otra tarea u otro día podrías responder distinto.' +
+        (S.intentos ? ' Repetiste ' + S.intentos + ' intento(s): reintentar forma parte del juego y no resta nada.' : ''),
+      ficha: ['Aclaración: No es un test validado ni define tu tipo de jugador.']
+    });
+  }
+
+  /* ---------- Los seis microdesafíos ---------- */
+  var G = [350, 265, 180, 95], PX = [40, 134, 40, 134];          /* Socializador: puertas y placas */
+  var PATRON = [0, 3, 5, 2, 4, 1, 3, 0, 5, 1, 4, 2, 0, 4, 2, 5, 1, 3]; /* Triunfador: columnas */
+  var FRANJAS = [{ n: 'A', y0: 280, y1: 340, s: 1 }, { n: 'B', y0: 130, y1: 190, s: -1 }];
+  var PAL = [{ x: 60, y: 388 }, { x: 300, y: 235 }];
+  var RETO = {};
+
+  RETO.fil = {
+    montar: function () {
+      D.nido = { x: 180, y: 408 }; D.cp = { x: 180, y: 408 }; D.salvados = 0;
+      D.pollos = [{ x: 50, y: 62, e: 'espera' }, { x: 310, y: 62, e: 'espera' }];
+      D.robots = [robot(40, 115, 72, 0), robot(300, 185, -92, 0), robot(90, 255, 80, 0), robot(250, 325, -98, 0)];
+    },
+    actualizar: function (dt, api) {
+      moverJugador(dt, api);
+      if (moverRobots(dt, api) && golpe(api, 'Un vigilante te ha alcanzado: vuelves al nido y los pollitos te esperan donde estaban.')) {
+        if (D.vidas > 0) D.pollos.forEach(function (p) { if (p.e === 'sigue') p.e = 'espera'; });
+        return;
+      }
+      var j = S.j, guia = j, enNido = dist(j, D.nido) < 26;
+      D.pollos.forEach(function (p) {
+        if (p.e === 'espera' && dist(p, j) < 18) { p.e = 'sigue'; api.sonido('punto'); api.flotar('¡Te sigo!', p.x, p.y - 14, { color: C.menta }); }
+        if (p.e !== 'sigue') return;
+        var d = dist(p, guia);
+        if (d > 20) { var v = Math.min(d - 20, 150 * dt); p.x += (guia.x - p.x) / d * v; p.y += (guia.y - p.y) / d * v; }
+        guia = p;
+        if (enNido) {
+          p.e = 'salvo'; p.x = D.nido.x - 14 + D.salvados * 28; p.y = D.nido.y + 12; D.salvados++;
+          api.sonido('ok'); api.flotar('¡Gracias!', p.x, p.y - 30, { color: C.oro });
+        }
+      });
+      if (D.salvados === 2) superar(api);
+    },
+    hud: function () { return { Pollitos: D.salvados + '/2' }; },
+    dibujar: function (ctx, api) {
+      [115, 185, 255, 325].forEach(function (y) { ctx.fillStyle = C.noche2; ctx.fillRect(0, y - 14, W, 28); });
+      A.caja(ctx, D.nido.x - 34, D.nido.y - 14, 68, 40, '#3a2f10', C.oro, 2);
+      A.texto(ctx, 'NIDO', D.nido.x, D.nido.y - 22, { tam: 12, color: C.oro, negrita: true });
+      D.pollos.forEach(function (p) {
+        A.oca(ctx, p.x, p.y, 13, { color: C.oro, dir: p.x > S.j.x ? -1 : 1, paso: p.e === 'sigue' && Math.floor(api.t * 8) % 2 });
+        if (p.e === 'espera') A.texto(ctx, '¡Aquí!', p.x, p.y - 18, { tam: 12, color: C.blanco });
+      });
+    }
+  };
+
+  RETO.soc = {
+    montar: function () {
+      D.cp = { x: 112, y: 416 }; D.npc = { x: 273, y: 416, en: -1 }; D.placa = -1; D.pisadas = 0;
+      D.muros = [{ x: 174, y: 82, w: 12, h: 360 }];
+      G.forEach(function (y) { D.muros.push({ x: 0, y: y, w: 174, h: 10, abierto: false }); });
+      D.robots = [robot(30, G[1] + 71, 55, 0, 16, 158), robot(150, G[2] + 71, -65, 0, 16, 158), robot(30, G[3] + 71, 75, 0, 16, 158)];
+    },
+    actualizar: function (dt, api) {
+      var j = S.j, n = D.npc, k, i;
+      moverJugador(dt, api);
+      D.placa = -1;
+      for (i = 0; i < 4; i++) if (Math.abs(j.x - PX[i]) < 15 && Math.abs(j.y - (G[i] + 42)) < 15) D.placa = i;
+      if (D.placa >= 0 && D.placa >= D.pisadas) { D.pisadas = D.placa + 1; D.cp = { x: PX[D.placa], y: G[D.placa] + 42 }; api.sonido('punto'); }
+      /* Brisa: va a su siguiente placa si tu placa le abre la puerta (o si ya la cruzó) */
+      k = n.en + 1;
+      if (k < 4 && (D.placa === k || n.y < G[k] + 18)) {
+        n.y -= 62 * dt;
+        if (n.y <= G[k] - 40) { n.y = G[k] - 40; n.en = k; api.sonido('salto'); api.flotar('¡Te abro!', n.x, n.y - 16, { color: C.menta }); }
+      }
+      for (i = 0; i < 4; i++) D.muros[i + 1].abierto = n.en === i;
+      if (moverRobots(dt, api) && golpe(api, 'Un vigilante te ha alcanzado: vuelves a tu última placa.')) return;
+      if (j.y < 74) superar(api);
+    },
+    hud: function () { var c = 0; G.forEach(function (y) { if (S.j.y < y) c++; }); return { Puertas: c + '/4' }; },
+    dibujar: function (ctx, api) {
+      var n = D.npc, i, y;
+      A.caja(ctx, 0, TOP, W, 54, '#0d3b2c');
+      A.texto(ctx, 'META', 87, TOP + 16, { tam: 13, color: C.menta, negrita: true });
+      A.caja(ctx, 174, 82, 12, 360, C.morado);
+      for (i = 0; i < 4; i++) {
+        y = G[i];
+        puerta(ctx, 0, y, 174, n.en === i);                         /* tu puerta: la abre Brisa */
+        puerta(ctx, 186, y, 174, D.placa === i || n.y < y);         /* su puerta: la abres tú */
+        placa(ctx, PX[i], y + 42, D.placa === i, C.menta, 'TÚ');
+        placa(ctx, 273, y - 40, n.en === i, C.oro, 'B');
+      }
+      A.oca(ctx, n.x, n.y + 1, 22, { color: C.oro, dir: -1, paso: n.en + 1 < 4 && D.placa === n.en + 1 && Math.floor(api.t * 8) % 2 });
+      A.texto(ctx, 'Brisa', n.x + 40, n.y, { tam: 12, color: C.oro });
+    }
+  };
+  function puerta(ctx, x, y, w, abierta) {
+    if (abierta) { A.caja(ctx, x, y, 14, 10, C.gris); A.caja(ctx, x + w - 14, y, 14, 10, C.gris); return; }
+    A.caja(ctx, x, y, w, 10, C.morado2);
+    ctx.fillStyle = C.noche; for (var b = x + 8; b < x + w - 4; b += 12) ctx.fillRect(b, y + 2, 3, 6);
+  }
+  function placa(ctx, x, y, pisada, color, letra) {
+    A.caja(ctx, x - 14, y - 14, 28, 28, pisada ? color : C.noche2, color, 2);
+    A.texto(ctx, letra, x, y + 1, { tam: 12, color: pisada ? C.noche : color, negrita: true, sombra: false });
+  }
+
+  RETO.lib = {
+    montar: function () {
+      D.cp = { x: 60, y: 400 }; D.vis = [false, false, false, false, false, false]; D.salas = 0; D.hall = 0; D.sala = -1;
+      D.muros = [
+        { x: 175, y: 28, w: 10, h: 137 },                                         /* fila 0: macizo */
+        { x: 175, y: 165, w: 10, h: 25 }, { x: 175, y: 230, w: 10, h: 72 },       /* fila 1: grieta y 190-230 */
+        { x: 175, y: 302, w: 10, h: 48 }, { x: 175, y: 390, w: 10, h: 50 },       /* fila 2: grieta y 350-390 */
+        { x: 0, y: 160, w: 110, h: 10 }, { x: 150, y: 160, w: 25, h: 10 },        /* col 0 arriba: grieta x 110-150 */
+        { x: 185, y: 160, w: 105, h: 10 }, { x: 330, y: 160, w: 30, h: 10 },      /* col 1 arriba: grieta x 290-330 */
+        { x: 0, y: 297, w: 30, h: 10 }, { x: 70, y: 297, w: 105, h: 10 },         /* col 0 abajo: grieta x 30-70 */
+        { x: 185, y: 297, w: 175, h: 10 }                                         /* col 1 abajo: macizo */
+      ];
+      D.grietas = [{ x: 175, y: 190, w: 10, h: 40, a: 2, b: 3 }, { x: 175, y: 350, w: 10, h: 40, a: 4, b: 5 },
+        { x: 110, y: 160, w: 40, h: 10, a: 0, b: 2 }, { x: 290, y: 160, w: 40, h: 10, a: 1, b: 3 }, { x: 30, y: 297, w: 40, h: 10, a: 2, b: 4 }];
+      D.cosas = [{ x: 270, y: 96, t: 'estrella' }, { x: 90, y: 96, t: 'hallazgo' }, { x: 270, y: 380, t: 'hallazgo' }];
+      D.robots = [robot(270, 235, 50, 38, 205, 340, 190, 280)];
+    },
+    actualizar: function (dt, api) {
+      var j = S.j, s, i, c;
+      moverJugador(dt, api);
+      s = (j.x < 180 ? 0 : 1) + 2 * (j.y < 165 ? 0 : j.y < 302 ? 1 : 2);
+      if (s !== D.sala) {
+        if (D.sala >= 0) D.cp = { x: j.x, y: j.y };
+        D.sala = s;
+        if (!D.vis[s]) { D.vis[s] = true; D.salas++; if (D.salas > 1) { api.sonido('punto'); api.flotar('Sala nueva', j.x, j.y - 16, { color: C.menta }); } }
+      }
+      if (moverRobots(dt, api) && golpe(api, 'Un vigilante te ha alcanzado: vuelves a la entrada de esta sala.')) return;
+      for (i = D.cosas.length - 1; i >= 0; i--) {
+        c = D.cosas[i];
+        if (dist(c, j) < 17) {
+          if (c.t === 'estrella') { superar(api); return; }
+          D.cosas.splice(i, 1); D.hall++; api.sonido('punto'); api.flotar('¡Hallazgo!', c.x, c.y - 14);
+        }
+      }
+    },
+    hud: function () { return { Salas: D.salas + '/6', Hallazgos: D.hall + '/2' }; },
+    dibujar: function (ctx) {
+      var i, m, g, x, y;
+      for (i = 0; i < 6; i++) if (!D.vis[i]) {
+        x = (i % 2) * 180; y = [28, 165, 302][Math.floor(i / 2)];
+        A.caja(ctx, x, y, 180, 138, '#070a14');
+        A.texto(ctx, '?', x + 90, y + 69, { tam: 26, color: C.gris, negrita: true });
+      }
+      for (i = 0; i < D.muros.length; i++) { m = D.muros[i]; A.caja(ctx, m.x, m.y, m.w, m.h, C.morado); }
+      for (i = 0; i < D.grietas.length; i++) {
+        g = D.grietas[i];
+        if (!D.vis[g.a] && !D.vis[g.b]) { A.caja(ctx, g.x, g.y, g.w, g.h, C.morado); continue; }
+        A.caja(ctx, g.x, g.y, g.w, g.h, '#4a3a86');
+        ctx.strokeStyle = C.blanco; ctx.lineWidth = 2; ctx.beginPath();
+        if (g.w > g.h) { ctx.moveTo(g.x + 4, g.y + 2); ctx.lineTo(g.x + 14, g.y + 8); ctx.lineTo(g.x + 22, g.y + 2); ctx.lineTo(g.x + 36, g.y + 8); }
+        else { ctx.moveTo(g.x + 2, g.y + 4); ctx.lineTo(g.x + 8, g.y + 14); ctx.lineTo(g.x + 2, g.y + 22); ctx.lineTo(g.x + 8, g.y + 36); }
+        ctx.stroke();
+      }
+      D.cosas.forEach(function (c) {
+        var s = (c.x < 180 ? 0 : 1) + 2 * (c.y < 165 ? 0 : c.y < 302 ? 1 : 2);
+        if (!D.vis[s]) return;
+        if (c.t === 'estrella') {
+          ctx.fillStyle = C.oro; ctx.fillRect(c.x - 4, c.y - 13, 8, 26); ctx.fillRect(c.x - 13, c.y - 4, 26, 8); ctx.fillRect(c.x - 8, c.y - 8, 16, 16);
+          A.texto(ctx, 'ESTRELLA', c.x, c.y + 26, { tam: 12, color: C.oro, negrita: true });
+        } else A.pluma(ctx, c.x, c.y, 20, C.menta);
+      });
+    }
+  };
+
+  RETO.tri = {
+    montar: function () {
+      D.cp = { x: 180, y: 400 }; D.conTiempo = false; D.reloj = 0; D.prox = 0.6; D.n = 0; D.bloques = []; D.nivel = 0;
+    },
+    actualizar: function (dt, api) {
+      var j = S.j, f = api.vel * D.dif, i, b, col, r, niv;
+      moverJugador(dt, api, 332, 424);
+      D.reloj += dt;
+      if (D.reloj >= 21) { D.nivel = 3; superar(api); return; }
+      niv = Math.floor(D.reloj / 7);
+      if (niv !== D.nivel) { D.nivel = niv; api.sonido('ok'); api.flotar('Nivel ' + niv + ' dominado', 180, 300, { color: C.menta, tam: 14 }); }
+      D.prox -= dt * api.vel;
+      if (D.prox <= 0) {
+        col = PATRON[D.n % PATRON.length];
+        D.bloques.push({ x: col * 60 + 3, y: TOP - 16, w: 54, h: 16, v: [115, 150, 185][niv] });
+        if (niv === 2 && D.n % 3 === 0) D.bloques.push({ x: ((col + 3) % 6) * 60 + 3, y: TOP - 16, w: 54, h: 16, v: 185 });
+        D.n++; D.prox = [0.8, 0.62, 0.5][niv];
+      }
+      r = { x: j.x - 7, y: j.y - 7, w: 14, h: 14 };
+      for (i = D.bloques.length - 1; i >= 0; i--) {
+        b = D.bloques[i]; b.y += b.v * f * dt;
+        if (b.y > H) { D.bloques.splice(i, 1); continue; }
+        if (D.inmune <= 0 && A.choca(r, b)) {
+          D.bloques.splice(i, 1);
+          if (golpe(api, 'Un bloque te ha dado. Fíjate en el orden de las columnas: se repite.') && D.vidas <= 0) return;
+        }
+      }
+    },
+    hud: function () { return { Nivel: Math.min(3, D.nivel + 1) + '/3', Aguanta: Math.max(0, Math.ceil(21 - D.reloj)) + ' s' }; },
+    dibujar: function (ctx) {
+      var i, b;
+      ctx.fillStyle = C.noche2; ctx.fillRect(0, 322, W, H - 322);
+      ctx.fillStyle = C.gris; for (i = 1; i < 6; i++) ctx.fillRect(i * 60 - 1, 322, 2, 6);
+      A.caja(ctx, 60, 300, 240, 10, null, C.gris, 1);
+      ctx.fillStyle = C.menta; ctx.fillRect(62, 302, 236 * Math.min(1, D.reloj / 21), 6);
+      ctx.fillStyle = C.blanco; ctx.fillRect(60 + 80, 298, 2, 14); ctx.fillRect(60 + 160, 298, 2, 14);
+      for (i = 0; i < D.bloques.length; i++) {
+        b = D.bloques[i];
+        A.caja(ctx, b.x, b.y, b.w, b.h, C.morado, C.morado2, 2);
+        ctx.fillStyle = C.blanco; ctx.fillRect(b.x + 8, b.y + 5, 38, 2); ctx.fillRect(b.x + 8, b.y + 9, 26, 2);
+      }
+    }
+  };
+
+  RETO.jug = {
+    montar: function () {
+      D.cp = { x: 180, y: 410 }; D.monedas = 0; D.cofre = { x: 180, y: 234 };
+      D.items = [[60, 70, 10], [300, 70, 10], [60, 390, 10], [300, 390, 10], [180, 90, 20], [60, 234, 20], [300, 234, 20], [120, 160, 50], [240, 310, 50]]
+        .map(function (m) { return { x: m[0], y: m[1], v: m[2] }; });
+      D.robots = [robot(60, 130, 70, 52, 16, 344, 44, 424), robot(300, 330, -58, -66, 16, 344, 44, 424)];
+    },
+    actualizar: function (dt, api) {
+      var j = S.j, i, m;
+      moverJugador(dt, api);
+      if (moverRobots(dt, api) && golpe(api, 'Un vigilante te ha alcanzado: vuelves a la entrada, pero conservas tus monedas.')) return;
+      for (i = D.items.length - 1; i >= 0; i--) {
+        m = D.items[i];
+        if (dist(m, j) < 17) {
+          D.items.splice(i, 1); D.monedas += m.v; api.sonido('punto'); api.flotar('+' + m.v, m.x, m.y - 12);
+          if (D.monedas >= 150 && D.monedas - m.v < 150) api.mensaje('¡Cofre abierto! Recógelo en el centro.');
+        }
+      }
+      if (D.monedas >= 150 && dist(D.cofre, j) < 22) superar(api);
+    },
+    hud: function () { return { Monedas: D.monedas + '/150' }; },
+    dibujar: function (ctx) {
+      var c = D.cofre, ab = D.monedas >= 150;
+      D.items.forEach(function (m) {
+        var r = m.v === 50 ? 13 : m.v === 20 ? 11 : 9;
+        ctx.fillStyle = C.oro; ctx.beginPath(); ctx.arc(m.x, m.y, r, 0, 6.3); ctx.fill();
+        A.texto(ctx, String(m.v), m.x, m.y + 1, { tam: 12, color: C.noche, negrita: true, sombra: false });
+      });
+      A.caja(ctx, c.x - 20, c.y - 8, 40, 24, '#3a2f10', C.oro, 2);
+      if (ab) { A.caja(ctx, c.x - 20, c.y - 24, 40, 10, '#3a2f10', C.oro, 2); A.pluma(ctx, c.x, c.y - 8, 16, C.oro); A.texto(ctx, 'PREMIO', c.x, c.y + 28, { tam: 12, color: C.oro, negrita: true }); }
+      else { A.caja(ctx, c.x - 20, c.y - 18, 40, 12, '#3a2f10', C.oro, 2); ctx.fillStyle = C.oro; ctx.fillRect(c.x - 3, c.y - 2, 6, 8); A.texto(ctx, 'faltan ' + (150 - D.monedas), c.x, c.y + 28, { tam: 12, color: C.blanco }); }
+    }
+  };
+
+  function cerca() { for (var i = 0; i < PAL.length; i++) if (dist(PAL[i], S.j) < 32) return i; return -1; }
+  RETO.dis = {
+    montar: function () {
+      D.cp = { x: 180, y: 412 }; D.inv = false; D.cambios = 0; D.meta = { x: 180, y: 52 };
+      D.robots = [robot(40, 92, 85, 0)];
+    },
+    palanca: function (api) {
+      var i = cerca();
+      if (i < 0) { api.mensaje('Acércate a una palanca para cambiar la regla.', 1800); return; }
+      D.inv = !D.inv; D.cambios++; D.cp = { x: PAL[i].x, y: PAL[i].y };
+      api.sonido('ok');
+      api.mensaje('Regla cambiada: ahora la franja A empuja hacia ' + (D.inv ? 'arriba' : 'abajo') + ' y la B hacia ' + (D.inv ? 'abajo' : 'arriba') + '.', 2600);
+    },
+    actualizar: function (dt, api) {
+      var j = S.j;
+      moverJugador(dt, api);
+      FRANJAS.forEach(function (f) {
+        if (j.y > f.y0 && j.y < f.y1) j.y = A.limitar(j.y + f.s * (D.inv ? -1 : 1) * 175 * dt, TOP + 9, H - 9);
+      });
+      if (moverRobots(dt, api) && golpe(api, 'Un vigilante te ha alcanzado: vuelves a la última palanca que usaste.')) return;
+      if (dist(D.meta, j) < 20) superar(api);
+    },
+    hud: function () { return { Regla: D.inv ? 'invertida' : 'original' }; },
+    franja: function () { return 'Regla: A empuja ' + (D.inv ? '▲' : '▼') + ' · B empuja ' + (D.inv ? '▼' : '▲'); },
+    dibujar: function (ctx, api) {
+      var c = cerca();
+      FRANJAS.forEach(function (f) {
+        var s = f.s * (D.inv ? -1 : 1), x, y, yy, d = (api.t * 36 * s) % 24;
+        A.caja(ctx, 0, f.y0, W, f.y1 - f.y0, C.noche2, C.morado, 2);
+        ctx.save(); ctx.beginPath(); ctx.rect(2, f.y0 + 3, W - 4, f.y1 - f.y0 - 6); ctx.clip();
+        ctx.fillStyle = C.morado2;
+        for (x = 30; x < 300; x += 60) for (y = f.y0 - 24; y < f.y1 + 24; y += 24) {
+          yy = y + d;                                                     /* flecha: asta y punta */
+          ctx.fillRect(x - 2, s > 0 ? yy - 8 : yy, 4, 8);
+          ctx.beginPath(); ctx.moveTo(x - 7, yy); ctx.lineTo(x + 7, yy); ctx.lineTo(x, yy + 8 * s); ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+        A.texto(ctx, f.n + (s > 0 ? ' ▼' : ' ▲'), 330, (f.y0 + f.y1) / 2, { tam: 14, color: C.blanco, negrita: true });
+      });
+      PAL.forEach(function (p, i) {
+        A.caja(ctx, p.x - 14, p.y + 4, 28, 10, C.gris, C.blanco, 1);
+        ctx.strokeStyle = C.oro; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x, p.y + 6); ctx.lineTo(p.x + (D.inv ? 10 : -10), p.y - 12); ctx.stroke();
+        ctx.fillStyle = C.oro; ctx.fillRect(p.x + (D.inv ? 10 : -10) - 4, p.y - 16, 8, 8);
+        A.texto(ctx, c === i ? 'Pulsa Acción' : 'PALANCA', p.x + (i ? -6 : 14), p.y + 26, { tam: 12, color: c === i ? C.oro : C.blanco, negrita: c === i });
+      });
+      A.caja(ctx, D.meta.x - 26, D.meta.y - 16, 52, 30, '#0d3b2c', C.menta, 2);
+      A.texto(ctx, 'SALIDA', D.meta.x, D.meta.y, { tam: 12, color: C.menta, negrita: true });
+    }
+  };
+
+  /* ---------- Dibujo de la sala ---------- */
+  function hex(ctx, x, y, r, relleno, borde, g) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) { var a = Math.PI / 3 * i + Math.PI / 6; ctx[i ? 'lineTo' : 'moveTo'](x + r * Math.cos(a), y + r * Math.sin(a)); }
+    ctx.closePath();
+    if (relleno) { ctx.fillStyle = relleno; ctx.fill(); }
+    if (borde) { ctx.strokeStyle = borde; ctx.lineWidth = g || 2; ctx.stroke(); }
+  }
+  function icono(ctx, id, x, y, c) {
+    ctx.fillStyle = c; ctx.strokeStyle = c; ctx.lineWidth = 3;
+    if (id === 'fil') { ctx.fillRect(x - 3, y - 9, 6, 18); ctx.fillRect(x - 9, y - 3, 18, 6); }
+    else if (id === 'soc') { ctx.fillRect(x - 10, y - 5, 8, 10); ctx.fillRect(x + 2, y - 5, 8, 10); ctx.fillRect(x - 2, y - 1, 4, 2); }
+    else if (id === 'lib') { ctx.beginPath(); ctx.moveTo(x, y - 10); ctx.lineTo(x + 8, y); ctx.lineTo(x, y + 10); ctx.lineTo(x - 8, y); ctx.closePath(); ctx.stroke(); ctx.fillRect(x - 2, y - 2, 4, 4); }
+    else if (id === 'tri') { ctx.fillRect(x - 10, y + 3, 7, 6); ctx.fillRect(x - 3, y - 3, 7, 12); ctx.fillRect(x + 4, y - 9, 7, 18); }
+    else if (id === 'jug') { ctx.beginPath(); ctx.arc(x, y, 9, 0, 6.3); ctx.stroke(); ctx.fillRect(x - 2, y - 5, 4, 10); }
+    else { ctx.beginPath(); ctx.moveTo(x - 10, y + 6); ctx.lineTo(x - 4, y - 7); ctx.lineTo(x + 3, y + 6); ctx.lineTo(x + 10, y - 7); ctx.stroke(); }
+  }
+  function dibujarSala(ctx, api) {
+    var n = hechos(), lista = n >= 3;
+    hex(ctx, CX, CY, 172, '#141b36', C.morado, 3);
+    ctx.strokeStyle = C.noche2; ctx.lineWidth = 12;
+    PORT.forEach(function (p) { ctx.beginPath(); ctx.moveTo(CX, CY); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    A.texto(ctx, 'MOTIVACIONES DE DISEÑO', CX, 15, { tam: 13, color: C.oro, negrita: true });
+    hex(ctx, CX, CY, 24, lista ? '#0d3b2c' : C.noche2, lista ? C.menta : C.gris, 3);
+    A.texto(ctx, lista ? 'SALIDA' : n + '/3', CX, CY + 1, { tam: 12, color: lista ? C.menta : C.blanco, negrita: true });
+    PORT.forEach(function (p) {
+      var ok = S.hecho[p.id];
+      hex(ctx, p.x, p.y, 22, ok ? '#0d3b2c' : '#2a1a5c', ok ? C.menta : C.oro, 3);
+      icono(ctx, p.id, p.x, p.y, ok ? C.menta : C.oro);
+      A.texto(ctx, p.nombre, p.x, p.y + 33, { tam: 13, color: C.blanco, negrita: true });
+      if (ok) {
+        ctx.strokeStyle = C.blanco; ctx.lineWidth = 3; ctx.beginPath();
+        ctx.moveTo(p.x + 12, p.y - 20); ctx.lineTo(p.x + 17, p.y - 14); ctx.lineTo(p.x + 26, p.y - 26); ctx.stroke();
+      }
+    });
+    A.texto(ctx, lista ? (n < 6 ? 'Salida abierta · quedan ' + (6 - n) + ' portales' : 'Los seis portales explorados') : 'Elige y supera al menos 3 portales', CX, 424, { tam: 13, color: C.blanco });
+  }
+
+  A.crear({
+    numero: '03', titulo: 'Hexarrutas: el laberinto de las motivaciones', pluma: 'PLUMA-HEXAD',
+    ancho: W, alto: H,
+    objetivo: 'Experimentar seis motivaciones de diseño inspiradas en Hexad y comprobar que una misma persona puede disfrutar de varias propuestas distintas.',
+    instrucciones: [
+      'Mueve la oca por la sala central y entra en el portal que quieras: cada uno abre un microdesafío distinto de unos 20–30 segundos.',
+      'Supera al menos tres portales (puedes explorar los seis); todos valen lo mismo y tras cada uno dices si te resultó atractivo.',
+      'Con tres portales se abre la salida del centro. La Pluma Dorada se consigue con la reflexión final, no con la puntuación.'
+    ],
+    teclas: 'Teclado: flechas o WASD para moverte y Espacio para la Acción (palancas). En móvil o tableta: cruceta y botón Acción en pantalla.',
+    transferencia: '¿Qué dos rutas distintas ofrecerías en una misma tarea para atender motivaciones diferentes?',
+    ayuda: '<p>Los seis portales son <b>motivaciones de diseño</b>, no diagnósticos ni tipos de persona:</p><ul>' +
+      PORT.map(function (p) { return '<li><b>' + p.nombre + ':</b> ' + p.lema + '.</li>'; }).join('') +
+      '</ul><p>Entra en un portal caminando sobre él. Con tres superados se abre la salida del centro. Si pierdes, reintentas sin perder nada.</p>',
+    controles: { cruceta: ['arriba', 'abajo', 'izq', 'der'], acciones: [{ id: 'accion', etiqueta: 'Acción' }] },
+
+    iniciar: function (api) {
+      D = null;
+      S = { modo: 'sala', activa: true, armada: false, hecho: {}, pref: {}, orden: [], puntos: 0, intentos: 0, j: { x: CX, y: CY + 42, mira: 1, mov: false } };
+      api.mensaje('Camina hasta un portal para entrar. Elige el que más te apetezca.', 4000);
+    },
+    alPulsar: function (id, api) {
+      if (id === 'accion' && S && S.activa && S.modo === 'reto' && D && D.id === 'dis') RETO.dis.palanca(api);
+    },
+    depurar: function () { return { S: S, D: D }; },
+
+    actualizar: function (dt, api) {
+      var j, i, d, o;
+      if (!S || !S.activa) return;
+      j = S.j;
+      if (S.modo === 'sala') {
+        moverJugador(dt, api);
+        api.hud({ Portales: hechos() + '/6', 'Mínimo': 3, Puntos: S.puntos });
+        for (i = 0; i < 6; i++) if (dist(PORT[i], j) < 20) { abrirPortal(api, i); return; }
+        d = dist({ x: CX, y: CY }, j);
+        if (d > 36) S.armada = true;
+        if (hechos() >= 3 && S.armada && d < 18) salida(api);
+        return;
+      }
+      D.inmune = Math.max(0, D.inmune - dt);
+      if (D.conTiempo && !api.tranquilo) {
+        D.tiempo -= dt;
+        if (D.tiempo <= 0) { derrota(api, 'Se acabó el tiempo'); return; }
+      }
+      RETO[D.id].actualizar(dt, api);
+      if (!D || !S.activa) return;
+      o = { Portal: PORT[D.i].nombre, Vidas: D.vidas, Tiempo: !D.conTiempo ? null : api.tranquilo ? 'sin límite' : Math.ceil(D.tiempo) + ' s' };
+      d = RETO[D.id].hud();
+      for (i in d) o[i] = d[i];
+      api.hud(o);
+    },
+
+    dibujar: function (ctx, api) {
+      if (!S) return;
+      var j = S.j, R;
+      if (S.modo === 'sala' || !D) dibujarSala(ctx, api);
+      else {
+        R = RETO[D.id];
+        R.dibujar(ctx, api);
+        D.robots.forEach(function (r) { A.robot(ctx, r.x, r.y + 1, 22); });
+        A.caja(ctx, 0, 0, W, TOP, C.noche2);
+        ctx.fillStyle = C.morado; ctx.fillRect(0, TOP - 2, W, 2);
+        A.texto(ctx, R.franja ? R.franja() : PORT[D.i].franja, CX, 13, { tam: 13, color: C.oro, negrita: true });
+        if (D.inmune > 0) { ctx.strokeStyle = C.menta; ctx.lineWidth = 2; ctx.strokeRect(j.x - 14, j.y - 14, 28, 28); }
+      }
+      A.oca(ctx, j.x, j.y + 1, 22, { dir: j.mira, paso: j.mov && Math.floor(api.t * 8) % 2 });
+    }
+  });
+})();

@@ -1,0 +1,72 @@
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;gap:6px;
+  padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "avisos avisos avisos" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+#barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+#titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
+  text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
+#hud{display:flex;flex-wrap:wrap;gap:4px;font-size:13px}
+.chip{background:#1b2444;border:2px solid #6D42C7;padding:2px 7px;white-space:nowrap}
+.chip b{color:#42D6A4;font-weight:700;margin-right:4px}
+#botones{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;color:#f4f1e8;background:#1b2444;border:2px solid #6D42C7;padding:6px 10px;cursor:pointer;
+  border-radius:0;touch-action:manipulation;min-height:36px;box-shadow:2px 2px 0 #000}
+button:hover{background:#2a3566}
+button:focus-visible,textarea:focus-visible{outline:3px solid #F1C453;outline-offset:2px}
+button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #000}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
+#botones button{font-size:12px;padding:4px 8px}
+#escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+#lienzo{box-sizing:content-box;display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
+#avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
+#herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#herramientas:empty{display:none}
+#herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
+#herramientas button[aria-pressed="true"]::before{content:"\25B6 "}
+#cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
+#acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
+#cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
+#acciones button{width:clamp(54px,17vw,76px);min-width:0;height:76px;font-size:clamp(11px,3.1vw,14px);border-radius:0;padding:2px}
+#cruceta:empty,#acciones:empty{display:none}
+.pulsado{background:#6D42C7!important}
+@media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
+@media (orientation:landscape) and (max-height:560px){
+  #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #avisos{grid-area:escena;align-self:start;height:auto;z-index:2;padding:6px}
+  #capa{grid-row:2/-1}
+  #cruceta,#acciones{align-self:end}
+  #acciones{flex-direction:column}
+  #acciones button{height:56px}
+  #titulo{font-size:14px;flex:0 1 auto}
+  #herramientas button{min-height:36px}
+}
+@media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
+#capa{grid-column:1/-1;grid-row:2/-1;min-height:0;background:#080b16f2;display:flex;align-items:center;justify-content:center;padding:4px;z-index:10}
+#capa[hidden]{display:none}
+#panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
+  overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
+#panel h2{margin:0 0 8px;color:#F1C453;font-size:clamp(18px,4vw,26px);text-transform:uppercase;letter-spacing:.05em;text-shadow:2px 2px 0 #6D42C7}
+#panel h3{margin:14px 0 4px;color:#42D6A4;font-size:15px;text-transform:uppercase}
+#panel p{margin:6px 0}
+#panel ol,#panel ul{margin:6px 0;padding-left:22px}
+#panel .opciones{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#panel .opciones.fila{flex-direction:row;flex-wrap:wrap}
+#panel .opciones.fila button{flex:1;min-width:48px;text-align:center}
+#panel .opciones button{text-align:left;min-height:44px;font-size:15px}
+#panel .opciones button small{display:block;color:#c9cfe8;font-size:13px;margin-top:2px}
+#panel .principal{background:#6D42C7;border-color:#F1C453;font-weight:700;font-size:17px;min-height:48px;text-align:center}
+#panel textarea{width:100%;font:inherit;font-size:16px;background:#101629;color:#f4f1e8;border:2px solid #42D6A4;padding:8px;min-height:74px;resize:vertical;border-radius:0}
+#panel label{display:block;margin:10px 0 4px;color:#42D6A4}
+#panel .nota{font-size:13px;color:#c9cfe8}
+#panel .ficha{background:#101629;border:2px dashed #F1C453;padding:10px;white-space:pre-wrap;word-break:break-word;
+  user-select:text;-webkit-user-select:text;font-size:14px;margin:8px 0}
+#panel .conmutadores{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.barras{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:8px 0}
+.barras .b{height:18px;background:repeating-linear-gradient(90deg,#42D6A4 0 8px,#2fae84 8px 10px);border:2px solid #f4f1e8}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

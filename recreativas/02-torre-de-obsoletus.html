@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Piso 1 · Planifico · Obsoletus y la Gran Oca del Saber</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;gap:6px;
+  padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "avisos avisos avisos" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+#barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+#titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
+  text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
+#hud{display:flex;flex-wrap:wrap;gap:4px;font-size:13px}
+.chip{background:#1b2444;border:2px solid #6D42C7;padding:2px 7px;white-space:nowrap}
+.chip b{color:#42D6A4;font-weight:700;margin-right:4px}
+#botones{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;color:#f4f1e8;background:#1b2444;border:2px solid #6D42C7;padding:6px 10px;cursor:pointer;
+  border-radius:0;touch-action:manipulation;min-height:36px;box-shadow:2px 2px 0 #000}
+button:hover{background:#2a3566}
+button:focus-visible,textarea:focus-visible{outline:3px solid #F1C453;outline-offset:2px}
+button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #000}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
+#botones button{font-size:12px;padding:4px 8px}
+#escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+#lienzo{box-sizing:content-box;display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
+#avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
+#herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#herramientas:empty{display:none}
+#herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
+#herramientas button[aria-pressed="true"]::before{content:"\25B6 "}
+#cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
+#acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
+#cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
+#acciones button{width:clamp(54px,17vw,76px);min-width:0;height:76px;font-size:clamp(11px,3.1vw,14px);border-radius:0;padding:2px}
+#cruceta:empty,#acciones:empty{display:none}
+.pulsado{background:#6D42C7!important}
+@media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
+@media (orientation:landscape) and (max-height:560px){
+  #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #avisos{grid-area:escena;align-self:start;height:auto;z-index:2;padding:6px}
+  #capa{grid-row:2/-1}
+  #cruceta,#acciones{align-self:end}
+  #acciones{flex-direction:column}
+  #acciones button{height:56px}
+  #titulo{font-size:14px;flex:0 1 auto}
+  #herramientas button{min-height:36px}
+}
+@media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
+#capa{grid-column:1/-1;grid-row:2/-1;min-height:0;background:#080b16f2;display:flex;align-items:center;justify-content:center;padding:4px;z-index:10}
+#capa[hidden]{display:none}
+#panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
+  overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
+#panel h2{margin:0 0 8px;color:#F1C453;font-size:clamp(18px,4vw,26px);text-transform:uppercase;letter-spacing:.05em;text-shadow:2px 2px 0 #6D42C7}
+#panel h3{margin:14px 0 4px;color:#42D6A4;font-size:15px;text-transform:uppercase}
+#panel p{margin:6px 0}
+#panel ol,#panel ul{margin:6px 0;padding-left:22px}
+#panel .opciones{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#panel .opciones.fila{flex-direction:row;flex-wrap:wrap}
+#panel .opciones.fila button{flex:1;min-width:48px;text-align:center}
+#panel .opciones button{text-align:left;min-height:44px;font-size:15px}
+#panel .opciones button small{display:block;color:#c9cfe8;font-size:13px;margin-top:2px}
+#panel .principal{background:#6D42C7;border-color:#F1C453;font-weight:700;font-size:17px;min-height:48px;text-align:center}
+#panel textarea{width:100%;font:inherit;font-size:16px;background:#101629;color:#f4f1e8;border:2px solid #42D6A4;padding:8px;min-height:74px;resize:vertical;border-radius:0}
+#panel label{display:block;margin:10px 0 4px;color:#42D6A4}
+#panel .nota{font-size:13px;color:#c9cfe8}
+#panel .ficha{background:#101629;border:2px dashed #F1C453;padding:10px;white-space:pre-wrap;word-break:break-word;
+  user-select:text;-webkit-user-select:text;font-size:14px;margin:8px 0}
+#panel .conmutadores{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.barras{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:8px 0}
+.barras .b{height:18px;background:repeating-linear-gradient(90deg,#42D6A4 0 8px,#2fae84 8px 10px);border:2px solid #f4f1e8}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="barra">
+    <h1 id="titulo"></h1>
+    <div id="hud"></div>
+    <div id="botones">
+      <button type="button" id="bPausa">Pausa</button>
+      <button type="button" id="bReiniciar">Reiniciar</button>
+      <button type="button" id="bSonido" aria-pressed="false">Sonido: no</button>
+      <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
+    </div>
+  </header>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas></main>
+  <div id="avisos" aria-live="polite"></div>
+  <div id="herramientas"></div>
+  <div id="cruceta"></div>
+  <div id="acciones"></div>
+  <div id="capa" hidden><div id="panel" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+</div>
+<script>
+/* Motor común de las recreativas de «Obsoletus y la Gran Oca del Saber».
+   Sin dependencias externas ni almacenamiento: todo vive en memoria durante la sesión. */
+(function () {
+  'use strict';
+  var C = { noche: '#101629', noche2: '#1b2444', morado: '#6D42C7', morado2: '#a98bf0', menta: '#42D6A4',
+    oro: '#F1C453', blanco: '#f4f1e8', rojo: '#ff8a8a', gris: '#8791b5' };
+  var FUENTE = 'ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  /* ---------- Ayudas de dibujo ---------- */
+  function texto(ctx, s, x, y, o) {
+    o = o || {};
+    var tam = o.tam || 14;
+    ctx.font = (o.negrita ? '700 ' : '') + tam + 'px ' + FUENTE;
+    ctx.textAlign = o.alin || 'center';
+    ctx.textBaseline = o.base || 'middle';
+    var lineas = [String(s)];
+    if (o.ancho) {
+      lineas = [];
+      var pal = String(s).split(' '), l = '';
+      pal.forEach(function (p) {
+        var t = l ? l + ' ' + p : p;
+        if (ctx.measureText(t).width > o.ancho && l) { lineas.push(l); l = p; } else l = t;
+      });
+      lineas.push(l);
+    }
+    var alto = tam * 1.25, y0 = y - (lineas.length - 1) * alto / 2;
+    lineas.forEach(function (ln, i) {
+      if (o.sombra !== false) { ctx.fillStyle = o.sombraColor || '#000'; ctx.fillText(ln, x + 1, y0 + i * alto + 1); }
+      ctx.fillStyle = o.color || C.blanco;
+      ctx.fillText(ln, x, y0 + i * alto);
+    });
+    return lineas.length;
+  }
+  function caja(ctx, x, y, w, h, relleno, borde, grosor) {
+    if (relleno) { ctx.fillStyle = relleno; ctx.fillRect(x, y, w, h); }
+    if (borde) { ctx.strokeStyle = borde; ctx.lineWidth = grosor || 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); }
+  }
+  /* Oca exploradora: centrada en (x,y), altura aproximada t. o = {dir:-1|1, paso:bool, color:gorro} */
+  function oca(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y); ctx.scale(o.dir < 0 ? -1 : 1, 1);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r('#f4f1e8', -3.5, -0.5, 5.5, 3.5);
+    r('#d9d4c4', -3, 0.3, 3, 1.6);
+    r('#f4f1e8', 0.8, -3.5, 2, 4);
+    r(o.color || C.menta, 0.3, -4.5, 3, 1);
+    r('#101629', 1.9, -2.8, 0.7, 0.7);
+    r(C.oro, 2.8, -2.4, 1.6, 0.9);
+    var p = o.paso ? 0.8 : 0;
+    r(C.oro, -2 + p, 3, 1, 1.4); r(C.oro, 0 - p, 3, 1, 1.4);
+    ctx.restore();
+  }
+  /* Robot de Obsoletus: centrado en (x,y), altura aproximada t. o = {color, ojo, enfado} */
+  function robot(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r(C.gris, -0.3, -4.5, 0.6, 1.2); r(o.ojo || C.rojo, -0.7, -5, 1.4, 0.8);
+    r(C.blanco, -3.8, -3.6, 7.6, 5.9); r(o.color || '#3b2a78', -3.5, -3.3, 7, 5.3);
+    r('#000', -2.6, -2.2, 5.2, 1.8);
+    r(o.ojo || C.rojo, -2, -1.8, 1.2, 1); r(o.ojo || C.rojo, 0.8, -1.8, 1.2, 1);
+    r('#000', -2, 0.6, 4, 0.6);
+    r(C.gris, -2.8, 2, 2, 2.4); r(C.gris, 0.8, 2, 2, 2.4);
+    ctx.restore();
+  }
+  function pluma(ctx, x, y, t, color) {
+    var u = t / 8;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5);
+    ctx.fillStyle = color || C.oro;
+    ctx.fillRect(-1.5 * u, -4 * u, 3 * u, 6 * u); ctx.fillRect(-0.8 * u, -5 * u, 1.6 * u, 1 * u);
+    ctx.fillStyle = '#000'; ctx.fillRect(-0.2 * u, -3.5 * u, 0.4 * u, 7.5 * u);
+    ctx.restore();
+  }
+  function choca(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function limitar(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  /* ---------- Motor ---------- */
+  function crear(J) {
+    var lienzo = $('lienzo'), ctx = lienzo.getContext('2d'), capa = $('capa'), panel = $('panel');
+    var W = J.ancho || 480, H = J.alto || 360, k = 1;
+    var estado = 'inicio', gen = 0, tranquilo = false, sonido = false, audio = null;
+    var registro = [], hudCache = '', herr = null, herrSel = null, alHerr = null;
+    var cola = Promise.resolve(), botonesModal = null, flotantes = [];
+    var ctl = J.controles || {};
+    var dirs = ctl.cruceta || ['arriba', 'abajo', 'izq', 'der'];
+    var acciones = ctl.acciones || [];
+    var teclas = { arriba: false, abajo: false, izq: false, der: false };
+    var TECLAS_DEF = [[' '], ['x', 'm'], ['z', 'n']];
+    var mapa = { arrowup: 'arriba', w: 'arriba', arrowdown: 'abajo', s: 'abajo', arrowleft: 'izq', a: 'izq', arrowright: 'der', d: 'der' };
+    acciones.forEach(function (a, i) {
+      teclas[a.id] = false;
+      (a.teclas || TECLAS_DEF[i] || []).forEach(function (t) { mapa[t.toLowerCase()] = a.id; });
+    });
+
+    var api = {
+      W: W, H: H, C: C, t: 0, teclas: teclas,
+      get tranquilo() { return tranquilo; },
+      get vel() { return tranquilo ? 0.6 : 1; },
+      get herramienta() { return herrSel; },
+      get jugando() { return estado === 'jugando'; },
+      hud: function (o) {
+        var h = '';
+        Object.keys(o).forEach(function (kk) {
+          if (o[kk] == null || o[kk] === '') return;
+          h += '<span class="chip"><b>' + esc(kk) + '</b>' + esc(o[kk]) + '</span>';
+        });
+        if (h !== hudCache) { hudCache = h; $('hud').innerHTML = h; }
+      },
+      sonido: bip,
+      mensaje: function (txt, ms) {
+        var cont = $('avisos'), a = el('div', 'aviso', txt);
+        while (cont.firstChild) cont.removeChild(cont.firstChild);
+        cont.appendChild(a);
+        setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
+      },
+      flotar: function (txt, x, y, o) {
+        o = o || {};
+        flotantes.push({ txt: txt, x: x, y: y, v: 0, dur: o.dur || 1.1, color: o.color || C.oro, tam: o.tam || 13 });
+        if (flotantes.length > 8) flotantes.shift();
+      },
+      registrar: function (txt) { registro.push(String(txt)); },
+      elegir: function (cfg) {
+        var g = gen;
+        cola = cola.then(function () { return g === gen ? modal(cfg, g) : new Promise(function () {}); });
+        return cola;
+      },
+      informar: function (cfg) {
+        return api.elegir({ titulo: cfg.titulo, texto: cfg.texto, html: cfg.html, opciones: [cfg.boton || 'Continuar'] });
+      },
+      herramientas: function (lista, alElegir) {
+        herr = lista && lista.length ? lista : null; alHerr = alElegir || null;
+        herrSel = null; pintarHerr(); ajustar();
+      },
+      seleccionar: function (id) { elegirHerr(id, true); },
+      ayuda: function (html) { J.ayuda = html; },
+      terminar: fin
+    };
+
+    /* --- Sonido (apagado por defecto) --- */
+    function bip(tipo) {
+      if (!sonido) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        var f = { punto: 880, ok: 660, error: 200, golpe: 150, salto: 520, disparo: 740, gana: 990 }[tipo] || 440;
+        var o = audio.createOscillator(), gn = audio.createGain();
+        o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.05;
+        o.connect(gn); gn.connect(audio.destination);
+        o.start(); o.stop(audio.currentTime + 0.09);
+      } catch (e) { /* sin audio disponible */ }
+    }
+
+    /* --- Tamaño del lienzo --- */
+    function ajustar() {
+      var r = $('escena').getBoundingClientRect();
+      var s = Math.max(0.2, Math.min((r.width - 6) / W, (r.height - 6) / H));
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      lienzo.style.width = Math.floor(W * s) + 'px';
+      lienzo.style.height = Math.floor(H * s) + 'px';
+      lienzo.width = Math.round(W * s * dpr); lienzo.height = Math.round(H * s * dpr);
+      k = lienzo.width / W;
+    }
+    window.addEventListener('resize', ajustar);
+    if (window.ResizeObserver) new ResizeObserver(ajustar).observe($('escena'));
+
+    /* --- Entrada --- */
+    function soltar() { Object.keys(teclas).forEach(function (t) { teclas[t] = false; }); }
+    function pulsar(id) {
+      if (estado !== 'jugando') return;
+      if (id in teclas) teclas[id] = true;
+      if (J.alPulsar) J.alPulsar(id, api);
+    }
+    function escribiendo(e) { var t = e.target && e.target.tagName; return t === 'TEXTAREA' || t === 'INPUT'; }
+    window.addEventListener('keydown', function (e) {
+      if (escribiendo(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+      var key = e.key.toLowerCase();
+      if (estado === 'modal') {
+        var n = parseInt(key, 10);
+        if (botonesModal && n >= 1 && n <= botonesModal.length) { e.preventDefault(); botonesModal[n - 1].click(); }
+        return;
+      }
+      if (key === 'p' || key === 'escape') { if (estado === 'jugando' || estado === 'pausa') { e.preventDefault(); pausa(); } return; }
+      if (estado !== 'jugando') return;
+      var id = mapa[key];
+      if (id) { e.preventDefault(); if (!e.repeat) pulsar(id); return; }
+      var d = parseInt(key, 10);
+      if (d >= 1 && d <= 9) {
+        if (herr && d <= herr.length) elegirHerr(herr[d - 1].id);
+        if (J.alPulsar) J.alPulsar(String(d), api);
+      }
+    });
+    window.addEventListener('keyup', function (e) {
+      var id = mapa[e.key.toLowerCase()];
+      if (id) teclas[id] = false;
+    });
+    window.addEventListener('blur', soltar);
+    lienzo.addEventListener('pointerdown', function (e) {
+      if (estado !== 'jugando' || !J.alPuntero) return;
+      var r = lienzo.getBoundingClientRect();
+      J.alPuntero((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H, api);
+    });
+    function botonTactil(id, etiqueta, aria) {
+      var b = el('button', null, etiqueta);
+      b.type = 'button'; b.setAttribute('aria-label', aria || etiqueta);
+      function baja(e) { e.preventDefault(); b.classList.add('pulsado'); pulsar(id); }
+      function sube(e) { e.preventDefault(); b.classList.remove('pulsado'); if (id in teclas) teclas[id] = false; }
+      b.addEventListener('pointerdown', baja);
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, sube); });
+      b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      return b;
+    }
+    (function montarTactil() {
+      var cr = $('cruceta'), ac = $('acciones');
+      if (dirs.length) {
+        var pos = { arriba: [2, 1, '▲', 'Arriba'], izq: [1, 2, '◀', 'Izquierda'], der: [3, 2, '▶', 'Derecha'], abajo: [2, 3, '▼', 'Abajo'] };
+        var soloLR = dirs.indexOf('arriba') < 0 && dirs.indexOf('abajo') < 0;
+        if (soloLR) { cr.style.gridTemplateRows = '56px'; cr.style.gridTemplateColumns = 'repeat(2,64px)'; }
+        dirs.forEach(function (dd) {
+          var p = pos[dd], b = botonTactil(dd, p[2], p[3]);
+          if (!soloLR) { b.style.gridColumn = p[0]; b.style.gridRow = p[1]; }
+          cr.appendChild(b);
+        });
+      }
+      acciones.forEach(function (a) { ac.appendChild(botonTactil(a.id, a.etiqueta)); });
+    })();
+
+    /* --- Barra de herramientas del juego --- */
+    function pintarHerr() {
+      var c = $('herramientas'); c.innerHTML = '';
+      if (!herr) return;
+      herr.forEach(function (h, i) {
+        var b = el('button', null, (i + 1) + ' · ' + (h.icono ? h.icono + ' ' : '') + h.etiqueta);
+        b.type = 'button'; b.setAttribute('aria-pressed', String(h.id === herrSel));
+        b.addEventListener('click', function () { if (estado === 'jugando') elegirHerr(h.id); b.blur(); });
+        c.appendChild(b);
+      });
+    }
+    function elegirHerr(id, silencioso) {
+      if (!herr) return;
+      herrSel = id; pintarHerr();
+      if (alHerr && !silencioso) alHerr(id, api);
+    }
+
+    /* --- Paneles --- */
+    function abrirPanel() { capa.hidden = false; panel.scrollTop = 0; }
+    function cerrarPanel() { capa.hidden = true; panel.innerHTML = ''; botonesModal = null; }
+    function parrafos(dest, txt) {
+      String(txt).split('\n').forEach(function (p) { if (p.trim()) dest.appendChild(el('p', null, p)); });
+    }
+    function modal(cfg, g) {
+      return new Promise(function (res) {
+        soltar(); estado = 'modal';
+        var abierto = performance.now(), ta = null;
+        panel.innerHTML = '';
+        if (cfg.titulo) panel.appendChild(el('h2', null, cfg.titulo));
+        if (cfg.texto) parrafos(panel, cfg.texto);
+        if (cfg.html) { var d = el('div'); d.innerHTML = cfg.html; panel.appendChild(d); }
+        if (cfg.campo) {
+          var lb = el('label', null, cfg.campo); lb.htmlFor = 'campoModal';
+          ta = el('textarea'); ta.id = 'campoModal'; ta.maxLength = 300;
+          panel.appendChild(lb); panel.appendChild(ta);
+        }
+        var cont = el('div', 'opciones' + (cfg.enFila ? ' fila' : ''));
+        botonesModal = [];
+        (cfg.opciones || ['Continuar']).forEach(function (o, i) {
+          var b = el('button'); b.type = 'button';
+          var et = typeof o === 'string' ? o : o.etiqueta;
+          b.appendChild(document.createTextNode((cfg.opciones && cfg.opciones.length > 1 && !cfg.enFila ? (i + 1) + ' · ' : '') + et));
+          if (o.detalle) b.appendChild(el('small', null, o.detalle));
+          b.addEventListener('click', function () {
+            if (performance.now() - abierto < 350 || g !== gen) return;
+            cerrarPanel(); estado = 'jugando';
+            res({ i: i, texto: ta ? ta.value.trim() : '' });
+          });
+          cont.appendChild(b); botonesModal.push(b);
+        });
+        panel.appendChild(cont);
+        abrirPanel();
+        setTimeout(function () { if (g === gen && estado === 'modal' && !ta) panel.focus(); }, 50);
+      });
+    }
+    function pausa() {
+      if (estado === 'jugando') {
+        soltar(); estado = 'pausa';
+        panel.innerHTML = '<h2>Pausa</h2><p>El juego está detenido. Nada se mueve hasta que reanudes.</p>' +
+          (J.ayuda ? '<h3>Ayuda y conceptos</h3>' + J.ayuda : '');
+        var b = el('button', 'principal', 'Reanudar'); b.type = 'button'; b.addEventListener('click', pausa);
+        var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+        abrirPanel(); $('bPausa').textContent = 'Reanudar';
+      } else if (estado === 'pausa') {
+        cerrarPanel(); estado = 'jugando'; $('bPausa').textContent = 'Pausa';
+      }
+    }
+    function conmutadores() {
+      var c = el('div', 'conmutadores');
+      var bt = el('button'), bs = el('button'); bt.type = bs.type = 'button';
+      function pinta() {
+        bt.textContent = 'Modo tranquilo: ' + (tranquilo ? 'sí' : 'no'); bt.setAttribute('aria-pressed', String(tranquilo));
+        bs.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); bs.setAttribute('aria-pressed', String(sonido));
+        $('bTranquilo').textContent = 'Tranquilo: ' + (tranquilo ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(tranquilo));
+        $('bSonido').textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); $('bSonido').setAttribute('aria-pressed', String(sonido));
+      }
+      bt.addEventListener('click', function () { tranquilo = !tranquilo; pinta(); });
+      bs.addEventListener('click', function () { sonido = !sonido; pinta(); bip('ok'); });
+      pinta(); c.appendChild(bt); c.appendChild(bs);
+      return c;
+    }
+    function ponTranquilo(v) {
+      tranquilo = v;
+      $('bTranquilo').textContent = 'Tranquilo: ' + (v ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(v));
+    }
+    api.activarTranquilo = function () { ponTranquilo(true); };
+
+    function portada() {
+      estado = 'inicio';
+      panel.innerHTML = '<p class="nota">Obsoletus y la Gran Oca del Saber · Recreativa ' + esc(J.numero || '') + '</p>' +
+        '<h2>' + esc(J.titulo) + '</h2>' +
+        '<h3>Objetivo pedagógico</h3><p>' + esc(J.objetivo) + '</p>' +
+        '<h3>Cómo se juega</h3><ol>' + (J.instrucciones || []).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ol>' +
+        '<p class="nota">' + esc(J.teclas || 'Teclado: flechas o WASD. En móvil o tableta: botones táctiles en pantalla.') +
+        ' P o Esc: pausa. El modo tranquilo quita la presión de tiempo y reduce la velocidad.</p>';
+      panel.appendChild(conmutadores());
+      var b = el('button', 'principal', 'Iniciar'); b.type = 'button'; b.id = 'bIniciar';
+      b.addEventListener('click', comenzar);
+      var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+      abrirPanel();
+    }
+    function comenzar() {
+      gen++; cola = Promise.resolve();
+      registro = []; flotantes = []; herr = null; herrSel = null; alHerr = null; pintarHerr();
+      hudCache = ''; $('hud').innerHTML = ''; $('avisos').innerHTML = '';
+      api.t = 0; soltar(); cerrarPanel();
+      $('bPausa').textContent = 'Pausa';
+      estado = 'jugando'; ajustar();
+      J.iniciar(api);
+    }
+
+    /* --- Pantalla final y Pluma Dorada --- */
+    function fin(r) {
+      r = r || {};
+      soltar(); estado = 'fin'; bip('gana');
+      var decisiones = registro.slice();
+      panel.innerHTML = '<h2>' + esc(r.titulo || '¡Reto superado!') + '</h2>' +
+        '<p><b>Puntuación lúdica:</b> ' + esc(r.puntos != null ? r.puntos : 0) + ' <span class="nota">(solo mide la partida, no tu aprendizaje)</span></p>' +
+        (r.html || '') +
+        '<h3>Decisiones que tomaste</h3>' +
+        (decisiones.length ? '<ul>' + decisiones.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' : '<p>Sin decisiones registradas.</p>') +
+        (r.feedback ? '<h3>Comentario sobre esta partida</h3><p>' + esc(r.feedback) + '</p>' : '') +
+        '<h3>Pregunta de transferencia</h3><p><b>' + esc(J.transferencia) + '</b></p>';
+      var lb = el('label', null, 'Tu respuesta (1–2 frases):'); lb.htmlFor = 'reflexion';
+      var ta = el('textarea'); ta.id = 'reflexion'; ta.maxLength = 600;
+      var reclamar = el('button', 'principal', 'Reclamar Pluma Dorada'); reclamar.type = 'button'; reclamar.id = 'bReclamar'; reclamar.disabled = true;
+      var aviso = el('p', 'nota', 'Escribe tu reflexión (al menos 20 caracteres) para activar la Pluma Dorada.');
+      var zona = el('div');
+      var otra = el('button', null, 'Jugar de nuevo'); otra.type = 'button'; otra.addEventListener('click', comenzar);
+      var ops = el('div', 'opciones'); ops.appendChild(reclamar); ops.appendChild(otra);
+      ta.addEventListener('input', function () { reclamar.disabled = ta.value.trim().length < 20; });
+      reclamar.addEventListener('click', function () {
+        var f = new Date(), fecha = f.toLocaleDateString('es-ES') + ' ' + f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        var lineas = ['✦ ' + J.pluma + ' ✦', 'Pluma Dorada · Obsoletus y la Gran Oca del Saber',
+          'Recreativa ' + (J.numero || '') + ': ' + J.titulo, 'Fecha: ' + fecha,
+          'Puntuación lúdica: ' + (r.puntos != null ? r.puntos : 0) + (tranquilo ? ' (modo tranquilo)' : ''), '', 'Decisiones en esta partida:'];
+        decisiones.forEach(function (d) { lineas.push('- ' + d); });
+        (r.ficha || []).forEach(function (d) { lineas.push('- ' + d); });
+        lineas.push('', 'Pregunta: ' + J.transferencia, 'Mi reflexión: ' + ta.value.trim(), '',
+          'Repaso formativo: esta ficha no certifica competencia docente.');
+        zona.innerHTML = '<h3>Pluma Dorada reclamada: ' + esc(J.pluma) + '</h3>';
+        var ficha = el('div', 'ficha', lineas.join('\n')); ficha.id = 'ficha'; ficha.tabIndex = 0;
+        zona.appendChild(ficha);
+        var copiar = el('button', null, 'Seleccionar y copiar ficha'); copiar.type = 'button';
+        var nota = el('p', 'nota', 'Esta ficha solo existe en tu pantalla: no se ha enviado al profesorado ni se guarda en ningún servidor. Cópiala o haz una captura para conservarla.');
+        copiar.addEventListener('click', function () {
+          var rg = document.createRange(); rg.selectNodeContents(ficha);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          copiar.textContent = ok ? 'Ficha copiada' : 'Ficha seleccionada: cópiala con Ctrl/Cmd + C';
+        });
+        zona.appendChild(copiar); zona.appendChild(nota);
+        reclamar.disabled = true; reclamar.textContent = 'Pluma Dorada reclamada'; ta.readOnly = true; aviso.textContent = '';
+        ficha.scrollIntoView({ block: 'nearest' });
+      });
+      panel.appendChild(lb); panel.appendChild(ta); panel.appendChild(aviso); panel.appendChild(ops); panel.appendChild(zona);
+      abrirPanel();
+    }
+
+    /* --- Botones fijos --- */
+    $('titulo').textContent = J.titulo;
+    $('bPausa').addEventListener('click', function () { pausa(); this.blur(); });
+    $('bReiniciar').addEventListener('click', function () { this.blur(); comenzar(); });
+    $('bSonido').addEventListener('click', function () {
+      sonido = !sonido; this.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); this.setAttribute('aria-pressed', String(sonido)); this.blur(); bip('ok');
+    });
+    $('bTranquilo').addEventListener('click', function () { ponTranquilo(!tranquilo); this.blur(); });
+
+    /* --- Bucle --- */
+    var previo = 0;
+    function cuadro(ts) {
+      requestAnimationFrame(cuadro);
+      var dt = Math.min(0.05, (ts - previo) / 1000 || 0); previo = ts;
+      if (estado === 'jugando') {
+        api.t += dt;
+        J.actualizar(dt, api);
+        for (var i = flotantes.length - 1; i >= 0; i--) { flotantes[i].v += dt; if (flotantes[i].v > flotantes[i].dur) flotantes.splice(i, 1); }
+      }
+      if (estado === 'inicio') return;
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = C.noche; ctx.fillRect(0, 0, W, H);
+      J.dibujar(ctx, api);
+      flotantes.forEach(function (f) { texto(ctx, f.txt, f.x, f.y - f.v * 22, { tam: f.tam, color: f.color, negrita: true }); });
+    }
+    ajustar(); portada(); requestAnimationFrame(cuadro);
+    Arcade._ = { api: api, juego: J, estado: function () { return estado; } };
+    return api;
+  }
+
+  window.Arcade = { crear: crear, C: C, esc: esc, texto: texto, caja: caja, oca: oca, robot: robot, pluma: pluma, choca: choca, limitar: limitar };
+})();
+
+</script>
+<script>
+/* 02 · La torre de Obsoletus */
+(function () {
+  'use strict';
+  var A = Arcade, C = A.C, W = 360, H = 500, MY = 472;
+  var L = [452, 364, 276, 188, 100];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
+  var FASES = ['Plan', 'Actúo', 'Reviso', 'Ajusto'];
+  var ANDAR = 95, TREPAR = 85, SALTO = -250, GRAV = 640, VMIN = 56;
+  var TABLON = { a: 150, b: 176 }, ANTENA = 300;
+  var PISOS = [
+    { ini: 40, esc: 300, boca: 346, dir: -1, vel: 62, cada: 2.9, barril: 'plan poco realista', sim: '?', banda: C.morado2 },
+    { ini: 300, esc: 60, boca: 14, dir: 1, vel: 70, cada: 2.7, barril: 'distracción', sim: '!', banda: C.rojo },
+    { ini: 60, esc: 300, boca: 346, dir: -1, vel: 78, cada: 2.5, barril: 'no revisar errores', sim: '×', banda: C.gris },
+    { ini: 300, esc: 60, boca: 14, dir: 1, vel: 84, cada: 2.4, barril: 'procrastinación', sim: 'z', banda: C.menta }
+  ];
+  var DEC = [
+    { titulo: 'Piso 1 · Planifico',
+      texto: 'Antes de moverte, fija tu plan para este piso. Los barriles de «plan poco realista» empezarán a rodar en cuanto elijas.',
+      ops: [
+        { id: 'prisa', efecto: 'más barriles seguidos', et: 'Llegar a la antena en 10 segundos, pase lo que pase', corto: 'plan de 10 segundos', eficaz: false,
+          msg: 'Con un plan tan ajustado llegan más barriles seguidos. Se puede superar: espera, salta uno y avanza.' },
+        { id: 'meta', efecto: 'punto de control y tiempo orientativo', et: 'Objetivo concreto: llegar a la escalera en unos 30 s, con una parada a mitad de piso', corto: 'objetivo concreto y tiempo realista', eficaz: true,
+          msg: 'Plan concreto: aparece un punto de control a mitad de piso y un tiempo orientativo en el marcador.' },
+        { id: 'vago', efecto: 'sin referencias en el piso', et: 'Subir sin fijar objetivo ni tiempo: ya iré viendo', corto: 'sin objetivo ni tiempo', eficaz: false,
+          msg: 'Sin objetivo ni tiempo no hay referencias en este piso: ni punto de control ni tiempo orientativo.' }
+      ] },
+    { titulo: 'Piso 2 · Actúo y superviso',
+      texto: 'Llegan barriles de «distracción». ¿Qué técnica de atención aplicas mientras avanzas?',
+      ops: [
+        { id: 'multi', efecto: 'más barriles', et: 'Atender varias cosas a la vez para aprovechar el tiempo', corto: 'multitarea', eficaz: false,
+          msg: 'Con varias cosas a la vez llegan más barriles de distracción. Céntrate en uno cada vez.' },
+        { id: 'voluntad', efecto: 'barriles al mismo ritmo', et: 'Dejar el móvil a la vista y confiar en la fuerza de voluntad', corto: 'fuerza de voluntad sin cambiar el entorno', eficaz: false,
+          msg: 'Sin cambiar el entorno, las distracciones siguen llegando al mismo ritmo.' },
+        { id: 'bloques', efecto: 'barriles lentos y separados', et: 'Silenciar avisos y trabajar en bloques cortos con pausas', corto: 'bloques cortos sin avisos', eficaz: true,
+          msg: 'Avisos silenciados: los barriles de distracción ruedan más despacio y más separados.' }
+      ] },
+    { titulo: 'Piso 3 · Reviso',
+      texto: 'Pista del trayecto: en este piso hay un tablón con una grieta, y los barriles de «no revisar errores» botan justo al pasar por él. Antes de cruzar, ¿qué error conviene detectar?',
+      ops: [
+        { id: 'suerte', efecto: 'tablón sin señalar', et: 'Ninguno: si algo sale mal será mala suerte', corto: 'no buscar el error', eficaz: false,
+          msg: 'Nada señalado en el suelo. La grieta sigue ahí: fíjate dónde botan los barriles.' },
+        { id: 'tablon', efecto: 'pista luminosa en el tablón', et: 'Pisar el tablón agrietado sin mirar: hay que saltarlo', corto: 'detectar el tablón agrietado', eficaz: true,
+          msg: 'Error detectado: una pista luminosa marca el tablón agrietado y el salto para evitarlo.' },
+        { id: 'correr', efecto: 'más barriles y tablón sin señalar', et: 'Ir demasiado despacio: lo que hace falta es correr', corto: 'correr más', eficaz: false,
+          msg: 'Con las prisas llegan más barriles y el tablón sigue sin señalar. Fíjate dónde botan.' }
+      ] },
+    { titulo: 'Piso 4 · Ajusto',
+      texto: 'Imprevisto: Obsoletus ha roto la escalera prevista y lanza barriles de «procrastinación». ¿Qué haces con tu plan?',
+      ops: [
+        { id: 'esperar', efecto: '10 s de espera con barriles', et: 'Esperar a que la escalera se arregle sola', corto: 'esperar sin cambiar el plan', eficaz: false,
+          msg: 'La escalera tardará 10 s en arreglarse. Mientras esperas, siguen llegando barriles.' },
+        { id: 'ajustar', efecto: 'escalera alternativa y punto de control', et: 'Ajustar el plan: buscar otra ruta y dividir el tramo en dos pasos', corto: 'ajustar el plan con otra ruta', eficaz: true,
+          msg: 'Plan ajustado: aparece una escalera alternativa a mitad de piso y un punto de control.' },
+        { id: 'improvisar', efecto: 'subida junto a la trampilla', et: 'Tirar el plan e improvisar por donde salen los barriles', corto: 'improvisar sin plan', eficaz: false,
+          msg: 'Hay una subida, pero pegada a la trampilla de los barriles: salta uno y sube enseguida.' }
+      ] }
+  ];
+  var S;
+
+  function opcion(n) { var d = S.dec[n]; return d.length ? DEC[n].ops[d[d.length - 1]] : null; }
+  function resaltado() { return S.ef === 'tablon' || S.tablonVisto; }
+
+  /* ---------- Flujo de pisos ---------- */
+  function preguntar(api, cambio) {
+    var n = S.piso, D = DEC[n];
+    S.activa = false; S.barriles = [];
+    api.elegir({
+      titulo: D.titulo, texto: (cambio ? 'Cambias de estrategia para este piso. ' : '') + D.texto,
+      opciones: D.ops.map(function (o) { return { etiqueta: o.et }; })
+    }).then(function (r) {
+      var o = D.ops[r.i];
+      S.dec[n].push(r.i);
+      api.registrar('Piso ' + (n + 1) + ' (' + FASES[n] + '): ' + (cambio ? 'cambié a' : 'elegí') + ' «' + o.corto + '».');
+      S.medidor[n] = Math.max(S.medidor[n], 0.5);
+      montarPiso(api);
+      api.mensaje(o.msg, 5200);
+    });
+  }
+
+  function montarPiso(api) {
+    var n = S.piso, P = PISOS[n];
+    S.ef = opcion(n).id;
+    S.barriles = []; S.sig = 0.7; S.tPiso = 0; S.vidas = 3; S.inmune = 1; S.avisoMeta = false;
+    S.cp = { x: P.ini }; S.bandera = null; S.reparo = 0;
+    S.escs = S.escs.filter(function (e) { return e.n !== n; });
+    if (n < 3) S.escs.push({ x: P.esc, n: n });
+    else {
+      S.escs.push({ x: P.esc, n: 3, rota: true });
+      if (S.ef === 'ajustar') S.escs.push({ x: 170, n: 3, alt: true });
+      if (S.ef === 'improvisar') S.escs.push({ x: 40, n: 3, alt: true });
+      if (S.ef === 'esperar') S.reparo = 10;
+    }
+    if (n === 0 && S.ef === 'meta') S.bandera = { x: 170, ok: false };
+    if (n === 3 && S.ef === 'ajustar') S.bandera = { x: 240, ok: false };
+    S.meta = n === 0 ? (S.ef === 'meta' ? 30 : S.ef === 'prisa' ? 10 : 0) : 0;
+    S.j = { x: P.ini, y: L[n], vy: 0, suelo: true, esc: null, dir: P.dir < 0 ? 1 : -1, anda: false };
+    S.salto = -9; S.activa = true;
+  }
+
+  function recolocar() {
+    var j = S.j;
+    j.x = S.cp.x; j.y = L[S.piso]; j.vy = 0; j.suelo = true; j.esc = null;
+    S.barriles = []; S.sig = 1.2; S.inmune = 1.6; S.salto = -9;
+  }
+
+  function tropezar(api, tablon) {
+    var n = S.piso, P = PISOS[n];
+    S.vidas--; S.caidas[n]++; api.sonido('golpe');
+    if (tablon) S.tablonVisto = true;
+    if (S.vidas <= 0) { derrota(api); return; }
+    recolocar();
+    api.mensaje(tablon ? 'El tablón agrietado ha cedido. Ahora queda señalado: pásalo saltando.'
+      : 'Te alcanzó un barril de «' + P.barril + '». Vuelves al punto de control. ' +
+        (S.ef === 'prisa' || S.ef === 'multi' || S.ef === 'correr' ? 'Con esta estrategia llegan más seguidos: espera, salta uno y avanza.'
+          : S.ef === 'improvisar' ? 'Junto a la trampilla hay poco margen: salta el barril y sube enseguida.'
+            : 'Salta cuando esté a un paso de la oca.'), 4200);
+  }
+
+  function derrota(api) {
+    var n = S.piso;
+    S.activa = false; S.intentos++; S.barriles = [];
+    api.elegir({
+      titulo: 'Tres caídas en el piso ' + (n + 1),
+      texto: 'No pasa nada: conservas los pisos superados, tus puntos y el medidor. ¿Cómo quieres volver a intentarlo?',
+      opciones: [
+        { etiqueta: 'Reintentar tramo', detalle: 'Mismo piso y misma estrategia, con tres vidas.' },
+        { etiqueta: 'Reintentar en modo tranquilo', detalle: 'Barriles más lentos y sin tiempo.' },
+        { etiqueta: 'Reintentar cambiando de estrategia', detalle: 'Vuelves a elegir cómo afrontar este piso.' }
+      ]
+    }).then(function (r) {
+      if (r.i === 1) { api.activarTranquilo(); api.registrar('Piso ' + (n + 1) + ': reintenté en modo tranquilo.'); }
+      if (r.i === 2) preguntar(api, true); else montarPiso(api);
+    });
+  }
+
+  function subirPiso(api) {
+    var n = S.piso, j = S.j, extra = 100 + S.vidas * 20;
+    if (S.meta === 30 && !api.tranquilo && S.tPiso <= 30) { extra += 30; api.mensaje('Objetivo de tiempo cumplido: +30.'); }
+    S.puntos += extra; S.medidor[n] = 1; S.tiempos[n] = Math.round(S.tPiso);
+    api.sonido('ok'); api.flotar('+' + extra, j.x, j.y - 34);
+    S.piso++; S.barriles = []; S.bandera = null; S.vidas = 3; S.meta = 0; S.reparo = 0;
+    j.y = L[S.piso]; j.vy = 0; j.suelo = true; j.esc = null;
+    S.cp = { x: j.x };
+    if (S.piso < 4) preguntar(api);
+    else api.mensaje('Azotea: camina hasta la antena.', 3000);
+  }
+
+  function ganar(api) {
+    S.activa = false;
+    var eficaces = 0, cambios = 0, caidas = 0, h = '<h3>Cómo evolucionó tu plan</h3><ol>';
+    for (var n = 0; n < 4; n++) {
+      var ops = S.dec[n].map(function (i) { return DEC[n].ops[i]; }), fin = ops[ops.length - 1];
+      if (fin.eficaz) eficaces++;
+      cambios += ops.length - 1; caidas += S.caidas[n];
+      h += '<li><b>' + FASES[n] + ':</b> ' + ops.map(function (o) { return A.esc(o.corto) + ' (' + A.esc(o.efecto) + ')'; }).join(' → ') +
+        '. ' + (S.caidas[n] ? S.caidas[n] + (S.caidas[n] === 1 ? ' caída' : ' caídas') : 'Sin caídas') + ', ' + S.tiempos[n] + ' s.</li>';
+    }
+    h += '</ol><p class="nota">Medidor Plan–Actúo–Reviso–Ajusto: completo (4/4). Las fases forman un ciclo: lo que ajustas alimenta el siguiente plan.</p>';
+    api.terminar({
+      titulo: '¡Antena desconectada!', puntos: S.puntos, html: h,
+      feedback: 'En esta partida ' + (eficaces === 4 ? 'las cuatro estrategias que usaste facilitaron el tramo'
+        : eficaces === 0 ? 'las estrategias que usaste hicieron los tramos más exigentes, y aun así llegaste arriba'
+          : eficaces + ' de tus 4 estrategias finales facilitaron el tramo y el resto lo hicieron más exigente') + '. ' +
+        (cambios ? 'Cambiaste de estrategia ' + cambios + (cambios === 1 ? ' vez' : ' veces') + ' tras un tropiezo: eso es ajustar. ' : '') +
+        (caidas ? 'Hubo ' + caidas + (caidas === 1 ? ' caída' : ' caídas') + ' y seguiste desde el punto de control. ' : '') +
+        'Son decisiones dentro de un juego: una sola partida no dice cómo aprendes ni cómo te organizas fuera de él.'
+    });
+  }
+
+  /* ---------- Simulación ---------- */
+  function escaleraEn(x) {
+    for (var i = 0; i < S.escs.length; i++) {
+      var e = S.escs[i];
+      if (e.n === S.piso && !e.rota && Math.abs(e.x - x) < 13) return e;
+    }
+    return null;
+  }
+
+  function moverOca(dt, api) {
+    var j = S.j, n = S.piso, t = api.teclas, dx = (t.der ? 1 : 0) - (t.izq ? 1 : 0);
+    j.anda = false;
+    if (j.esc) {
+      if (dx && j.y > L[n] - 5) { j.esc = null; j.y = L[n]; j.suelo = true; }
+      else {
+        var dy = (t.abajo ? 1 : 0) - (t.arriba ? 1 : 0);
+        j.y += dy * TREPAR * dt; j.anda = !!dy;
+        if (j.y >= L[n]) { j.y = L[n]; if (dy > 0) { j.esc = null; j.suelo = true; } }
+        if (j.y <= L[n + 1]) { subirPiso(api); }
+        return;
+      }
+    }
+    if (dx) { j.x = A.limitar(j.x + dx * ANDAR * dt, 12, W - 12); j.dir = dx; j.anda = j.suelo; }
+    if (j.suelo && api.t - S.salto < 0.14) { j.vy = SALTO; j.suelo = false; S.salto = -9; api.sonido('salto'); }
+    if (!j.suelo) {
+      j.vy += GRAV * dt; j.y += j.vy * dt;
+      if (j.y >= L[n]) { j.y = L[n]; j.vy = 0; j.suelo = true; }
+    } else if (t.arriba && n < 4) {
+      var e = escaleraEn(j.x);
+      if (e) { j.esc = e; j.x = e.x; j.suelo = false; j.vy = 0; }
+    }
+  }
+
+  function alturaBarril(b) {
+    if (S.piso !== 2 || b.x < TABLON.a - 8 || b.x > TABLON.b + 8) return 0;
+    return Math.sin((b.x - TABLON.a + 8) / (TABLON.b - TABLON.a + 16) * Math.PI) * 8;
+  }
+
+  function moverBarriles(dt, api) {
+    var n = S.piso, P = PISOS[n], j = S.j;
+    var v = Math.max(VMIN, P.vel * api.vel * (S.ef === 'bloques' ? 0.8 : 1));
+    var k = S.ef === 'prisa' || S.ef === 'multi' ? 0.72 : S.ef === 'correr' ? 0.75 : S.ef === 'bloques' ? 1.6 : 1;
+    S.sig -= dt;
+    if (S.sig <= 0) { S.barriles.push({ x: P.boca, hecho: false }); S.sig = P.cada * k / api.vel; }
+    var caja = { x: j.x - 4, y: j.y - 22, w: 8, h: 22 };
+    for (var i = S.barriles.length - 1; i >= 0; i--) {
+      var b = S.barriles[i], by;
+      b.x += P.dir * v * dt;
+      if (b.x < 10 || b.x > W - 10) { S.barriles.splice(i, 1); continue; }
+      by = L[n] - alturaBarril(b);
+      if (!b.hecho && !j.suelo && !j.esc && Math.abs(b.x - j.x) < 7 && j.y < by - 13) {
+        b.hecho = true; S.puntos += 10; S.saltados++; api.sonido('punto'); api.flotar('+10', j.x, j.y - 30);
+      }
+      if (S.inmune <= 0 && A.choca(caja, { x: b.x - 4, y: by - 11, w: 8, h: 11 })) { tropezar(api, false); return; }
+    }
+  }
+
+  /* ---------- Dibujo ---------- */
+  function dibMedidor(ctx) {
+    for (var i = 0; i < 4; i++) {
+      var x = 5 + i * 88, m = S.medidor[i];
+      A.caja(ctx, x, MY, 86, 24, C.noche2);
+      if (m > 0) { ctx.fillStyle = C.morado; ctx.fillRect(x, MY, 86 * m, 24); }
+      A.caja(ctx, x, MY, 86, 24, null, m >= 1 ? C.menta : S.piso === i ? C.blanco : C.morado2, 2);
+      A.texto(ctx, FASES[i] + (m >= 1 ? ' ✓' : m > 0 ? ' …' : ''), x + 43, MY + 13, { tam: 13, negrita: true });
+    }
+  }
+  function dibEscalera(ctx, e) {
+    var y0 = L[e.n + 1], y1 = L[e.n], activa = e.n === S.piso, col = e.alt ? C.menta : activa ? C.blanco : C.gris, y;
+    ctx.fillStyle = col;
+    if (e.rota) {
+      ctx.fillRect(e.x - 9, y0, 3, 34); ctx.fillRect(e.x + 6, y0, 3, 26);
+      ctx.fillRect(e.x - 9, y0 + 12, 18, 3); ctx.fillRect(e.x - 9, y0 + 24, 12, 3);
+      ctx.fillRect(e.x - 9, y1 - 14, 3, 14); ctx.fillRect(e.x + 6, y1 - 8, 3, 8);
+      A.texto(ctx, 'ROTA', e.x + 14, y0 + 44, { tam: 12, color: C.rojo, negrita: true, alin: 'left' });
+      if (S.reparo > 0 && activa) A.texto(ctx, Math.ceil(S.reparo) + ' s', e.x + 14, y0 + 60, { tam: 13, negrita: true, alin: 'left' });
+      return;
+    }
+    ctx.fillRect(e.x - 9, y0, 3, y1 - y0); ctx.fillRect(e.x + 6, y0, 3, y1 - y0);
+    for (y = y0 + 8; y < y1 - 2; y += 12) ctx.fillRect(e.x - 9, y, 18, 3);
+  }
+  function dibBandera(ctx, b, y) {
+    ctx.fillStyle = C.blanco; ctx.fillRect(b.x - 1, y - 34, 3, 34);
+    if (b.ok) { ctx.fillStyle = C.menta; ctx.fillRect(b.x + 2, y - 34, 16, 12); A.texto(ctx, '✓', b.x + 10, y - 28, { tam: 11, color: C.noche, negrita: true, sombra: false }); }
+    else { ctx.strokeStyle = C.menta; ctx.lineWidth = 2; ctx.strokeRect(b.x + 3, y - 33, 14, 10); }
+  }
+  function dibBarril(ctx, x, y, P) {
+    ctx.fillStyle = '#7a4f33'; ctx.fillRect(x - 8, y - 16, 16, 16);
+    ctx.fillStyle = '#a06a45'; ctx.fillRect(x - 6, y - 16, 12, 16);
+    ctx.fillStyle = P.banda; ctx.fillRect(x - 8, y - 14, 16, 2); ctx.fillRect(x - 8, y - 4, 16, 2);
+    A.texto(ctx, P.sim, x, y - 8, { tam: 12, negrita: true, color: C.blanco });
+  }
+
+  A.crear({
+    numero: '02', titulo: 'La torre de Obsoletus', pluma: 'PLUMA-AUTORREGULACION',
+    ancho: W, alto: H,
+    objetivo: 'Experimentar las fases de la autorregulación del aprendizaje: planificar, ejecutar y supervisar, evaluar y ajustar.',
+    instrucciones: [
+      'Sube los cuatro pisos de la torre hasta la antena de Obsoletus: camina, salta los barriles y trepa por las escaleras.',
+      'Al llegar a cada piso tomas una decisión (plan, atención, revisión, ajuste) que cambia lo que encuentras en ese tramo.',
+      'Tienes tres vidas por piso y punto de control en cada uno. La Pluma Dorada se consigue con la reflexión final.'
+    ],
+    teclas: 'Teclado: flechas o WASD para andar y subir escaleras, Espacio para saltar. En móvil o tableta: cruceta y botón Saltar.',
+    transferencia: '¿Qué actividad permitiría a tus estudiantes hacer visible cómo planifican, supervisan y ajustan su aprendizaje?',
+    ayuda: '<ul><li><b>Plan:</b> fijar un objetivo concreto y un tiempo realista.</li>' +
+      '<li><b>Actúo:</b> aplicar la estrategia y supervisar la atención mientras se trabaja.</li>' +
+      '<li><b>Reviso:</b> comparar lo ocurrido con el plan y localizar el error.</li>' +
+      '<li><b>Ajusto:</b> cambiar el plan cuando algo no funciona o surge un imprevisto.</li></ul>' +
+      '<p>Los barriles ruedan siempre por el piso en el sentido de las flechas del suelo. Salta cuando estén a un paso de la oca. ' +
+      'Para subir, colócate en la escalera y mantén ▲.</p>',
+    controles: { cruceta: ['arriba', 'abajo', 'izq', 'der'], acciones: [{ id: 'saltar', etiqueta: 'Saltar' }] },
+    _estado: function () { return S; },
+
+    iniciar: function (api) {
+      S = { piso: 0, puntos: 0, medidor: [0, 0, 0, 0], dec: [[], [], [], []], caidas: [0, 0, 0, 0], tiempos: [0, 0, 0, 0],
+        intentos: 0, saltados: 0, tablonVisto: false, escs: [], barriles: [], vidas: 3, activa: false, ef: null,
+        bandera: null, reparo: 0, meta: 0, tPiso: 0, inmune: 0, salto: -9, cp: { x: 40 },
+        j: { x: 40, y: L[0], vy: 0, suelo: true, esc: null, dir: 1, anda: false } };
+      preguntar(api);
+    },
+    alPulsar: function (id, api) { if (id === 'saltar' && S) S.salto = api.t; },
+
+    actualizar: function (dt, api) {
+      if (!S || !S.activa) return;
+      var n = S.piso, j = S.j;
+      S.inmune = Math.max(0, S.inmune - dt);
+      moverOca(dt, api);
+      if (!S.activa) return;
+      if (S.piso !== n) n = S.piso;
+      else if (n < 4) {
+        S.tPiso += dt;
+        if (S.meta && !api.tranquilo && !S.avisoMeta && S.tPiso > S.meta) {
+          S.avisoMeta = true;
+          api.mensaje(S.meta === 10 ? 'Han pasado los 10 s: el plan no era realista para este tramo. Sigue a tu ritmo, sin penalización.'
+            : 'Has pasado el tiempo orientativo. No hay penalización: sirve para comparar plan y resultado.', 4500);
+        }
+        if (S.reparo > 0) {
+          S.reparo -= dt;
+          if (S.reparo <= 0) {
+            S.escs.forEach(function (e) { if (e.n === 3) e.rota = false; });
+            api.mensaje('La escalera ya está arreglada. Esperar ha costado tiempo y barriles: otra ruta habría sido un ajuste.', 4500);
+          }
+        }
+        if (S.bandera && !S.bandera.ok && Math.abs(j.x - S.bandera.x) < 10 && !j.esc) {
+          S.bandera.ok = true; S.cp = { x: S.bandera.x }; S.puntos += 20; api.sonido('ok');
+          api.flotar('Punto de control', S.bandera.x, L[n] - 44, { color: C.menta });
+        }
+        if (n === 2 && j.suelo && !j.esc && S.inmune <= 0 && j.x > TABLON.a + 2 && j.x < TABLON.b - 2) { tropezar(api, true); }
+        if (S.activa) moverBarriles(dt, api);
+      } else if (Math.abs(j.x - ANTENA) < 14 && j.suelo) { ganar(api); }
+      api.hud({
+        Piso: Math.min(S.piso + 1, 4) + '/4', Vidas: S.vidas,
+        Tiempo: S.piso > 3 ? null : api.tranquilo ? 'sin límite' : S.meta ? Math.max(0, Math.ceil(S.meta - S.tPiso)) + ' s' : Math.floor(S.tPiso) + ' s',
+        Puntos: S.puntos
+      });
+    },
+
+    dibujar: function (ctx, api) {
+      if (!S) return;
+      var n = S.piso, P = PISOS[Math.min(n, 3)], j = S.j, i, x, y;
+      /* muro de la torre */
+      ctx.fillStyle = C.noche2;
+      for (y = 20; y < L[0]; y += 24) for (x = (y / 24 % 2) * 30 - 20; x < W; x += 60) ctx.fillRect(x, y, 26, 2);
+      /* pisos */
+      for (i = 0; i < 5; i++) {
+        A.caja(ctx, 0, L[i], W, 10, C.morado); ctx.fillStyle = C.morado2; ctx.fillRect(0, L[i], W, 3);
+        ctx.fillStyle = '#4a2a94'; for (x = 10; x < W; x += 40) ctx.fillRect(x, L[i] + 5, 4, 3);
+      }
+      /* tablón agrietado del piso 3 */
+      ctx.fillStyle = '#2b1d55'; ctx.fillRect(TABLON.a, L[2], TABLON.b - TABLON.a, 10);
+      ctx.strokeStyle = C.noche; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(TABLON.a + 4, L[2]); ctx.lineTo(TABLON.a + 10, L[2] + 5); ctx.lineTo(TABLON.a + 7, L[2] + 10);
+      ctx.moveTo(TABLON.a + 15, L[2]); ctx.lineTo(TABLON.a + 20, L[2] + 6); ctx.lineTo(TABLON.a + 16, L[2] + 10); ctx.stroke();
+      if (n === 2 && resaltado()) {
+        A.caja(ctx, TABLON.a - 2, L[2] - 2, TABLON.b - TABLON.a + 4, 14, null, C.oro, 2);
+        ctx.fillStyle = C.oro;
+        for (i = 0; i <= 8; i++) { x = TABLON.a - 22 + i * 8.8; ctx.fillRect(x, L[2] - 8 - Math.sin(i / 8 * Math.PI) * 26, 3, 3); }
+        A.texto(ctx, 'SALTA', (TABLON.a + TABLON.b) / 2, L[2] - 45, { tam: 13, color: C.oro, negrita: true });
+      }
+      /* antena y Obsoletus en la azotea */
+      ctx.fillStyle = C.gris; ctx.fillRect(ANTENA - 2, L[4] - 40, 4, 40); ctx.fillRect(ANTENA - 10, L[4] - 32, 20, 3); ctx.fillRect(ANTENA - 6, L[4] - 22, 12, 3);
+      ctx.fillStyle = S.medidor[3] >= 1 && !S.activa ? C.gris : C.rojo; ctx.fillRect(ANTENA - 4, L[4] - 46, 8, 8);
+      A.robot(ctx, 336, L[4] - 13, 26);
+      if (n === 4) A.texto(ctx, 'ANTENA ▶', ANTENA - 60, L[4] - 34, { tam: 13, color: C.oro, negrita: true });
+      /* escaleras */
+      S.escs.forEach(function (e) { dibEscalera(ctx, e); });
+      if (n < 3) dibEscalera(ctx, { x: PISOS[3].esc, n: 3, rota: true });
+      for (i = n + 1; i < 3; i++) dibEscalera(ctx, { x: PISOS[i].esc, n: i });
+      if (n < 4 && S.dec[n].length) {
+        /* trampilla, sentido de los barriles y rótulo */
+        A.caja(ctx, P.boca - 12, L[n] - 22, 24, 22, '#000', C.gris, 2);
+        var fin = P.dir < 0 ? 2 : W - 12;
+        A.caja(ctx, fin, L[n] - 12, 10, 12, '#000', C.gris, 2);
+        ctx.strokeStyle = C.gris; ctx.lineWidth = 2;
+        for (x = 50; x < W - 30; x += 52) {
+          ctx.beginPath(); ctx.moveTo(x - P.dir * 4, L[n] + 12); ctx.lineTo(x + P.dir * 3, L[n] + 15); ctx.lineTo(x - P.dir * 4, L[n] + 18); ctx.stroke();
+        }
+        A.texto(ctx, '«' + P.sim + '» ' + P.barril, W / 2, L[n] - 62, { tam: 13, color: C.blanco });
+        if (S.bandera) dibBandera(ctx, S.bandera, L[n]);
+        S.barriles.forEach(function (b) { dibBarril(ctx, b.x, L[n] - alturaBarril(b), P); });
+      }
+      /* oca */
+      if (S.inmune > 0 && S.activa) { ctx.strokeStyle = C.menta; ctx.lineWidth = 2; ctx.strokeRect(j.x - 13, j.y - 26, 26, 27); }
+      A.oca(ctx, j.x, j.y - 12, 24, { dir: j.dir, paso: j.anda && Math.floor(api.t * 9) % 2 });
+      /* medidor Plan–Actúo–Reviso–Ajusto */
+      ctx.fillStyle = C.noche; ctx.fillRect(0, MY - 4, W, H - MY + 4);
+      dibMedidor(ctx);
+    }
+  });
+})();
+
+</script>
+</body>
+</html>
