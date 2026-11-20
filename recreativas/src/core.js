@@ -123,7 +123,7 @@
       sonido: bip,
       mensaje: function (txt, ms) {
         var cont = $('avisos'), a = el('div', 'aviso', txt);
-        while (cont.children.length >= 2) cont.removeChild(cont.firstChild);
+        while (cont.firstChild) cont.removeChild(cont.firstChild);
         cont.appendChild(a);
         setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
       },

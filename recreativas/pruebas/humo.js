@@ -28,7 +28,8 @@ const fs = require('fs'), path = require('path'), os = require('os');
         await pag.keyboard.down(k); await pag.waitForTimeout(120); await pag.keyboard.up(k);
       }
       await pag.screenshot({ path: path.join(sal, f.replace('.html', `-${nombre}-1juego.png`)) });
-      const desborda = await pag.evaluate(() => document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1);
+      const desborda = await pag.evaluate(() => document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1 ||
+        [...document.querySelectorAll('#lienzo,#cruceta button,#acciones button,#herramientas button,#botones button')].some(e => { const r = e.getBoundingClientRect(); return r.width && (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1); }));
       const lienzo = await pag.evaluate(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; });
       await pag.keyboard.press('p'); await pag.waitForTimeout(100);
       const est = await pag.evaluate(() => Arcade._.estado());

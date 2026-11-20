@@ -11,8 +11,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 #app{position:fixed;inset:0;display:grid;gap:6px;
   padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
-  grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto auto;
-  grid-template-areas:"barra barra barra" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+  grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "avisos avisos avisos" "escena escena escena" "herr herr herr" "cruceta . acciones"}
 #barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 #titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
   text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
@@ -30,8 +30,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #botones button{font-size:12px;padding:4px 8px}
 #escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
 #lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
-#avisos{position:absolute;left:0;right:0;top:8px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;padding:0 8px}
-.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:5px 10px;font-size:14px;line-height:1.3;max-width:560px;text-align:center}
+#avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
 #herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 #herramientas:empty{display:none}
 #herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
@@ -39,12 +39,14 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
 #acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
 #cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
-#acciones button{min-width:76px;height:76px;font-size:14px;border-radius:0;padding:4px}
+#acciones button{width:clamp(54px,17vw,76px);min-width:0;height:76px;font-size:clamp(11px,3.1vw,14px);border-radius:0;padding:2px}
 #cruceta:empty,#acciones:empty{display:none}
 .pulsado{background:#6D42C7!important}
 @media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
 @media (orientation:landscape) and (max-height:560px){
   #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #avisos{grid-area:escena;align-self:start;height:auto;z-index:2;padding:6px}
+  #capa{grid-row:2/-1}
   #cruceta,#acciones{align-self:end}
   #acciones{flex-direction:column}
   #acciones button{height:56px}
@@ -52,7 +54,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
   #herramientas button{min-height:36px}
 }
 @media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
-#capa{position:fixed;inset:0;background:#080b16d9;display:flex;align-items:center;justify-content:center;padding:10px;z-index:10}
+#capa{grid-column:1/-1;grid-row:2/-1;min-height:0;background:#080b16f2;display:flex;align-items:center;justify-content:center;padding:4px;z-index:10}
 #capa[hidden]{display:none}
 #panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
   overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
@@ -90,7 +92,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
     </div>
   </header>
-  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas><div id="avisos" aria-live="polite"></div></main>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas></main>
+  <div id="avisos" aria-live="polite"></div>
   <div id="herramientas"></div>
   <div id="cruceta"></div>
   <div id="acciones"></div>
@@ -222,7 +225,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       sonido: bip,
       mensaje: function (txt, ms) {
         var cont = $('avisos'), a = el('div', 'aviso', txt);
-        while (cont.children.length >= 2) cont.removeChild(cont.firstChild);
+        while (cont.firstChild) cont.removeChild(cont.firstChild);
         cont.appendChild(a);
         setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
       },
@@ -535,8 +538,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 /* 02 · La torre de Obsoletus */
 (function () {
   'use strict';
-  var A = Arcade, C = A.C, W = 360, H = 480;
-  var L = [466, 370, 274, 178, 82];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
+  var A = Arcade, C = A.C, W = 360, H = 500, MY = 472;
+  var L = [452, 364, 276, 188, 100];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
   var FASES = ['Plan', 'Actúo', 'Reviso', 'Ajusto'];
   var ANDAR = 95, TREPAR = 85, SALTO = -250, GRAV = 640, VMIN = 56;
   var TABLON = { a: 150, b: 176 }, ANTENA = 300;
@@ -550,41 +553,41 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     { titulo: 'Piso 1 · Planifico',
       texto: 'Antes de moverte, fija tu plan para este piso. Los barriles de «plan poco realista» empezarán a rodar en cuanto elijas.',
       ops: [
-        { id: 'prisa', et: 'Llegar a la antena en 10 segundos, pase lo que pase', corto: 'plan de 10 segundos', eficaz: false,
+        { id: 'prisa', efecto: 'más barriles seguidos', et: 'Llegar a la antena en 10 segundos, pase lo que pase', corto: 'plan de 10 segundos', eficaz: false,
           msg: 'Con un plan tan ajustado llegan más barriles seguidos. Se puede superar: espera, salta uno y avanza.' },
-        { id: 'meta', et: 'Objetivo concreto: llegar a la escalera en unos 30 s, con una parada a mitad de piso', corto: 'objetivo concreto y tiempo realista', eficaz: true,
+        { id: 'meta', efecto: 'punto de control y tiempo orientativo', et: 'Objetivo concreto: llegar a la escalera en unos 30 s, con una parada a mitad de piso', corto: 'objetivo concreto y tiempo realista', eficaz: true,
           msg: 'Plan concreto: aparece un punto de control a mitad de piso y un tiempo orientativo en el marcador.' },
-        { id: 'vago', et: 'Subir sin fijar objetivo ni tiempo: ya iré viendo', corto: 'sin objetivo ni tiempo', eficaz: false,
+        { id: 'vago', efecto: 'sin referencias en el piso', et: 'Subir sin fijar objetivo ni tiempo: ya iré viendo', corto: 'sin objetivo ni tiempo', eficaz: false,
           msg: 'Sin objetivo ni tiempo no hay referencias en este piso: ni punto de control ni tiempo orientativo.' }
       ] },
     { titulo: 'Piso 2 · Actúo y superviso',
       texto: 'Llegan barriles de «distracción». ¿Qué técnica de atención aplicas mientras avanzas?',
       ops: [
-        { id: 'multi', et: 'Atender varias cosas a la vez para aprovechar el tiempo', corto: 'multitarea', eficaz: false,
+        { id: 'multi', efecto: 'más barriles', et: 'Atender varias cosas a la vez para aprovechar el tiempo', corto: 'multitarea', eficaz: false,
           msg: 'Con varias cosas a la vez llegan más barriles de distracción. Céntrate en uno cada vez.' },
-        { id: 'voluntad', et: 'Dejar el móvil a la vista y confiar en la fuerza de voluntad', corto: 'fuerza de voluntad sin cambiar el entorno', eficaz: false,
+        { id: 'voluntad', efecto: 'barriles al mismo ritmo', et: 'Dejar el móvil a la vista y confiar en la fuerza de voluntad', corto: 'fuerza de voluntad sin cambiar el entorno', eficaz: false,
           msg: 'Sin cambiar el entorno, las distracciones siguen llegando al mismo ritmo.' },
-        { id: 'bloques', et: 'Silenciar avisos y trabajar en bloques cortos con pausas', corto: 'bloques cortos sin avisos', eficaz: true,
+        { id: 'bloques', efecto: 'barriles lentos y separados', et: 'Silenciar avisos y trabajar en bloques cortos con pausas', corto: 'bloques cortos sin avisos', eficaz: true,
           msg: 'Avisos silenciados: los barriles de distracción ruedan más despacio y más separados.' }
       ] },
     { titulo: 'Piso 3 · Reviso',
       texto: 'Pista del trayecto: en este piso hay un tablón con una grieta, y los barriles de «no revisar errores» botan justo al pasar por él. Antes de cruzar, ¿qué error conviene detectar?',
       ops: [
-        { id: 'suerte', et: 'Ninguno: si algo sale mal será mala suerte', corto: 'no buscar el error', eficaz: false,
+        { id: 'suerte', efecto: 'tablón sin señalar', et: 'Ninguno: si algo sale mal será mala suerte', corto: 'no buscar el error', eficaz: false,
           msg: 'Nada señalado en el suelo. La grieta sigue ahí: fíjate dónde botan los barriles.' },
-        { id: 'tablon', et: 'Pisar el tablón agrietado sin mirar: hay que saltarlo', corto: 'detectar el tablón agrietado', eficaz: true,
+        { id: 'tablon', efecto: 'pista luminosa en el tablón', et: 'Pisar el tablón agrietado sin mirar: hay que saltarlo', corto: 'detectar el tablón agrietado', eficaz: true,
           msg: 'Error detectado: una pista luminosa marca el tablón agrietado y el salto para evitarlo.' },
-        { id: 'correr', et: 'Ir demasiado despacio: lo que hace falta es correr', corto: 'correr más', eficaz: false,
+        { id: 'correr', efecto: 'más barriles y tablón sin señalar', et: 'Ir demasiado despacio: lo que hace falta es correr', corto: 'correr más', eficaz: false,
           msg: 'Con las prisas llegan más barriles y el tablón sigue sin señalar. Fíjate dónde botan.' }
       ] },
     { titulo: 'Piso 4 · Ajusto',
       texto: 'Imprevisto: Obsoletus ha roto la escalera prevista y lanza barriles de «procrastinación». ¿Qué haces con tu plan?',
       ops: [
-        { id: 'esperar', et: 'Esperar a que la escalera se arregle sola', corto: 'esperar sin cambiar el plan', eficaz: false,
+        { id: 'esperar', efecto: '10 s de espera con barriles', et: 'Esperar a que la escalera se arregle sola', corto: 'esperar sin cambiar el plan', eficaz: false,
           msg: 'La escalera tardará 10 s en arreglarse. Mientras esperas, siguen llegando barriles.' },
-        { id: 'ajustar', et: 'Ajustar el plan: buscar otra ruta y dividir el tramo en dos pasos', corto: 'ajustar el plan con otra ruta', eficaz: true,
+        { id: 'ajustar', efecto: 'escalera alternativa y punto de control', et: 'Ajustar el plan: buscar otra ruta y dividir el tramo en dos pasos', corto: 'ajustar el plan con otra ruta', eficaz: true,
           msg: 'Plan ajustado: aparece una escalera alternativa a mitad de piso y un punto de control.' },
-        { id: 'improvisar', et: 'Tirar el plan e improvisar por donde salen los barriles', corto: 'improvisar sin plan', eficaz: false,
+        { id: 'improvisar', efecto: 'subida junto a la trampilla', et: 'Tirar el plan e improvisar por donde salen los barriles', corto: 'improvisar sin plan', eficaz: false,
           msg: 'Hay una subida, pero pegada a la trampilla de los barriles: salta uno y sube enseguida.' }
       ] }
   ];
@@ -675,7 +678,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     j.y = L[S.piso]; j.vy = 0; j.suelo = true; j.esc = null;
     S.cp = { x: j.x };
     if (S.piso < 4) preguntar(api);
-    else api.mensaje('Azotea alcanzada. Camina hasta la antena para desconectarla.', 4500);
+    else api.mensaje('Azotea: camina hasta la antena.', 3000);
   }
 
   function ganar(api) {
@@ -685,7 +688,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       var ops = S.dec[n].map(function (i) { return DEC[n].ops[i]; }), fin = ops[ops.length - 1];
       if (fin.eficaz) eficaces++;
       cambios += ops.length - 1; caidas += S.caidas[n];
-      h += '<li><b>' + FASES[n] + ':</b> ' + ops.map(function (o) { return A.esc(o.corto); }).join(' → ') +
+      h += '<li><b>' + FASES[n] + ':</b> ' + ops.map(function (o) { return A.esc(o.corto) + ' (' + A.esc(o.efecto) + ')'; }).join(' → ') +
         '. ' + (S.caidas[n] ? S.caidas[n] + (S.caidas[n] === 1 ? ' caída' : ' caídas') : 'Sin caídas') + ', ' + S.tiempos[n] + ' s.</li>';
     }
     h += '</ol><p class="nota">Medidor Plan–Actúo–Reviso–Ajusto: completo (4/4). Las fases forman un ciclo: lo que ajustas alimenta el siguiente plan.</p>';
@@ -761,10 +764,10 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
   function dibMedidor(ctx) {
     for (var i = 0; i < 4; i++) {
       var x = 5 + i * 88, m = S.medidor[i];
-      A.caja(ctx, x, 5, 86, 24, C.noche2);
-      if (m > 0) { ctx.fillStyle = C.morado; ctx.fillRect(x, 5, 86 * m, 24); }
-      A.caja(ctx, x, 5, 86, 24, null, m >= 1 ? C.menta : S.piso === i ? C.blanco : C.morado2, 2);
-      A.texto(ctx, FASES[i] + (m >= 1 ? ' ✓' : m > 0 ? ' …' : ''), x + 43, 18, { tam: 13, negrita: true });
+      A.caja(ctx, x, MY, 86, 24, C.noche2);
+      if (m > 0) { ctx.fillStyle = C.morado; ctx.fillRect(x, MY, 86 * m, 24); }
+      A.caja(ctx, x, MY, 86, 24, null, m >= 1 ? C.menta : S.piso === i ? C.blanco : C.morado2, 2);
+      A.texto(ctx, FASES[i] + (m >= 1 ? ' ✓' : m > 0 ? ' …' : ''), x + 43, MY + 13, { tam: 13, negrita: true });
     }
   }
   function dibEscalera(ctx, e) {
@@ -774,8 +777,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       ctx.fillRect(e.x - 9, y0, 3, 34); ctx.fillRect(e.x + 6, y0, 3, 26);
       ctx.fillRect(e.x - 9, y0 + 12, 18, 3); ctx.fillRect(e.x - 9, y0 + 24, 12, 3);
       ctx.fillRect(e.x - 9, y1 - 14, 3, 14); ctx.fillRect(e.x + 6, y1 - 8, 3, 8);
-      A.texto(ctx, 'ROTA', e.x, y0 + 50, { tam: 12, color: C.rojo, negrita: true });
-      if (S.reparo > 0 && activa) A.texto(ctx, Math.ceil(S.reparo) + ' s', e.x, y0 + 66, { tam: 13, negrita: true });
+      A.texto(ctx, 'ROTA', e.x + 14, y0 + 44, { tam: 12, color: C.rojo, negrita: true, alin: 'left' });
+      if (S.reparo > 0 && activa) A.texto(ctx, Math.ceil(S.reparo) + ' s', e.x + 14, y0 + 60, { tam: 13, negrita: true, alin: 'left' });
       return;
     }
     ctx.fillRect(e.x - 9, y0, 3, y1 - y0); ctx.fillRect(e.x + 6, y0, 3, y1 - y0);
@@ -862,7 +865,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       var n = S.piso, P = PISOS[Math.min(n, 3)], j = S.j, i, x, y;
       /* muro de la torre */
       ctx.fillStyle = C.noche2;
-      for (y = 44; y < H; y += 24) for (x = (y / 24 % 2) * 30 - 20; x < W; x += 60) ctx.fillRect(x, y, 26, 2);
+      for (y = 20; y < L[0]; y += 24) for (x = (y / 24 % 2) * 30 - 20; x < W; x += 60) ctx.fillRect(x, y, 26, 2);
       /* pisos */
       for (i = 0; i < 5; i++) {
         A.caja(ctx, 0, L[i], W, 10, C.morado); ctx.fillStyle = C.morado2; ctx.fillRect(0, L[i], W, 3);
@@ -876,12 +879,12 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       if (n === 2 && resaltado()) {
         A.caja(ctx, TABLON.a - 2, L[2] - 2, TABLON.b - TABLON.a + 4, 14, null, C.oro, 2);
         ctx.fillStyle = C.oro;
-        for (i = 0; i <= 8; i++) { x = TABLON.a - 22 + i * 8.8; ctx.fillRect(x, L[2] - 8 - Math.sin(i / 8 * Math.PI) * 30, 3, 3); }
-        A.texto(ctx, 'SALTA', (TABLON.a + TABLON.b) / 2, L[2] - 50, { tam: 13, color: C.oro, negrita: true });
+        for (i = 0; i <= 8; i++) { x = TABLON.a - 22 + i * 8.8; ctx.fillRect(x, L[2] - 8 - Math.sin(i / 8 * Math.PI) * 26, 3, 3); }
+        A.texto(ctx, 'SALTA', (TABLON.a + TABLON.b) / 2, L[2] - 45, { tam: 13, color: C.oro, negrita: true });
       }
       /* antena y Obsoletus en la azotea */
-      ctx.fillStyle = C.gris; ctx.fillRect(ANTENA - 2, 42, 4, 40); ctx.fillRect(ANTENA - 10, 50, 20, 3); ctx.fillRect(ANTENA - 6, 60, 12, 3);
-      ctx.fillStyle = S.medidor[3] >= 1 && !S.activa ? C.gris : C.rojo; ctx.fillRect(ANTENA - 4, 36, 8, 8);
+      ctx.fillStyle = C.gris; ctx.fillRect(ANTENA - 2, L[4] - 40, 4, 40); ctx.fillRect(ANTENA - 10, L[4] - 32, 20, 3); ctx.fillRect(ANTENA - 6, L[4] - 22, 12, 3);
+      ctx.fillStyle = S.medidor[3] >= 1 && !S.activa ? C.gris : C.rojo; ctx.fillRect(ANTENA - 4, L[4] - 46, 8, 8);
       A.robot(ctx, 336, L[4] - 13, 26);
       if (n === 4) A.texto(ctx, 'ANTENA ▶', ANTENA - 60, L[4] - 34, { tam: 13, color: C.oro, negrita: true });
       /* escaleras */
@@ -895,9 +898,9 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
         A.caja(ctx, fin, L[n] - 12, 10, 12, '#000', C.gris, 2);
         ctx.strokeStyle = C.gris; ctx.lineWidth = 2;
         for (x = 50; x < W - 30; x += 52) {
-          ctx.beginPath(); ctx.moveTo(x - P.dir * 4, L[n] + 13); ctx.lineTo(x + P.dir * 4, L[n] + 17); ctx.lineTo(x - P.dir * 4, L[n] + 21); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x - P.dir * 4, L[n] + 12); ctx.lineTo(x + P.dir * 3, L[n] + 15); ctx.lineTo(x - P.dir * 4, L[n] + 18); ctx.stroke();
         }
-        A.texto(ctx, '«' + P.sim + '» ' + P.barril, W / 2, L[n] - 78, { tam: 13, color: C.blanco });
+        A.texto(ctx, '«' + P.sim + '» ' + P.barril, W / 2, L[n] - 62, { tam: 13, color: C.blanco });
         if (S.bandera) dibBandera(ctx, S.bandera, L[n]);
         S.barriles.forEach(function (b) { dibBarril(ctx, b.x, L[n] - alturaBarril(b), P); });
       }
@@ -905,7 +908,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       if (S.inmune > 0 && S.activa) { ctx.strokeStyle = C.menta; ctx.lineWidth = 2; ctx.strokeRect(j.x - 13, j.y - 26, 26, 27); }
       A.oca(ctx, j.x, j.y - 12, 24, { dir: j.dir, paso: j.anda && Math.floor(api.t * 9) % 2 });
       /* medidor Plan–Actúo–Reviso–Ajusto */
-      ctx.fillStyle = C.noche; ctx.fillRect(0, 0, W, 34);
+      ctx.fillStyle = C.noche; ctx.fillRect(0, MY - 4, W, H - MY + 4);
       dibMedidor(ctx);
     }
   });

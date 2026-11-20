@@ -1,8 +1,8 @@
 /* 02 · La torre de Obsoletus */
 (function () {
   'use strict';
-  var A = Arcade, C = A.C, W = 360, H = 480;
-  var L = [466, 370, 274, 178, 82];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
+  var A = Arcade, C = A.C, W = 360, H = 500, MY = 472;
+  var L = [452, 364, 276, 188, 100];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
   var FASES = ['Plan', 'Actúo', 'Reviso', 'Ajusto'];
   var ANDAR = 95, TREPAR = 85, SALTO = -250, GRAV = 640, VMIN = 56;
   var TABLON = { a: 150, b: 176 }, ANTENA = 300;
@@ -16,41 +16,41 @@
     { titulo: 'Piso 1 · Planifico',
       texto: 'Antes de moverte, fija tu plan para este piso. Los barriles de «plan poco realista» empezarán a rodar en cuanto elijas.',
       ops: [
-        { id: 'prisa', et: 'Llegar a la antena en 10 segundos, pase lo que pase', corto: 'plan de 10 segundos', eficaz: false,
+        { id: 'prisa', efecto: 'más barriles seguidos', et: 'Llegar a la antena en 10 segundos, pase lo que pase', corto: 'plan de 10 segundos', eficaz: false,
           msg: 'Con un plan tan ajustado llegan más barriles seguidos. Se puede superar: espera, salta uno y avanza.' },
-        { id: 'meta', et: 'Objetivo concreto: llegar a la escalera en unos 30 s, con una parada a mitad de piso', corto: 'objetivo concreto y tiempo realista', eficaz: true,
+        { id: 'meta', efecto: 'punto de control y tiempo orientativo', et: 'Objetivo concreto: llegar a la escalera en unos 30 s, con una parada a mitad de piso', corto: 'objetivo concreto y tiempo realista', eficaz: true,
           msg: 'Plan concreto: aparece un punto de control a mitad de piso y un tiempo orientativo en el marcador.' },
-        { id: 'vago', et: 'Subir sin fijar objetivo ni tiempo: ya iré viendo', corto: 'sin objetivo ni tiempo', eficaz: false,
+        { id: 'vago', efecto: 'sin referencias en el piso', et: 'Subir sin fijar objetivo ni tiempo: ya iré viendo', corto: 'sin objetivo ni tiempo', eficaz: false,
           msg: 'Sin objetivo ni tiempo no hay referencias en este piso: ni punto de control ni tiempo orientativo.' }
       ] },
     { titulo: 'Piso 2 · Actúo y superviso',
       texto: 'Llegan barriles de «distracción». ¿Qué técnica de atención aplicas mientras avanzas?',
       ops: [
-        { id: 'multi', et: 'Atender varias cosas a la vez para aprovechar el tiempo', corto: 'multitarea', eficaz: false,
+        { id: 'multi', efecto: 'más barriles', et: 'Atender varias cosas a la vez para aprovechar el tiempo', corto: 'multitarea', eficaz: false,
           msg: 'Con varias cosas a la vez llegan más barriles de distracción. Céntrate en uno cada vez.' },
-        { id: 'voluntad', et: 'Dejar el móvil a la vista y confiar en la fuerza de voluntad', corto: 'fuerza de voluntad sin cambiar el entorno', eficaz: false,
+        { id: 'voluntad', efecto: 'barriles al mismo ritmo', et: 'Dejar el móvil a la vista y confiar en la fuerza de voluntad', corto: 'fuerza de voluntad sin cambiar el entorno', eficaz: false,
           msg: 'Sin cambiar el entorno, las distracciones siguen llegando al mismo ritmo.' },
-        { id: 'bloques', et: 'Silenciar avisos y trabajar en bloques cortos con pausas', corto: 'bloques cortos sin avisos', eficaz: true,
+        { id: 'bloques', efecto: 'barriles lentos y separados', et: 'Silenciar avisos y trabajar en bloques cortos con pausas', corto: 'bloques cortos sin avisos', eficaz: true,
           msg: 'Avisos silenciados: los barriles de distracción ruedan más despacio y más separados.' }
       ] },
     { titulo: 'Piso 3 · Reviso',
       texto: 'Pista del trayecto: en este piso hay un tablón con una grieta, y los barriles de «no revisar errores» botan justo al pasar por él. Antes de cruzar, ¿qué error conviene detectar?',
       ops: [
-        { id: 'suerte', et: 'Ninguno: si algo sale mal será mala suerte', corto: 'no buscar el error', eficaz: false,
+        { id: 'suerte', efecto: 'tablón sin señalar', et: 'Ninguno: si algo sale mal será mala suerte', corto: 'no buscar el error', eficaz: false,
           msg: 'Nada señalado en el suelo. La grieta sigue ahí: fíjate dónde botan los barriles.' },
-        { id: 'tablon', et: 'Pisar el tablón agrietado sin mirar: hay que saltarlo', corto: 'detectar el tablón agrietado', eficaz: true,
+        { id: 'tablon', efecto: 'pista luminosa en el tablón', et: 'Pisar el tablón agrietado sin mirar: hay que saltarlo', corto: 'detectar el tablón agrietado', eficaz: true,
           msg: 'Error detectado: una pista luminosa marca el tablón agrietado y el salto para evitarlo.' },
-        { id: 'correr', et: 'Ir demasiado despacio: lo que hace falta es correr', corto: 'correr más', eficaz: false,
+        { id: 'correr', efecto: 'más barriles y tablón sin señalar', et: 'Ir demasiado despacio: lo que hace falta es correr', corto: 'correr más', eficaz: false,
           msg: 'Con las prisas llegan más barriles y el tablón sigue sin señalar. Fíjate dónde botan.' }
       ] },
     { titulo: 'Piso 4 · Ajusto',
       texto: 'Imprevisto: Obsoletus ha roto la escalera prevista y lanza barriles de «procrastinación». ¿Qué haces con tu plan?',
       ops: [
-        { id: 'esperar', et: 'Esperar a que la escalera se arregle sola', corto: 'esperar sin cambiar el plan', eficaz: false,
+        { id: 'esperar', efecto: '10 s de espera con barriles', et: 'Esperar a que la escalera se arregle sola', corto: 'esperar sin cambiar el plan', eficaz: false,
           msg: 'La escalera tardará 10 s en arreglarse. Mientras esperas, siguen llegando barriles.' },
-        { id: 'ajustar', et: 'Ajustar el plan: buscar otra ruta y dividir el tramo en dos pasos', corto: 'ajustar el plan con otra ruta', eficaz: true,
+        { id: 'ajustar', efecto: 'escalera alternativa y punto de control', et: 'Ajustar el plan: buscar otra ruta y dividir el tramo en dos pasos', corto: 'ajustar el plan con otra ruta', eficaz: true,
           msg: 'Plan ajustado: aparece una escalera alternativa a mitad de piso y un punto de control.' },
-        { id: 'improvisar', et: 'Tirar el plan e improvisar por donde salen los barriles', corto: 'improvisar sin plan', eficaz: false,
+        { id: 'improvisar', efecto: 'subida junto a la trampilla', et: 'Tirar el plan e improvisar por donde salen los barriles', corto: 'improvisar sin plan', eficaz: false,
           msg: 'Hay una subida, pero pegada a la trampilla de los barriles: salta uno y sube enseguida.' }
       ] }
   ];
@@ -141,7 +141,7 @@
     j.y = L[S.piso]; j.vy = 0; j.suelo = true; j.esc = null;
     S.cp = { x: j.x };
     if (S.piso < 4) preguntar(api);
-    else api.mensaje('Azotea alcanzada. Camina hasta la antena para desconectarla.', 4500);
+    else api.mensaje('Azotea: camina hasta la antena.', 3000);
   }
 
   function ganar(api) {
@@ -151,7 +151,7 @@
       var ops = S.dec[n].map(function (i) { return DEC[n].ops[i]; }), fin = ops[ops.length - 1];
       if (fin.eficaz) eficaces++;
       cambios += ops.length - 1; caidas += S.caidas[n];
-      h += '<li><b>' + FASES[n] + ':</b> ' + ops.map(function (o) { return A.esc(o.corto); }).join(' → ') +
+      h += '<li><b>' + FASES[n] + ':</b> ' + ops.map(function (o) { return A.esc(o.corto) + ' (' + A.esc(o.efecto) + ')'; }).join(' → ') +
         '. ' + (S.caidas[n] ? S.caidas[n] + (S.caidas[n] === 1 ? ' caída' : ' caídas') : 'Sin caídas') + ', ' + S.tiempos[n] + ' s.</li>';
     }
     h += '</ol><p class="nota">Medidor Plan–Actúo–Reviso–Ajusto: completo (4/4). Las fases forman un ciclo: lo que ajustas alimenta el siguiente plan.</p>';
@@ -227,10 +227,10 @@
   function dibMedidor(ctx) {
     for (var i = 0; i < 4; i++) {
       var x = 5 + i * 88, m = S.medidor[i];
-      A.caja(ctx, x, 5, 86, 24, C.noche2);
-      if (m > 0) { ctx.fillStyle = C.morado; ctx.fillRect(x, 5, 86 * m, 24); }
-      A.caja(ctx, x, 5, 86, 24, null, m >= 1 ? C.menta : S.piso === i ? C.blanco : C.morado2, 2);
-      A.texto(ctx, FASES[i] + (m >= 1 ? ' ✓' : m > 0 ? ' …' : ''), x + 43, 18, { tam: 13, negrita: true });
+      A.caja(ctx, x, MY, 86, 24, C.noche2);
+      if (m > 0) { ctx.fillStyle = C.morado; ctx.fillRect(x, MY, 86 * m, 24); }
+      A.caja(ctx, x, MY, 86, 24, null, m >= 1 ? C.menta : S.piso === i ? C.blanco : C.morado2, 2);
+      A.texto(ctx, FASES[i] + (m >= 1 ? ' ✓' : m > 0 ? ' …' : ''), x + 43, MY + 13, { tam: 13, negrita: true });
     }
   }
   function dibEscalera(ctx, e) {
@@ -240,8 +240,8 @@
       ctx.fillRect(e.x - 9, y0, 3, 34); ctx.fillRect(e.x + 6, y0, 3, 26);
       ctx.fillRect(e.x - 9, y0 + 12, 18, 3); ctx.fillRect(e.x - 9, y0 + 24, 12, 3);
       ctx.fillRect(e.x - 9, y1 - 14, 3, 14); ctx.fillRect(e.x + 6, y1 - 8, 3, 8);
-      A.texto(ctx, 'ROTA', e.x, y0 + 50, { tam: 12, color: C.rojo, negrita: true });
-      if (S.reparo > 0 && activa) A.texto(ctx, Math.ceil(S.reparo) + ' s', e.x, y0 + 66, { tam: 13, negrita: true });
+      A.texto(ctx, 'ROTA', e.x + 14, y0 + 44, { tam: 12, color: C.rojo, negrita: true, alin: 'left' });
+      if (S.reparo > 0 && activa) A.texto(ctx, Math.ceil(S.reparo) + ' s', e.x + 14, y0 + 60, { tam: 13, negrita: true, alin: 'left' });
       return;
     }
     ctx.fillRect(e.x - 9, y0, 3, y1 - y0); ctx.fillRect(e.x + 6, y0, 3, y1 - y0);
@@ -328,7 +328,7 @@
       var n = S.piso, P = PISOS[Math.min(n, 3)], j = S.j, i, x, y;
       /* muro de la torre */
       ctx.fillStyle = C.noche2;
-      for (y = 44; y < H; y += 24) for (x = (y / 24 % 2) * 30 - 20; x < W; x += 60) ctx.fillRect(x, y, 26, 2);
+      for (y = 20; y < L[0]; y += 24) for (x = (y / 24 % 2) * 30 - 20; x < W; x += 60) ctx.fillRect(x, y, 26, 2);
       /* pisos */
       for (i = 0; i < 5; i++) {
         A.caja(ctx, 0, L[i], W, 10, C.morado); ctx.fillStyle = C.morado2; ctx.fillRect(0, L[i], W, 3);
@@ -342,12 +342,12 @@
       if (n === 2 && resaltado()) {
         A.caja(ctx, TABLON.a - 2, L[2] - 2, TABLON.b - TABLON.a + 4, 14, null, C.oro, 2);
         ctx.fillStyle = C.oro;
-        for (i = 0; i <= 8; i++) { x = TABLON.a - 22 + i * 8.8; ctx.fillRect(x, L[2] - 8 - Math.sin(i / 8 * Math.PI) * 30, 3, 3); }
-        A.texto(ctx, 'SALTA', (TABLON.a + TABLON.b) / 2, L[2] - 50, { tam: 13, color: C.oro, negrita: true });
+        for (i = 0; i <= 8; i++) { x = TABLON.a - 22 + i * 8.8; ctx.fillRect(x, L[2] - 8 - Math.sin(i / 8 * Math.PI) * 26, 3, 3); }
+        A.texto(ctx, 'SALTA', (TABLON.a + TABLON.b) / 2, L[2] - 45, { tam: 13, color: C.oro, negrita: true });
       }
       /* antena y Obsoletus en la azotea */
-      ctx.fillStyle = C.gris; ctx.fillRect(ANTENA - 2, 42, 4, 40); ctx.fillRect(ANTENA - 10, 50, 20, 3); ctx.fillRect(ANTENA - 6, 60, 12, 3);
-      ctx.fillStyle = S.medidor[3] >= 1 && !S.activa ? C.gris : C.rojo; ctx.fillRect(ANTENA - 4, 36, 8, 8);
+      ctx.fillStyle = C.gris; ctx.fillRect(ANTENA - 2, L[4] - 40, 4, 40); ctx.fillRect(ANTENA - 10, L[4] - 32, 20, 3); ctx.fillRect(ANTENA - 6, L[4] - 22, 12, 3);
+      ctx.fillStyle = S.medidor[3] >= 1 && !S.activa ? C.gris : C.rojo; ctx.fillRect(ANTENA - 4, L[4] - 46, 8, 8);
       A.robot(ctx, 336, L[4] - 13, 26);
       if (n === 4) A.texto(ctx, 'ANTENA ▶', ANTENA - 60, L[4] - 34, { tam: 13, color: C.oro, negrita: true });
       /* escaleras */
@@ -361,9 +361,9 @@
         A.caja(ctx, fin, L[n] - 12, 10, 12, '#000', C.gris, 2);
         ctx.strokeStyle = C.gris; ctx.lineWidth = 2;
         for (x = 50; x < W - 30; x += 52) {
-          ctx.beginPath(); ctx.moveTo(x - P.dir * 4, L[n] + 13); ctx.lineTo(x + P.dir * 4, L[n] + 17); ctx.lineTo(x - P.dir * 4, L[n] + 21); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x - P.dir * 4, L[n] + 12); ctx.lineTo(x + P.dir * 3, L[n] + 15); ctx.lineTo(x - P.dir * 4, L[n] + 18); ctx.stroke();
         }
-        A.texto(ctx, '«' + P.sim + '» ' + P.barril, W / 2, L[n] - 78, { tam: 13, color: C.blanco });
+        A.texto(ctx, '«' + P.sim + '» ' + P.barril, W / 2, L[n] - 62, { tam: 13, color: C.blanco });
         if (S.bandera) dibBandera(ctx, S.bandera, L[n]);
         S.barriles.forEach(function (b) { dibBarril(ctx, b.x, L[n] - alturaBarril(b), P); });
       }
@@ -371,7 +371,7 @@
       if (S.inmune > 0 && S.activa) { ctx.strokeStyle = C.menta; ctx.lineWidth = 2; ctx.strokeRect(j.x - 13, j.y - 26, 26, 27); }
       A.oca(ctx, j.x, j.y - 12, 24, { dir: j.dir, paso: j.anda && Math.floor(api.t * 9) % 2 });
       /* medidor Plan–Actúo–Reviso–Ajusto */
-      ctx.fillStyle = C.noche; ctx.fillRect(0, 0, W, 34);
+      ctx.fillStyle = C.noche; ctx.fillRect(0, MY - 4, W, H - MY + 4);
       dibMedidor(ctx);
     }
   });

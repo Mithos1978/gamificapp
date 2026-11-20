@@ -51,6 +51,7 @@ Arcade.crear({
 | `api.elegir({titulo, texto, html?, opciones:[{etiqueta, detalle?}|string], campo?, enFila?})` | modal que **detiene el juego**; devuelve `Promise<{i, texto}>`. `campo` añade un cuadro de texto opcional; `enFila` para escalas 1–5. Tras Reiniciar, las promesas antiguas no se resuelven nunca (seguro) |
 | `api.informar({titulo, texto, html?, boton?})` | modal de un botón; `Promise` |
 | `api.herramientas([{id, etiqueta, icono?}], (id, api)=>{})` | barra de botones bajo el lienzo (teclas 1–9). `api.herramienta` = id seleccionado o `null`; `api.seleccionar(id)`; `api.herramientas(null)` la quita |
+| `api.ayuda(html)` | sustituye el HTML de ayuda del panel de pausa (p. ej. para acumular lo ya explicado) |
 | `api.terminar({titulo?, puntos, html?, feedback, ficha?:[lineas]})` | **solo al ganar**: abre la pantalla final con reflexión y Pluma |
 | `api.W`, `api.H`, `api.C` | tamaño lógico y paleta |
 
@@ -73,3 +74,7 @@ Paleta `Arcade.C`: `noche, noche2, morado, morado2, menta, oro, blanco, rojo, gr
 - No uses `localStorage`, `fetch`, imágenes, fuentes ni librerías externas. No escribas `</script` en el JS.
 - Prueba de fuego: `Arcade._.estado()` devuelve `inicio|jugando|pausa|modal|fin`; `Arcade._.api` y
   `Arcade._.juego` sirven para depurar desde Playwright.
+- Los avisos de `api.mensaje` salen en una franja propia sobre el lienzo (uno cada vez, máx. ~3 líneas); en móvil apaisado se superponen a la parte alta del lienzo.
+- La fuente del lienzo no dibuja bien símbolos como «✓»: usa formas o texto («OK»).
+- Convención de pruebas: cada juego expone `depurar()` en su configuración (lectura del estado), accesible como `Arcade._.juego.depurar()`.
+- En móvil caben la cruceta completa y hasta 3 acciones; los botones de acción se estrechan solos.

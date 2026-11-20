@@ -163,7 +163,7 @@
     montar: function () {
       D.nido = { x: 180, y: 408 }; D.cp = { x: 180, y: 408 }; D.salvados = 0;
       D.pollos = [{ x: 50, y: 62, e: 'espera' }, { x: 310, y: 62, e: 'espera' }];
-      D.robots = [robot(40, 115, 80, 0), robot(300, 185, -105, 0), robot(90, 255, 90, 0), robot(250, 325, -110, 0)];
+      D.robots = [robot(40, 115, 72, 0), robot(300, 185, -92, 0), robot(90, 255, 80, 0), robot(250, 325, -98, 0)];
     },
     actualizar: function (dt, api) {
       moverJugador(dt, api);
@@ -416,14 +416,16 @@
     dibujar: function (ctx, api) {
       var c = cerca();
       FRANJAS.forEach(function (f) {
-        var s = f.s * (D.inv ? -1 : 1), x, y, d = (api.t * 30 * s) % 20;
+        var s = f.s * (D.inv ? -1 : 1), x, y, yy, d = (api.t * 36 * s) % 24;
         A.caja(ctx, 0, f.y0, W, f.y1 - f.y0, C.noche2, C.morado, 2);
+        ctx.save(); ctx.beginPath(); ctx.rect(2, f.y0 + 3, W - 4, f.y1 - f.y0 - 6); ctx.clip();
         ctx.fillStyle = C.morado2;
-        for (x = 30; x < W; x += 60) for (y = f.y0 + 14; y < f.y1 - 8; y += 20) {
-          var yy = A.limitar(y + d, f.y0 + 8, f.y1 - 14);
-          ctx.fillRect(x - 2, yy, 4, 8);                                   /* flecha: asta y punta */
-          ctx.fillRect(x - 6, s > 0 ? yy + 6 : yy - 2, 12, 3); ctx.fillRect(x - 3, s > 0 ? yy + 9 : yy - 5, 6, 3);
+        for (x = 30; x < 300; x += 60) for (y = f.y0 - 24; y < f.y1 + 24; y += 24) {
+          yy = y + d;                                                     /* flecha: asta y punta */
+          ctx.fillRect(x - 2, s > 0 ? yy - 8 : yy, 4, 8);
+          ctx.beginPath(); ctx.moveTo(x - 7, yy); ctx.lineTo(x + 7, yy); ctx.lineTo(x, yy + 8 * s); ctx.closePath(); ctx.fill();
         }
+        ctx.restore();
         A.texto(ctx, f.n + (s > 0 ? ' ▼' : ' ▲'), 330, (f.y0 + f.y1) / 2, { tam: 14, color: C.blanco, negrita: true });
       });
       PAL.forEach(function (p, i) {
@@ -493,7 +495,7 @@
 
     iniciar: function (api) {
       D = null;
-      S = { modo: 'sala', activa: true, armada: false, hecho: {}, pref: {}, orden: [], puntos: 0, intentos: 0, j: { x: CX, y: CY, mira: 1, mov: false } };
+      S = { modo: 'sala', activa: true, armada: false, hecho: {}, pref: {}, orden: [], puntos: 0, intentos: 0, j: { x: CX, y: CY + 42, mira: 1, mov: false } };
       api.mensaje('Camina hasta un portal para entrar. Elige el que más te apetezca.', 4000);
     },
     alPulsar: function (id, api) {

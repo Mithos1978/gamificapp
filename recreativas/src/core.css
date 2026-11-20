@@ -4,8 +4,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 #app{position:fixed;inset:0;display:grid;gap:6px;
   padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
-  grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto auto;
-  grid-template-areas:"barra barra barra" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+  grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "avisos avisos avisos" "escena escena escena" "herr herr herr" "cruceta . acciones"}
 #barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 #titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
   text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
@@ -23,8 +23,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #botones button{font-size:12px;padding:4px 8px}
 #escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
 #lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
-#avisos{position:absolute;left:0;right:0;top:8px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;padding:0 8px}
-.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:5px 10px;font-size:14px;line-height:1.3;max-width:560px;text-align:center}
+#avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
 #herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 #herramientas:empty{display:none}
 #herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
@@ -32,12 +32,14 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
 #acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
 #cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
-#acciones button{min-width:76px;height:76px;font-size:14px;border-radius:0;padding:4px}
+#acciones button{width:clamp(54px,17vw,76px);min-width:0;height:76px;font-size:clamp(11px,3.1vw,14px);border-radius:0;padding:2px}
 #cruceta:empty,#acciones:empty{display:none}
 .pulsado{background:#6D42C7!important}
 @media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
 @media (orientation:landscape) and (max-height:560px){
   #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #avisos{grid-area:escena;align-self:start;height:auto;z-index:2;padding:6px}
+  #capa{grid-row:2/-1}
   #cruceta,#acciones{align-self:end}
   #acciones{flex-direction:column}
   #acciones button{height:56px}
@@ -45,7 +47,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
   #herramientas button{min-height:36px}
 }
 @media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
-#capa{position:fixed;inset:0;background:#080b16d9;display:flex;align-items:center;justify-content:center;padding:10px;z-index:10}
+#capa{grid-column:1/-1;grid-row:2/-1;min-height:0;background:#080b16f2;display:flex;align-items:center;justify-content:center;padding:4px;z-index:10}
 #capa[hidden]{display:none}
 #panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
   overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}

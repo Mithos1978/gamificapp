@@ -11,8 +11,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
   -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 #app{position:fixed;inset:0;display:grid;gap:6px;
   padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
-  grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto auto;
-  grid-template-areas:"barra barra barra" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+  grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "avisos avisos avisos" "escena escena escena" "herr herr herr" "cruceta . acciones"}
 #barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
 #titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
   text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
@@ -30,8 +30,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #botones button{font-size:12px;padding:4px 8px}
 #escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
 #lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
-#avisos{position:absolute;left:0;right:0;top:8px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;padding:0 8px}
-.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:5px 10px;font-size:14px;line-height:1.3;max-width:560px;text-align:center}
+#avisos{grid-area:avisos;height:56px;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:3px 10px;font-size:13px;line-height:1.25;max-width:640px;max-height:100%;text-align:center}
 #herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 #herramientas:empty{display:none}
 #herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
@@ -39,12 +39,14 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 #cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
 #acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
 #cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
-#acciones button{min-width:76px;height:76px;font-size:14px;border-radius:0;padding:4px}
+#acciones button{width:clamp(54px,17vw,76px);min-width:0;height:76px;font-size:clamp(11px,3.1vw,14px);border-radius:0;padding:2px}
 #cruceta:empty,#acciones:empty{display:none}
 .pulsado{background:#6D42C7!important}
 @media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
 @media (orientation:landscape) and (max-height:560px){
   #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #avisos{grid-area:escena;align-self:start;height:auto;z-index:2;padding:6px}
+  #capa{grid-row:2/-1}
   #cruceta,#acciones{align-self:end}
   #acciones{flex-direction:column}
   #acciones button{height:56px}
@@ -52,7 +54,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
   #herramientas button{min-height:36px}
 }
 @media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
-#capa{position:fixed;inset:0;background:#080b16d9;display:flex;align-items:center;justify-content:center;padding:10px;z-index:10}
+#capa{grid-column:1/-1;grid-row:2/-1;min-height:0;background:#080b16f2;display:flex;align-items:center;justify-content:center;padding:4px;z-index:10}
 #capa[hidden]{display:none}
 #panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
   overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
@@ -90,7 +92,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
     </div>
   </header>
-  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas><div id="avisos" aria-live="polite"></div></main>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas></main>
+  <div id="avisos" aria-live="polite"></div>
   <div id="herramientas"></div>
   <div id="cruceta"></div>
   <div id="acciones"></div>
@@ -222,7 +225,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       sonido: bip,
       mensaje: function (txt, ms) {
         var cont = $('avisos'), a = el('div', 'aviso', txt);
-        while (cont.children.length >= 2) cont.removeChild(cont.firstChild);
+        while (cont.firstChild) cont.removeChild(cont.firstChild);
         cont.appendChild(a);
         setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
       },
@@ -697,7 +700,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     montar: function () {
       D.nido = { x: 180, y: 408 }; D.cp = { x: 180, y: 408 }; D.salvados = 0;
       D.pollos = [{ x: 50, y: 62, e: 'espera' }, { x: 310, y: 62, e: 'espera' }];
-      D.robots = [robot(40, 115, 80, 0), robot(300, 185, -105, 0), robot(90, 255, 90, 0), robot(250, 325, -110, 0)];
+      D.robots = [robot(40, 115, 72, 0), robot(300, 185, -92, 0), robot(90, 255, 80, 0), robot(250, 325, -98, 0)];
     },
     actualizar: function (dt, api) {
       moverJugador(dt, api);
@@ -950,14 +953,16 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     dibujar: function (ctx, api) {
       var c = cerca();
       FRANJAS.forEach(function (f) {
-        var s = f.s * (D.inv ? -1 : 1), x, y, d = (api.t * 30 * s) % 20;
+        var s = f.s * (D.inv ? -1 : 1), x, y, yy, d = (api.t * 36 * s) % 24;
         A.caja(ctx, 0, f.y0, W, f.y1 - f.y0, C.noche2, C.morado, 2);
+        ctx.save(); ctx.beginPath(); ctx.rect(2, f.y0 + 3, W - 4, f.y1 - f.y0 - 6); ctx.clip();
         ctx.fillStyle = C.morado2;
-        for (x = 30; x < W; x += 60) for (y = f.y0 + 14; y < f.y1 - 8; y += 20) {
-          var yy = A.limitar(y + d, f.y0 + 8, f.y1 - 14);
-          ctx.fillRect(x - 2, yy, 4, 8);                                   /* flecha: asta y punta */
-          ctx.fillRect(x - 6, s > 0 ? yy + 6 : yy - 2, 12, 3); ctx.fillRect(x - 3, s > 0 ? yy + 9 : yy - 5, 6, 3);
+        for (x = 30; x < 300; x += 60) for (y = f.y0 - 24; y < f.y1 + 24; y += 24) {
+          yy = y + d;                                                     /* flecha: asta y punta */
+          ctx.fillRect(x - 2, s > 0 ? yy - 8 : yy, 4, 8);
+          ctx.beginPath(); ctx.moveTo(x - 7, yy); ctx.lineTo(x + 7, yy); ctx.lineTo(x, yy + 8 * s); ctx.closePath(); ctx.fill();
         }
+        ctx.restore();
         A.texto(ctx, f.n + (s > 0 ? ' ▼' : ' ▲'), 330, (f.y0 + f.y1) / 2, { tam: 14, color: C.blanco, negrita: true });
       });
       PAL.forEach(function (p, i) {
@@ -1027,7 +1032,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 
     iniciar: function (api) {
       D = null;
-      S = { modo: 'sala', activa: true, armada: false, hecho: {}, pref: {}, orden: [], puntos: 0, intentos: 0, j: { x: CX, y: CY, mira: 1, mov: false } };
+      S = { modo: 'sala', activa: true, armada: false, hecho: {}, pref: {}, orden: [], puntos: 0, intentos: 0, j: { x: CX, y: CY + 42, mira: 1, mov: false } };
       api.mensaje('Camina hasta un portal para entrar. Elige el que más te apetezca.', 4000);
     },
     alPulsar: function (id, api) {
