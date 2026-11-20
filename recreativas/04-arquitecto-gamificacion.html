@@ -647,13 +647,11 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     return { ok: !mejor.faltan.length && !exceso, i: mejor.i, faltan: mejor.faltan, exceso: exceso, pres: pres };
   }
   function tarjeta(ev, m) {
-    var hay = unir(nombres(ORDEN.filter(function (k) { return ev.pres[k]; })));
     if (!ev.faltan.length && ev.exceso) {
-      return 'Fila eliminada sin bonificación: la combinación estaba, pero con ' + ev.pres.reco +
-        ' casillas de recompensa el premio ocupa casi toda la fila y tapa lo demás (máximo 2).';
+      return 'Fila eliminada sin bonificación: con ' + ev.pres.reco + ' casillas de recompensa el premio tapa todo lo demás (máximo 2).';
     }
-    return 'Fila eliminada sin bonificación. Tenía ' + hay + '; para «' + m.nombre + '» faltaba ' +
-      unir(nombres(ev.faltan)) + ': ' + CON[ev.faltan[0]].falta + '.';
+    var f = CON[ev.faltan[0]].falta;
+    return 'Fila eliminada sin bonificación: faltaba ' + unir(nombres(ev.faltan)) + '. ' + f.charAt(0).toUpperCase() + f.slice(1) + '.';
   }
 
   function criterioHtml(m) {
@@ -714,7 +712,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       api.flotar('+300 combinación', GX + COLS * T / 2, GY + llenas[buena] * T + 6, { tam: 14 });
     } else {
       S.sinBono += llenas.length; api.sonido('error');
-      api.mensaje(tarjeta(evs[0], m), 6500);
+      api.mensaje(tarjeta(evs[0], m), 5000);
     }
   }
   function terminarLimpieza(api) {

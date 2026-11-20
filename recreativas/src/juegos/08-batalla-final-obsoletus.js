@@ -132,7 +132,7 @@
   function desenlace(api) {
     S.fin = true; S.proy = []; S.avisos = []; S.tiros = [];
     var lista = '<ul>' + FASES.map(function (F, i) {
-      return '<li><b>' + A.esc(F.pluma) + ':</b> frente a «' + A.esc(F.error) + '» usaste «' + A.esc(S.elegida[i]) + '».</li>';
+      return '<li><b>' + A.esc(F.pluma) + ':</b> desmonta «' + A.esc(F.error) + '».</li>';
     }).join('') + '</ul>';
     api.informar({
       titulo: '¡Obsoletus se queda sin argumentos!',

@@ -620,7 +620,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       activa: true, ganaT: 0, sinPala: 0, trozos: [], reparados: [], notas: [], usos: {}, obj: null, ruta: [], avisoSin: -9,
       banda: { tipo: 'Cómo va', txt: 'Elige una mejora (1–4) y lanza. Aquí verás la explicación de cada golpe; en Pausa las tienes todas.' } };
   }
-  function anchoPala(api) { return api.tranquilo ? 108 : 88; }
+  function anchoPala(api) { return api.tranquilo ? 116 : 96; }
   function vivos() {
     var l = S.bloques.filter(function (b) { return b.vivo; });
     if (S.final && S.final.vivo) l.push(S.final);
@@ -703,7 +703,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     nota(q, texto, true); pintarAyuda(api);
   }
   function golpear(q, api) {
-    var h = api.herramienta, m = h && M[h], cx = A.limitar(q.x + q.w / 2, 70, W - 70);
+    var h = api.herramienta, m = h && M[h], cx = A.limitar(q.x + q.w / 2, 84, W - 84);
     if (!m) {
       q.tiembla = api.t;
       S.banda = { tipo: 'Aviso', txt: 'Sin mejora elegida la pelota solo rebota: pulsa 1, 2, 3 o 4 (o un botón de mejora).' };
@@ -933,7 +933,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       A.caja(ctx, p.x - pw / 2, PALA_Y, pw, PALA_H, m ? m.color : C.gris, C.blanco, 2);
       if (m) {
         icono(ctx, h, p.x - pw / 2 + 13, PALA_Y + 9, C.noche);
-        A.texto(ctx, m.corto, p.x + 9, PALA_Y + 10, { tam: 12, color: C.noche, negrita: true, sombra: false });
+        A.texto(ctx, m.corto, p.x + 11, PALA_Y + 10, { tam: 12, color: C.noche, negrita: true, sombra: false });
       } else A.texto(ctx, 'elige 1–4', p.x, PALA_Y + 10, { tam: 12, color: C.noche, negrita: true, sombra: false });
       /* franja fija de explicación (no tapa el juego ni caduca) */
       var bc = S.banda.tipo === 'Pista' || S.banda.tipo === 'Aviso' ? C.oro : C.menta;
