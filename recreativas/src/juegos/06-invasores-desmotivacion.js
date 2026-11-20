@@ -73,8 +73,8 @@
     S.activa = false; S.reintentos++; S.balas = [];
     api.elegir({
       titulo: 'La escuela necesita un respiro',
-      texto: 'Tres amenazas han llegado a la Escuela del Saber en esta oleada. No pasa nada: conservas las ' + S.prot +
-        ' que ya has atendido y vuelves a intentar solo las que quedan.',
+      texto: 'Tres amenazas han llegado a la Escuela del Saber en esta oleada. No pasa nada: conservas lo ya atendido (' + S.prot +
+        ' de 12) y vuelves a intentar solo las amenazas que quedan.',
       opciones: [{ etiqueta: 'Reintentar la oleada' },
         { etiqueta: 'Reintentar en modo tranquilo', detalle: 'Los nubarrones bajan más despacio: más tiempo para pensar.' }]
     }).then(function (r) { if (r.i === 1) api.activarTranquilo(); empezarOleada(api, true); });
