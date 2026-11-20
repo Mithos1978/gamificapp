@@ -17,11 +17,11 @@
   ];
   var RONDAS = [
     { clave: 'A', nombre: 'Puntos inmediatos', corto: 'puntos',
-      intro: 'Cada chispa suma puntos al instante y el contador está siempre a la vista. Recoge 12 chispas para abrir la puerta y sal por ella.' },
+      intro: 'Cada chispa suma puntos al instante y el contador está siempre a la vista. Recoge 16 chispas para abrir la puerta y sal por ella.' },
     { clave: 'B', nombre: 'Insignias y llave de acceso', corto: 'insignias y llave',
       intro: 'Aquí no verás puntos mientras juegas: ganarás insignias de estatus (bronce, plata y oro) y necesitas la llave para tener acceso a la puerta.' },
     { clave: 'C', nombre: 'Feedback útil y elección', corto: 'feedback y elección',
-      intro: 'Verás las rutas de los guardianes y recibirás avisos sobre tu progreso. Además eliges tú la ayuda. Recoge 12 chispas y sal por la puerta.' }
+      intro: 'Verás las rutas de los guardianes y recibirás avisos sobre tu progreso. Además eliges tú la ayuda. Recoge 16 chispas y sal por la puerta.' }
   ];
   var DIR = { arriba: [0, -1], abajo: [0, 1], izq: [-1, 0], der: [1, 0] };
   var S;
@@ -31,10 +31,11 @@
     if (n === 2) return BASE.slice().reverse();
     return BASE.slice();
   }
+  function rondaAct() { return RONDAS[Math.min(S.ronda, 2)]; }
   function libre(x, y) { return S.muro[y] && S.muro[y][x] === false; }
 
   function montar(api) {
-    var m = mapaDe(S.ronda), R = RONDAS[S.ronda];
+    var m = mapaDe(S.ronda), R = rondaAct();
     S.muro = []; S.chispas = {}; S.total = 0; S.guardias = []; S.llave = null;
     for (var y = 0; y < FILAS; y++) {
       S.muro.push([]);
@@ -57,14 +58,14 @@
       while (libre(b.x + g.dx, b.y + g.dy)) { b.x += g.dx; b.y += g.dy; }
       g.a = a; g.b = b;
     });
-    S.meta = Math.min(12, S.total);
+    S.meta = Math.min(16, S.total);
     S.j = { tx: S.inicio.x, ty: S.inicio.y, dx: 0, dy: 0, p: 0, mira: 1 };
     S.vidas = 3; S.tiempo = 45; S.cogidas = 0; S.puntosRonda = 0; S.tieneLlave = false;
     S.insignias = 0; S.inmune = 1.5; S.pista = []; S.activa = true; S.avisado = 0;
   }
 
   function empezarRonda(api) {
-    var R = RONDAS[S.ronda];
+    var R = rondaAct();
     S.activa = false;
     montar(api); S.activa = false;
     var p;
@@ -94,7 +95,7 @@
   }
 
   function finRonda(api) {
-    var R = RONDAS[S.ronda];
+    var R = rondaAct();
     S.activa = false;
     S.puntosRonda += 50 + S.vidas * 20; S.puntos += S.puntosRonda;
     api.sonido('ok');
@@ -184,9 +185,9 @@
       else if (!(q && libre(j.tx + j.dx, j.ty + j.dy))) { j.dx = 0; j.dy = 0; j.p = 0; }
     }
   }
-  function puertaAbierta() { return RONDAS[S.ronda].clave === 'B' ? S.tieneLlave : S.cogidas >= S.meta; }
+  function puertaAbierta() { return rondaAct().clave === 'B' ? S.tieneLlave : S.cogidas >= S.meta; }
   function alLlegar(api) {
-    var j = S.j, k = j.tx + ',' + j.ty, R = RONDAS[S.ronda], px = j.tx * T + T / 2, py = j.ty * T;
+    var j = S.j, k = j.tx + ',' + j.ty, R = rondaAct(), px = j.tx * T + T / 2, py = j.ty * T;
     if (S.chispas[k]) {
       delete S.chispas[k]; S.cogidas++; S.puntosRonda += 10; api.sonido('punto');
       if (R.clave === 'A') api.flotar('+10', px, py);
@@ -226,7 +227,7 @@
     while (fin && fin !== ini) { S.pista.push(fin.split(',').map(Number)); fin = previo[fin]; }
   }
   function moverGuardia(g, dt, api) {
-    var v = 2.1 * api.vel * (RONDAS[S.ronda].clave === 'C' && S.ayudaC === 'lentos' ? 0.6 : 1);
+    var v = 2.1 * api.vel * (rondaAct().clave === 'C' && S.ayudaC === 'lentos' ? 0.6 : 1);
     g.p += v * dt;
     if (g.p >= 1) { g.tx += g.dx; g.ty += g.dy; g.p -= 1; }
     if (!libre(g.tx + g.dx, g.ty + g.dy)) { if (g.p > 0) g.p = 0; g.dx = -g.dx; g.dy = -g.dy; }
@@ -254,9 +255,10 @@
       empezarRonda(api);
     },
     alPulsar: function (id) { if (DIR[id]) S.ultima = id; },
+    depurar: function () { return S; },
 
     actualizar: function (dt, api) {
-      var R = RONDAS[S.ronda];
+      var R = rondaAct();
       if (!S.activa || !R) return;
       if (!api.tranquilo) {
         S.tiempo -= dt;
@@ -291,7 +293,7 @@
 
     dibujar: function (ctx, api) {
       if (!S || !S.muro) return;
-      var R = RONDAS[Math.min(S.ronda, 2)], x, y;
+      var R = rondaAct(), x, y;
       for (y = 0; y < FILAS; y++) for (x = 0; x < COLS; x++) {
         if (S.muro[y][x]) { A.caja(ctx, x * T, y * T, T, T, C.morado); ctx.fillStyle = C.morado2; ctx.fillRect(x * T, y * T, T, 3); ctx.fillStyle = '#4a2a94'; ctx.fillRect(x * T, y * T + T - 3, T, 3); }
         else if (S.chispas[x + ',' + y]) {

@@ -390,7 +390,7 @@
           copiar.textContent = ok ? 'Ficha copiada' : 'Ficha seleccionada: cópiala con Ctrl/Cmd + C';
         });
         zona.appendChild(copiar); zona.appendChild(nota);
-        reclamar.disabled = true; reclamar.textContent = 'Pluma Dorada reclamada'; ta.readOnly = true;
+        reclamar.disabled = true; reclamar.textContent = 'Pluma Dorada reclamada'; ta.readOnly = true; aviso.textContent = '';
         ficha.scrollIntoView({ block: 'nearest' });
       });
       panel.appendChild(lb); panel.appendChild(ta); panel.appendChild(aviso); panel.appendChild(ops); panel.appendChild(zona);

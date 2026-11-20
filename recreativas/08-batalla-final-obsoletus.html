@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fase  · Obsoletus y la Gran Oca del Saber</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;gap:6px;
+  padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+#barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+#titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
+  text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
+#hud{display:flex;flex-wrap:wrap;gap:4px;font-size:13px}
+.chip{background:#1b2444;border:2px solid #6D42C7;padding:2px 7px;white-space:nowrap}
+.chip b{color:#42D6A4;font-weight:700;margin-right:4px}
+#botones{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;color:#f4f1e8;background:#1b2444;border:2px solid #6D42C7;padding:6px 10px;cursor:pointer;
+  border-radius:0;touch-action:manipulation;min-height:36px;box-shadow:2px 2px 0 #000}
+button:hover{background:#2a3566}
+button:focus-visible,textarea:focus-visible{outline:3px solid #F1C453;outline-offset:2px}
+button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #000}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
+#botones button{font-size:12px;padding:4px 8px}
+#escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+#lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
+#avisos{position:absolute;left:0;right:0;top:8px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;padding:0 8px}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:5px 10px;font-size:14px;line-height:1.3;max-width:560px;text-align:center}
+#herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#herramientas:empty{display:none}
+#herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
+#herramientas button[aria-pressed="true"]::before{content:"\25B6 "}
+#cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
+#acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
+#cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
+#acciones button{min-width:76px;height:76px;font-size:14px;border-radius:0;padding:4px}
+#cruceta:empty,#acciones:empty{display:none}
+.pulsado{background:#6D42C7!important}
+@media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
+@media (orientation:landscape) and (max-height:560px){
+  #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #cruceta,#acciones{align-self:end}
+  #acciones{flex-direction:column}
+  #acciones button{height:56px}
+  #titulo{font-size:14px;flex:0 1 auto}
+  #herramientas button{min-height:36px}
+}
+@media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
+#capa{position:fixed;inset:0;background:#080b16d9;display:flex;align-items:center;justify-content:center;padding:10px;z-index:10}
+#capa[hidden]{display:none}
+#panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
+  overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
+#panel h2{margin:0 0 8px;color:#F1C453;font-size:clamp(18px,4vw,26px);text-transform:uppercase;letter-spacing:.05em;text-shadow:2px 2px 0 #6D42C7}
+#panel h3{margin:14px 0 4px;color:#42D6A4;font-size:15px;text-transform:uppercase}
+#panel p{margin:6px 0}
+#panel ol,#panel ul{margin:6px 0;padding-left:22px}
+#panel .opciones{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#panel .opciones.fila{flex-direction:row;flex-wrap:wrap}
+#panel .opciones.fila button{flex:1;min-width:48px;text-align:center}
+#panel .opciones button{text-align:left;min-height:44px;font-size:15px}
+#panel .opciones button small{display:block;color:#c9cfe8;font-size:13px;margin-top:2px}
+#panel .principal{background:#6D42C7;border-color:#F1C453;font-weight:700;font-size:17px;min-height:48px;text-align:center}
+#panel textarea{width:100%;font:inherit;font-size:16px;background:#101629;color:#f4f1e8;border:2px solid #42D6A4;padding:8px;min-height:74px;resize:vertical;border-radius:0}
+#panel label{display:block;margin:10px 0 4px;color:#42D6A4}
+#panel .nota{font-size:13px;color:#c9cfe8}
+#panel .ficha{background:#101629;border:2px dashed #F1C453;padding:10px;white-space:pre-wrap;word-break:break-word;
+  user-select:text;-webkit-user-select:text;font-size:14px;margin:8px 0}
+#panel .conmutadores{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.barras{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:8px 0}
+.barras .b{height:18px;background:repeating-linear-gradient(90deg,#42D6A4 0 8px,#2fae84 8px 10px);border:2px solid #f4f1e8}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="barra">
+    <h1 id="titulo"></h1>
+    <div id="hud"></div>
+    <div id="botones">
+      <button type="button" id="bPausa">Pausa</button>
+      <button type="button" id="bReiniciar">Reiniciar</button>
+      <button type="button" id="bSonido" aria-pressed="false">Sonido: no</button>
+      <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
+    </div>
+  </header>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas><div id="avisos" aria-live="polite"></div></main>
+  <div id="herramientas"></div>
+  <div id="cruceta"></div>
+  <div id="acciones"></div>
+  <div id="capa" hidden><div id="panel" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+</div>
+<script>
+/* Motor común de las recreativas de «Obsoletus y la Gran Oca del Saber».
+   Sin dependencias externas ni almacenamiento: todo vive en memoria durante la sesión. */
+(function () {
+  'use strict';
+  var C = { noche: '#101629', noche2: '#1b2444', morado: '#6D42C7', morado2: '#a98bf0', menta: '#42D6A4',
+    oro: '#F1C453', blanco: '#f4f1e8', rojo: '#ff8a8a', gris: '#8791b5' };
+  var FUENTE = 'ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  /* ---------- Ayudas de dibujo ---------- */
+  function texto(ctx, s, x, y, o) {
+    o = o || {};
+    var tam = o.tam || 14;
+    ctx.font = (o.negrita ? '700 ' : '') + tam + 'px ' + FUENTE;
+    ctx.textAlign = o.alin || 'center';
+    ctx.textBaseline = o.base || 'middle';
+    var lineas = [String(s)];
+    if (o.ancho) {
+      lineas = [];
+      var pal = String(s).split(' '), l = '';
+      pal.forEach(function (p) {
+        var t = l ? l + ' ' + p : p;
+        if (ctx.measureText(t).width > o.ancho && l) { lineas.push(l); l = p; } else l = t;
+      });
+      lineas.push(l);
+    }
+    var alto = tam * 1.25, y0 = y - (lineas.length - 1) * alto / 2;
+    lineas.forEach(function (ln, i) {
+      if (o.sombra !== false) { ctx.fillStyle = o.sombraColor || '#000'; ctx.fillText(ln, x + 1, y0 + i * alto + 1); }
+      ctx.fillStyle = o.color || C.blanco;
+      ctx.fillText(ln, x, y0 + i * alto);
+    });
+    return lineas.length;
+  }
+  function caja(ctx, x, y, w, h, relleno, borde, grosor) {
+    if (relleno) { ctx.fillStyle = relleno; ctx.fillRect(x, y, w, h); }
+    if (borde) { ctx.strokeStyle = borde; ctx.lineWidth = grosor || 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); }
+  }
+  /* Oca exploradora: centrada en (x,y), altura aproximada t. o = {dir:-1|1, paso:bool, color:gorro} */
+  function oca(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y); ctx.scale(o.dir < 0 ? -1 : 1, 1);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r('#f4f1e8', -3.5, -0.5, 5.5, 3.5);
+    r('#d9d4c4', -3, 0.3, 3, 1.6);
+    r('#f4f1e8', 0.8, -3.5, 2, 4);
+    r(o.color || C.menta, 0.3, -4.5, 3, 1);
+    r('#101629', 1.9, -2.8, 0.7, 0.7);
+    r(C.oro, 2.8, -2.4, 1.6, 0.9);
+    var p = o.paso ? 0.8 : 0;
+    r(C.oro, -2 + p, 3, 1, 1.4); r(C.oro, 0 - p, 3, 1, 1.4);
+    ctx.restore();
+  }
+  /* Robot de Obsoletus: centrado en (x,y), altura aproximada t. o = {color, ojo, enfado} */
+  function robot(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r(C.gris, -0.3, -4.5, 0.6, 1.2); r(o.ojo || C.rojo, -0.7, -5, 1.4, 0.8);
+    r(C.blanco, -3.8, -3.6, 7.6, 5.9); r(o.color || '#3b2a78', -3.5, -3.3, 7, 5.3);
+    r('#000', -2.6, -2.2, 5.2, 1.8);
+    r(o.ojo || C.rojo, -2, -1.8, 1.2, 1); r(o.ojo || C.rojo, 0.8, -1.8, 1.2, 1);
+    r('#000', -2, 0.6, 4, 0.6);
+    r(C.gris, -2.8, 2, 2, 2.4); r(C.gris, 0.8, 2, 2, 2.4);
+    ctx.restore();
+  }
+  function pluma(ctx, x, y, t, color) {
+    var u = t / 8;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5);
+    ctx.fillStyle = color || C.oro;
+    ctx.fillRect(-1.5 * u, -4 * u, 3 * u, 6 * u); ctx.fillRect(-0.8 * u, -5 * u, 1.6 * u, 1 * u);
+    ctx.fillStyle = '#000'; ctx.fillRect(-0.2 * u, -3.5 * u, 0.4 * u, 7.5 * u);
+    ctx.restore();
+  }
+  function choca(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function limitar(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  /* ---------- Motor ---------- */
+  function crear(J) {
+    var lienzo = $('lienzo'), ctx = lienzo.getContext('2d'), capa = $('capa'), panel = $('panel');
+    var W = J.ancho || 480, H = J.alto || 360, k = 1;
+    var estado = 'inicio', gen = 0, tranquilo = false, sonido = false, audio = null;
+    var registro = [], hudCache = '', herr = null, herrSel = null, alHerr = null;
+    var cola = Promise.resolve(), botonesModal = null, flotantes = [];
+    var ctl = J.controles || {};
+    var dirs = ctl.cruceta || ['arriba', 'abajo', 'izq', 'der'];
+    var acciones = ctl.acciones || [];
+    var teclas = { arriba: false, abajo: false, izq: false, der: false };
+    var TECLAS_DEF = [[' '], ['x', 'm'], ['z', 'n']];
+    var mapa = { arrowup: 'arriba', w: 'arriba', arrowdown: 'abajo', s: 'abajo', arrowleft: 'izq', a: 'izq', arrowright: 'der', d: 'der' };
+    acciones.forEach(function (a, i) {
+      teclas[a.id] = false;
+      (a.teclas || TECLAS_DEF[i] || []).forEach(function (t) { mapa[t.toLowerCase()] = a.id; });
+    });
+
+    var api = {
+      W: W, H: H, C: C, t: 0, teclas: teclas,
+      get tranquilo() { return tranquilo; },
+      get vel() { return tranquilo ? 0.6 : 1; },
+      get herramienta() { return herrSel; },
+      get jugando() { return estado === 'jugando'; },
+      hud: function (o) {
+        var h = '';
+        Object.keys(o).forEach(function (kk) {
+          if (o[kk] == null || o[kk] === '') return;
+          h += '<span class="chip"><b>' + esc(kk) + '</b>' + esc(o[kk]) + '</span>';
+        });
+        if (h !== hudCache) { hudCache = h; $('hud').innerHTML = h; }
+      },
+      sonido: bip,
+      mensaje: function (txt, ms) {
+        var cont = $('avisos'), a = el('div', 'aviso', txt);
+        while (cont.children.length >= 2) cont.removeChild(cont.firstChild);
+        cont.appendChild(a);
+        setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
+      },
+      flotar: function (txt, x, y, o) {
+        o = o || {};
+        flotantes.push({ txt: txt, x: x, y: y, v: 0, dur: o.dur || 1.1, color: o.color || C.oro, tam: o.tam || 13 });
+        if (flotantes.length > 8) flotantes.shift();
+      },
+      registrar: function (txt) { registro.push(String(txt)); },
+      elegir: function (cfg) {
+        var g = gen;
+        cola = cola.then(function () { return g === gen ? modal(cfg, g) : new Promise(function () {}); });
+        return cola;
+      },
+      informar: function (cfg) {
+        return api.elegir({ titulo: cfg.titulo, texto: cfg.texto, html: cfg.html, opciones: [cfg.boton || 'Continuar'] });
+      },
+      herramientas: function (lista, alElegir) {
+        herr = lista && lista.length ? lista : null; alHerr = alElegir || null;
+        herrSel = null; pintarHerr(); ajustar();
+      },
+      seleccionar: function (id) { elegirHerr(id, true); },
+      ayuda: function (html) { J.ayuda = html; },
+      terminar: fin
+    };
+
+    /* --- Sonido (apagado por defecto) --- */
+    function bip(tipo) {
+      if (!sonido) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        var f = { punto: 880, ok: 660, error: 200, golpe: 150, salto: 520, disparo: 740, gana: 990 }[tipo] || 440;
+        var o = audio.createOscillator(), gn = audio.createGain();
+        o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.05;
+        o.connect(gn); gn.connect(audio.destination);
+        o.start(); o.stop(audio.currentTime + 0.09);
+      } catch (e) { /* sin audio disponible */ }
+    }
+
+    /* --- Tamaño del lienzo --- */
+    function ajustar() {
+      var r = $('escena').getBoundingClientRect();
+      var s = Math.max(0.2, Math.min((r.width - 6) / W, (r.height - 6) / H));
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      lienzo.style.width = Math.floor(W * s) + 'px';
+      lienzo.style.height = Math.floor(H * s) + 'px';
+      lienzo.width = Math.round(W * s * dpr); lienzo.height = Math.round(H * s * dpr);
+      k = lienzo.width / W;
+    }
+    window.addEventListener('resize', ajustar);
+    if (window.ResizeObserver) new ResizeObserver(ajustar).observe($('escena'));
+
+    /* --- Entrada --- */
+    function soltar() { Object.keys(teclas).forEach(function (t) { teclas[t] = false; }); }
+    function pulsar(id) {
+      if (estado !== 'jugando') return;
+      if (id in teclas) teclas[id] = true;
+      if (J.alPulsar) J.alPulsar(id, api);
+    }
+    function escribiendo(e) { var t = e.target && e.target.tagName; return t === 'TEXTAREA' || t === 'INPUT'; }
+    window.addEventListener('keydown', function (e) {
+      if (escribiendo(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+      var key = e.key.toLowerCase();
+      if (estado === 'modal') {
+        var n = parseInt(key, 10);
+        if (botonesModal && n >= 1 && n <= botonesModal.length) { e.preventDefault(); botonesModal[n - 1].click(); }
+        return;
+      }
+      if (key === 'p' || key === 'escape') { if (estado === 'jugando' || estado === 'pausa') { e.preventDefault(); pausa(); } return; }
+      if (estado !== 'jugando') return;
+      var id = mapa[key];
+      if (id) { e.preventDefault(); if (!e.repeat) pulsar(id); return; }
+      var d = parseInt(key, 10);
+      if (d >= 1 && d <= 9) {
+        if (herr && d <= herr.length) elegirHerr(herr[d - 1].id);
+        if (J.alPulsar) J.alPulsar(String(d), api);
+      }
+    });
+    window.addEventListener('keyup', function (e) {
+      var id = mapa[e.key.toLowerCase()];
+      if (id) teclas[id] = false;
+    });
+    window.addEventListener('blur', soltar);
+    lienzo.addEventListener('pointerdown', function (e) {
+      if (estado !== 'jugando' || !J.alPuntero) return;
+      var r = lienzo.getBoundingClientRect();
+      J.alPuntero((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H, api);
+    });
+    function botonTactil(id, etiqueta, aria) {
+      var b = el('button', null, etiqueta);
+      b.type = 'button'; b.setAttribute('aria-label', aria || etiqueta);
+      function baja(e) { e.preventDefault(); b.classList.add('pulsado'); pulsar(id); }
+      function sube(e) { e.preventDefault(); b.classList.remove('pulsado'); if (id in teclas) teclas[id] = false; }
+      b.addEventListener('pointerdown', baja);
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, sube); });
+      b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      return b;
+    }
+    (function montarTactil() {
+      var cr = $('cruceta'), ac = $('acciones');
+      if (dirs.length) {
+        var pos = { arriba: [2, 1, '▲', 'Arriba'], izq: [1, 2, '◀', 'Izquierda'], der: [3, 2, '▶', 'Derecha'], abajo: [2, 3, '▼', 'Abajo'] };
+        var soloLR = dirs.indexOf('arriba') < 0 && dirs.indexOf('abajo') < 0;
+        if (soloLR) { cr.style.gridTemplateRows = '56px'; cr.style.gridTemplateColumns = 'repeat(2,64px)'; }
+        dirs.forEach(function (dd) {
+          var p = pos[dd], b = botonTactil(dd, p[2], p[3]);
+          if (!soloLR) { b.style.gridColumn = p[0]; b.style.gridRow = p[1]; }
+          cr.appendChild(b);
+        });
+      }
+      acciones.forEach(function (a) { ac.appendChild(botonTactil(a.id, a.etiqueta)); });
+    })();
+
+    /* --- Barra de herramientas del juego --- */
+    function pintarHerr() {
+      var c = $('herramientas'); c.innerHTML = '';
+      if (!herr) return;
+      herr.forEach(function (h, i) {
+        var b = el('button', null, (i + 1) + ' · ' + (h.icono ? h.icono + ' ' : '') + h.etiqueta);
+        b.type = 'button'; b.setAttribute('aria-pressed', String(h.id === herrSel));
+        b.addEventListener('click', function () { if (estado === 'jugando') elegirHerr(h.id); b.blur(); });
+        c.appendChild(b);
+      });
+    }
+    function elegirHerr(id, silencioso) {
+      if (!herr) return;
+      herrSel = id; pintarHerr();
+      if (alHerr && !silencioso) alHerr(id, api);
+    }
+
+    /* --- Paneles --- */
+    function abrirPanel() { capa.hidden = false; panel.scrollTop = 0; }
+    function cerrarPanel() { capa.hidden = true; panel.innerHTML = ''; botonesModal = null; }
+    function parrafos(dest, txt) {
+      String(txt).split('\n').forEach(function (p) { if (p.trim()) dest.appendChild(el('p', null, p)); });
+    }
+    function modal(cfg, g) {
+      return new Promise(function (res) {
+        soltar(); estado = 'modal';
+        var abierto = performance.now(), ta = null;
+        panel.innerHTML = '';
+        if (cfg.titulo) panel.appendChild(el('h2', null, cfg.titulo));
+        if (cfg.texto) parrafos(panel, cfg.texto);
+        if (cfg.html) { var d = el('div'); d.innerHTML = cfg.html; panel.appendChild(d); }
+        if (cfg.campo) {
+          var lb = el('label', null, cfg.campo); lb.htmlFor = 'campoModal';
+          ta = el('textarea'); ta.id = 'campoModal'; ta.maxLength = 300;
+          panel.appendChild(lb); panel.appendChild(ta);
+        }
+        var cont = el('div', 'opciones' + (cfg.enFila ? ' fila' : ''));
+        botonesModal = [];
+        (cfg.opciones || ['Continuar']).forEach(function (o, i) {
+          var b = el('button'); b.type = 'button';
+          var et = typeof o === 'string' ? o : o.etiqueta;
+          b.appendChild(document.createTextNode((cfg.opciones && cfg.opciones.length > 1 && !cfg.enFila ? (i + 1) + ' · ' : '') + et));
+          if (o.detalle) b.appendChild(el('small', null, o.detalle));
+          b.addEventListener('click', function () {
+            if (performance.now() - abierto < 350 || g !== gen) return;
+            cerrarPanel(); estado = 'jugando';
+            res({ i: i, texto: ta ? ta.value.trim() : '' });
+          });
+          cont.appendChild(b); botonesModal.push(b);
+        });
+        panel.appendChild(cont);
+        abrirPanel();
+        setTimeout(function () { if (g === gen && estado === 'modal' && !ta) panel.focus(); }, 50);
+      });
+    }
+    function pausa() {
+      if (estado === 'jugando') {
+        soltar(); estado = 'pausa';
+        panel.innerHTML = '<h2>Pausa</h2><p>El juego está detenido. Nada se mueve hasta que reanudes.</p>' +
+          (J.ayuda ? '<h3>Ayuda y conceptos</h3>' + J.ayuda : '');
+        var b = el('button', 'principal', 'Reanudar'); b.type = 'button'; b.addEventListener('click', pausa);
+        var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+        abrirPanel(); $('bPausa').textContent = 'Reanudar';
+      } else if (estado === 'pausa') {
+        cerrarPanel(); estado = 'jugando'; $('bPausa').textContent = 'Pausa';
+      }
+    }
+    function conmutadores() {
+      var c = el('div', 'conmutadores');
+      var bt = el('button'), bs = el('button'); bt.type = bs.type = 'button';
+      function pinta() {
+        bt.textContent = 'Modo tranquilo: ' + (tranquilo ? 'sí' : 'no'); bt.setAttribute('aria-pressed', String(tranquilo));
+        bs.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); bs.setAttribute('aria-pressed', String(sonido));
+        $('bTranquilo').textContent = 'Tranquilo: ' + (tranquilo ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(tranquilo));
+        $('bSonido').textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); $('bSonido').setAttribute('aria-pressed', String(sonido));
+      }
+      bt.addEventListener('click', function () { tranquilo = !tranquilo; pinta(); });
+      bs.addEventListener('click', function () { sonido = !sonido; pinta(); bip('ok'); });
+      pinta(); c.appendChild(bt); c.appendChild(bs);
+      return c;
+    }
+    function ponTranquilo(v) {
+      tranquilo = v;
+      $('bTranquilo').textContent = 'Tranquilo: ' + (v ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(v));
+    }
+    api.activarTranquilo = function () { ponTranquilo(true); };
+
+    function portada() {
+      estado = 'inicio';
+      panel.innerHTML = '<p class="nota">Obsoletus y la Gran Oca del Saber · Recreativa ' + esc(J.numero || '') + '</p>' +
+        '<h2>' + esc(J.titulo) + '</h2>' +
+        '<h3>Objetivo pedagógico</h3><p>' + esc(J.objetivo) + '</p>' +
+        '<h3>Cómo se juega</h3><ol>' + (J.instrucciones || []).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ol>' +
+        '<p class="nota">' + esc(J.teclas || 'Teclado: flechas o WASD. En móvil o tableta: botones táctiles en pantalla.') +
+        ' P o Esc: pausa. El modo tranquilo quita la presión de tiempo y reduce la velocidad.</p>';
+      panel.appendChild(conmutadores());
+      var b = el('button', 'principal', 'Iniciar'); b.type = 'button'; b.id = 'bIniciar';
+      b.addEventListener('click', comenzar);
+      var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+      abrirPanel();
+    }
+    function comenzar() {
+      gen++; cola = Promise.resolve();
+      registro = []; flotantes = []; herr = null; herrSel = null; alHerr = null; pintarHerr();
+      hudCache = ''; $('hud').innerHTML = ''; $('avisos').innerHTML = '';
+      api.t = 0; soltar(); cerrarPanel();
+      $('bPausa').textContent = 'Pausa';
+      estado = 'jugando'; ajustar();
+      J.iniciar(api);
+    }
+
+    /* --- Pantalla final y Pluma Dorada --- */
+    function fin(r) {
+      r = r || {};
+      soltar(); estado = 'fin'; bip('gana');
+      var decisiones = registro.slice();
+      panel.innerHTML = '<h2>' + esc(r.titulo || '¡Reto superado!') + '</h2>' +
+        '<p><b>Puntuación lúdica:</b> ' + esc(r.puntos != null ? r.puntos : 0) + ' <span class="nota">(solo mide la partida, no tu aprendizaje)</span></p>' +
+        (r.html || '') +
+        '<h3>Decisiones que tomaste</h3>' +
+        (decisiones.length ? '<ul>' + decisiones.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' : '<p>Sin decisiones registradas.</p>') +
+        (r.feedback ? '<h3>Comentario sobre esta partida</h3><p>' + esc(r.feedback) + '</p>' : '') +
+        '<h3>Pregunta de transferencia</h3><p><b>' + esc(J.transferencia) + '</b></p>';
+      var lb = el('label', null, 'Tu respuesta (1–2 frases):'); lb.htmlFor = 'reflexion';
+      var ta = el('textarea'); ta.id = 'reflexion'; ta.maxLength = 600;
+      var reclamar = el('button', 'principal', 'Reclamar Pluma Dorada'); reclamar.type = 'button'; reclamar.id = 'bReclamar'; reclamar.disabled = true;
+      var aviso = el('p', 'nota', 'Escribe tu reflexión (al menos 20 caracteres) para activar la Pluma Dorada.');
+      var zona = el('div');
+      var otra = el('button', null, 'Jugar de nuevo'); otra.type = 'button'; otra.addEventListener('click', comenzar);
+      var ops = el('div', 'opciones'); ops.appendChild(reclamar); ops.appendChild(otra);
+      ta.addEventListener('input', function () { reclamar.disabled = ta.value.trim().length < 20; });
+      reclamar.addEventListener('click', function () {
+        var f = new Date(), fecha = f.toLocaleDateString('es-ES') + ' ' + f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        var lineas = ['✦ ' + J.pluma + ' ✦', 'Pluma Dorada · Obsoletus y la Gran Oca del Saber',
+          'Recreativa ' + (J.numero || '') + ': ' + J.titulo, 'Fecha: ' + fecha,
+          'Puntuación lúdica: ' + (r.puntos != null ? r.puntos : 0) + (tranquilo ? ' (modo tranquilo)' : ''), '', 'Decisiones en esta partida:'];
+        decisiones.forEach(function (d) { lineas.push('- ' + d); });
+        (r.ficha || []).forEach(function (d) { lineas.push('- ' + d); });
+        lineas.push('', 'Pregunta: ' + J.transferencia, 'Mi reflexión: ' + ta.value.trim(), '',
+          'Repaso formativo: esta ficha no certifica competencia docente.');
+        zona.innerHTML = '<h3>Pluma Dorada reclamada: ' + esc(J.pluma) + '</h3>';
+        var ficha = el('div', 'ficha', lineas.join('\n')); ficha.id = 'ficha'; ficha.tabIndex = 0;
+        zona.appendChild(ficha);
+        var copiar = el('button', null, 'Seleccionar y copiar ficha'); copiar.type = 'button';
+        var nota = el('p', 'nota', 'Esta ficha solo existe en tu pantalla: no se ha enviado al profesorado ni se guarda en ningún servidor. Cópiala o haz una captura para conservarla.');
+        copiar.addEventListener('click', function () {
+          var rg = document.createRange(); rg.selectNodeContents(ficha);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          copiar.textContent = ok ? 'Ficha copiada' : 'Ficha seleccionada: cópiala con Ctrl/Cmd + C';
+        });
+        zona.appendChild(copiar); zona.appendChild(nota);
+        reclamar.disabled = true; reclamar.textContent = 'Pluma Dorada reclamada'; ta.readOnly = true; aviso.textContent = '';
+        ficha.scrollIntoView({ block: 'nearest' });
+      });
+      panel.appendChild(lb); panel.appendChild(ta); panel.appendChild(aviso); panel.appendChild(ops); panel.appendChild(zona);
+      abrirPanel();
+    }
+
+    /* --- Botones fijos --- */
+    $('titulo').textContent = J.titulo;
+    $('bPausa').addEventListener('click', function () { pausa(); this.blur(); });
+    $('bReiniciar').addEventListener('click', function () { this.blur(); comenzar(); });
+    $('bSonido').addEventListener('click', function () {
+      sonido = !sonido; this.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); this.setAttribute('aria-pressed', String(sonido)); this.blur(); bip('ok');
+    });
+    $('bTranquilo').addEventListener('click', function () { ponTranquilo(!tranquilo); this.blur(); });
+
+    /* --- Bucle --- */
+    var previo = 0;
+    function cuadro(ts) {
+      requestAnimationFrame(cuadro);
+      var dt = Math.min(0.05, (ts - previo) / 1000 || 0); previo = ts;
+      if (estado === 'jugando') {
+        api.t += dt;
+        J.actualizar(dt, api);
+        for (var i = flotantes.length - 1; i >= 0; i--) { flotantes[i].v += dt; if (flotantes[i].v > flotantes[i].dur) flotantes.splice(i, 1); }
+      }
+      if (estado === 'inicio') return;
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = C.noche; ctx.fillRect(0, 0, W, H);
+      J.dibujar(ctx, api);
+      flotantes.forEach(function (f) { texto(ctx, f.txt, f.x, f.y - f.v * 22, { tam: f.tam, color: f.color, negrita: true }); });
+    }
+    ajustar(); portada(); requestAnimationFrame(cuadro);
+    Arcade._ = { api: api, juego: J, estado: function () { return estado; } };
+    return api;
+  }
+
+  window.Arcade = { crear: crear, C: C, esc: esc, texto: texto, caja: caja, oca: oca, robot: robot, pluma: pluma, choca: choca, limitar: limitar };
+})();
+
+</script>
+<script>
+/* 08 · La batalla final contra Obsoletus */
+(function () {
+  'use strict';
+  var A = Arcade, C = A.C, W = 400, H = 300, G = 240, BX = 338, EMAX = 5, VENTANA = 7;
+  var SLOT_X = 306, SLOT_Y = 17, SLOT_DX = 23;
+  var FASES = [
+    { error: 'Memorizar equivale a aprender', chapa: 'MEMORIA', pluma: 'Pluma de la Metacognición', color: '#3b2a78',
+      hp: 5, inter: 2.0, patron: ['bajo'],
+      ops: [
+        { et: 'Repetición cronometrada', ej: 'Copiar la definición diez veces y recitarla contra reloj.', ok: false,
+          pista: 'Repetir más deprisa sigue siendo memorizar. Busca una herramienta que haga pensar al estudiante sobre cómo aprende o que le pida usar lo aprendido.' },
+        { et: 'Autorregulación y metacognición', ej: 'Antes de estudiar, cada estudiante planifica cómo lo hará; al terminar explica con sus palabras qué ha entendido y qué cambiaría.', ok: true },
+        { et: 'Puntos por recitar', ej: 'Diez puntos por cada definición dicha de memoria sin fallos.', ok: false,
+          pista: 'Eso premia justo lo que Obsoletus defiende. ¿Qué herramienta ayuda a comprobar que se comprende, y no solo que se recuerda?' },
+        { et: 'Evaluación formativa con casos', ej: 'Minicasos sin nota: aplican lo estudiado a una situación nueva y revisan sus errores con una pauta.', ok: true }
+      ],
+      porque: 'Recordar un dato no garantiza comprenderlo ni saber usarlo. Planificar, supervisar y explicar con palabras propias (o aplicar lo estudiado a un caso nuevo y revisar los errores) hace visible qué se ha aprendido de verdad.' },
+    { error: 'Más puntos = más motivación', chapa: '+PUNTOS', pluma: 'Pluma del Feedback y la Autonomía', color: '#5a2a78',
+      hp: 6, inter: 1.9, patron: ['bajo', 'caida'],
+      ops: [
+        { et: 'Feedback útil', ej: 'En lugar de «+50», un comentario: «Tu hipótesis es clara; añade ahora una evidencia que la apoye».', ok: true },
+        { et: 'Duplicar los puntos', ej: 'Esta semana cada tarea entregada vale el doble.', ok: false,
+          pista: 'Más cantidad de lo mismo: los puntos no dicen cómo mejorar ni dan margen de decisión. ¿Qué necesita alguien para querer seguir aprendiendo?' },
+        { et: 'Ranking público semanal', ej: 'Una clasificación en la pared con los diez primeros puestos.', ok: false,
+          pista: 'Un ranking compara, pero no informa de cómo avanzar y puede desanimar a quien queda atrás. Piensa en información útil o en capacidad de elegir.' },
+        { et: 'Autonomía con opciones', ej: 'Elegir entre tres formatos para demostrar lo aprendido: maqueta, pódcast o informe.', ok: true }
+      ],
+      porque: 'Los puntos pueden animar un rato, pero no explican cómo mejorar ni dejan decidir. El feedback que informa del siguiente paso y la posibilidad de elegir suelen sostener mejor las ganas de aprender, aunque depende del contexto y de cada estudiante.' },
+    { error: 'Un único tipo de jugador sirve para todos', chapa: '1 TIPO', pluma: 'Pluma de la Diversidad', color: '#2a3f78',
+      hp: 7, inter: 1.8, patron: ['bajo', 'alto', 'caida'],
+      ops: [
+        { et: 'Torneo para toda la clase', ej: 'Competición individual obligatoria con un único ganador.', ok: false,
+          pista: 'Competir atrae a algunas personas y aleja a otras. ¿Cómo darías cabida a quien prefiere cooperar, explorar o ayudar?' },
+        { et: 'Diversidad de motivaciones', ej: 'Una misma meta con varias rutas: reto de dominio, misión cooperativa, exploración libre o ayudar a otro equipo.', ok: true },
+        { et: 'Sondear y ajustar', ej: 'Preguntar al grupo qué le engancha, observar cómo participa y adaptar las misiones a lo que se ve.', ok: true },
+        { et: 'Etiqueta fija por alumno', ej: 'Pasar un test y asignar a cada estudiante un solo tipo de misión para todo el curso.', ok: false,
+          pista: 'Las motivaciones cambian con la tarea y el momento: una etiqueta fija encasilla. Mejor ofrecer variedad que clasificar personas.' }
+      ],
+      porque: 'En un aula conviven motivaciones distintas, y una misma persona puede responder a varias. Ofrecer rutas variadas hacia la misma meta, y escuchar al grupo para ajustarlas, incluye a más estudiantes que un único molde.' },
+    { error: 'Evaluar es poner una nota al final', chapa: 'NOTA', pluma: 'Pluma de la Evaluación Formativa', color: '#6a2a4a',
+      hp: 8, inter: 1.6, patron: ['bajo', 'caida', 'alto', 'bajo', 'caida'],
+      ops: [
+        { et: 'Autoevaluación y coevaluación', ej: 'Cada estudiante compara su borrador con los criterios y un compañero le propone un siguiente paso.', ok: true },
+        { et: 'Examen final más largo', ej: 'Una única prueba de dos horas el último día, sin devolución de errores.', ok: false,
+          pista: 'Sigue siendo una sola foto al final, cuando ya no hay tiempo de mejorar. ¿Qué herramienta da información durante el proceso?' },
+        { et: 'Evaluación formativa', ej: 'Puntos de control durante el proyecto, con rúbrica compartida y tiempo para mejorar el trabajo antes de entregarlo.', ok: true },
+        { et: 'Nota final con medalla', ej: 'La misma nota de siempre, ahora acompañada de una insignia de oro, plata o bronce.', ok: false,
+          pista: 'Cambia el envoltorio, no la evaluación: sigue llegando tarde y sin orientar. Busca algo que permita corregir el rumbo a tiempo.' }
+      ],
+      porque: 'Una nota al final informa cuando ya no se puede mejorar. Evaluar durante el proceso, con criterios compartidos, revisión propia y de iguales y margen para rehacer, convierte la evaluación en parte del aprendizaje.' }
+  ];
+  var ESTRELLAS = [[22, 60], [58, 96], [96, 52], [140, 78], [176, 58], [214, 100], [248, 64], [30, 130], [120, 120], [200, 140], [262, 118], [84, 160]];
+  var S;
+
+  /* ---------- Flujo de fases ---------- */
+  function empezarFase(api, reintento) {
+    var F = FASES[S.fase];
+    S.energia = EMAX; S.hp = F.hp; S.proy = []; S.avisos = []; S.tiros = [];
+    S.j = { x: 80, y: 0, vy: 0, dir: 1, inm: 1, anda: false, escudo: false };
+    S.esc = 1; S.escBloq = false; S.cad = 0; S.buf = 0; S.np = 0; S.sig = 1.1;
+    S.modo = 'asedio'; S.vent = 0; S.avisoEscudo = -9;
+    if (reintento) { S.tm = 3; S.activa = true; pintarHud(api); return; }
+    S.tm = 4.5; S.sabe = false; S.fallosFase = []; S.activa = false;
+    pintarHud(api);
+    api.informar({
+      titulo: 'Fase ' + (S.fase + 1) + ' de 4 · Obsoletus proclama',
+      texto: '«' + F.error.toUpperCase() + '».\n' + (S.fase === 0
+        ? 'Su escudo rebota tus disparos. Esquiva sus proyectiles (cada uno avisa antes de salir) mientras preparas una herramienta pedagógica para desactivarlo.'
+        : 'Vuelve a levantar su escudo. Esquiva mientras preparas la herramienta que desmonte este error.'),
+      boton: 'A la plataforma'
+    }).then(function () { S.activa = true; });
+  }
+
+  function preguntar(api) {
+    var F = FASES[S.fase];
+    S.activa = false; S.proy = []; S.avisos = []; S.tiros = [];
+    api.elegir({
+      titulo: 'Fase ' + (S.fase + 1) + ' · Elige tu herramienta pedagógica',
+      texto: 'Obsoletus insiste: «' + F.error + '». ¿Con qué herramienta desactivas su escudo? Puede haber más de una adecuada.',
+      opciones: F.ops.map(function (o) { return { etiqueta: o.et, detalle: 'Ejemplo: ' + o.ej }; })
+    }).then(function (r) {
+      var o = F.ops[r.i];
+      if (o.ok) {
+        S.sabe = true; S.elegida[S.fase] = o.et;
+        if (!S.fallosFase.length) { S.primeras++; S.puntos += 50; }
+        api.registrar('Fase ' + (S.fase + 1) + ' («' + F.error + '»): desactivé el escudo con «' + o.et + '»' +
+          (S.fallosFase.length ? ', tras probar «' + S.fallosFase.join('» y «') + '» y recibir pista' : '') + '.');
+        api.sonido('ok');
+        abrirVentana(api, true);
+        S.activa = true;
+      } else {
+        if (S.fallosFase.indexOf(o.et) < 0) S.fallosFase.push(o.et);
+        S.fallos++; api.sonido('error');
+        api.informar({
+          titulo: 'El escudo resiste',
+          texto: '«' + o.et + '» no desmonta este error.\nPista: ' + o.pista + '\nNo pierdes energía ni plumas: elige otra herramienta.',
+          boton: 'Elegir de nuevo'
+        }).then(function () { preguntar(api); });
+      }
+    });
+  }
+
+  function abrirVentana(api, primera) {
+    S.modo = 'ventana'; S.vent = VENTANA; S.sig = Math.max(S.sig, 0.8);
+    api.mensaje(primera ? '¡Escudo caído! Dispara al núcleo de Obsoletus y sigue esquivando.' : 'Tu herramienta vuelve a abrir el escudo: ¡dispara!');
+  }
+
+  function derrota(api) {
+    S.activa = false; S.derrotas++;
+    api.elegir({
+      titulo: 'Te has quedado sin energía',
+      texto: 'No pasa nada: repites la fase ' + (S.fase + 1) + ' desde su punto de control. Conservas tus ' + S.plumas +
+        ' Plumas de Conocimiento' + (S.sabe ? ' y la herramienta que ya elegiste.' : '.'),
+      opciones: [{ etiqueta: 'Reintentar la fase' }, { etiqueta: 'Reintentar en modo tranquilo', detalle: 'Proyectiles más lentos y ventana de ataque sin límite de tiempo.' }]
+    }).then(function (r) { if (r.i === 1) api.activarTranquilo(); empezarFase(api, true); });
+  }
+
+  function faseVencida(api) {
+    var F = FASES[S.fase];
+    S.activa = false; S.plumas++; S.puntos += 100 + S.energia * 10;
+    pintarHud(api); api.sonido('ok');
+    api.informar({
+      titulo: '¡' + F.pluma + ' liberada! (' + S.plumas + '/4)',
+      texto: 'Usaste «' + S.elegida[S.fase] + '» contra «' + F.error + '».\n' + F.porque,
+      boton: S.fase < 3 ? 'Siguiente fase' : 'Ver el desenlace'
+    }).then(function () {
+      S.fase++;
+      if (S.fase < 4) empezarFase(api, false); else desenlace(api);
+    });
+  }
+
+  function desenlace(api) {
+    S.fin = true; S.proy = []; S.avisos = []; S.tiros = [];
+    var lista = '<ul>' + FASES.map(function (F, i) {
+      return '<li><b>' + A.esc(F.pluma) + ':</b> frente a «' + A.esc(F.error) + '» usaste «' + A.esc(S.elegida[i]) + '».</li>';
+    }).join('') + '</ul>';
+    api.informar({
+      titulo: '¡Obsoletus se queda sin argumentos!',
+      html: '<p>Con las cuatro Plumas de Conocimiento reunidas, sus circuitos de «siempre se ha hecho así» se apagan y la Escuela del Saber enciende todas sus luces. ¡Enhorabuena, defensora!</p>' +
+        '<p>Queda el último paso: tu decisión de transferencia.</p>',
+      boton: 'Ir a la decisión de transferencia'
+    }).then(function () {
+      api.terminar({
+        titulo: '¡Batalla final superada!', puntos: S.puntos,
+        html: '<h3>Tus cuatro Plumas de Conocimiento</h3>' + lista,
+        feedback: 'En esta partida elegiste una herramienta adecuada a la primera en ' + S.primeras + ' de 4 fases.' +
+          (S.fallos ? ' En las demás, la pista te llevó a otra opción: equivocarse y reintentar forma parte del repaso.' : '') +
+          (S.derrotas ? ' Reintentaste ' + S.derrotas + ' vez/veces una fase; eso habla de reflejos, no de tu criterio pedagógico.' : '') +
+          ' Esto es un repaso formativo: ganar la batalla no certifica competencia docente. Lo valioso es que sepas justificar por qué cada herramienta responde a cada error, y que en un aula real dependerá del contexto y del alumnado.',
+        ficha: ['Plumas de Conocimiento reunidas: 4/4', 'Herramienta adecuada al primer intento: ' + S.primeras + '/4 fases']
+      });
+    });
+  }
+
+  function pintarHud(api) {
+    api.hud({
+      Fase: Math.min(S.fase + 1, 4) + '/4', 'Energía': S.energia + '/' + EMAX, Plumas: S.plumas + '/4',
+      Escudo: S.fin ? 'apagado' : S.modo === 'ventana' ? (api.tranquilo ? 'caído' : 'caído ' + Math.ceil(S.vent) + ' s') : S.modo === 'liberar' ? 'roto' : 'activo'
+    });
+  }
+
+  /* ---------- Simulación ---------- */
+  function cajaJ() { return { x: S.j.x - 8, y: G - S.j.y - 28, w: 16, h: 28 }; }
+  function lanzarAviso(tipo) {
+    S.avisos.push({ tipo: tipo, v: 0, dur: tipo === 'caida' ? 1.15 : 0.95, x: A.limitar(S.j.x, 24, 250) });
+  }
+  function disparaJefe(a, api) {
+    if (a.tipo === 'bajo') S.proy.push({ tipo: 'bajo', x: 280, y: G - 13, w: 14, h: 12 });
+    else if (a.tipo === 'alto') S.proy.push({ tipo: 'alto', x: 280, y: G - 66, w: 16, h: 12 });
+    else S.proy.push({ tipo: 'caida', x: a.x - 9, y: 44, w: 18, h: 18 });
+  }
+
+  /* ---------- Dibujo ---------- */
+  function etiqueta(ctx, s, x, y, color) {
+    ctx.font = '700 13px monospace';
+    var w = s.length * 8 + 10;
+    A.caja(ctx, x - w / 2, y - 10, w, 20, 'rgba(16,22,41,0.85)', color, 2);
+    A.texto(ctx, s, x, y + 1, { tam: 13, color: color, negrita: true, sombra: false });
+  }
+  function dibujarFondo(ctx) {
+    ctx.fillStyle = C.noche2; ctx.fillRect(0, 48, W, G - 48);
+    ctx.fillStyle = '#2a3560';
+    ESTRELLAS.forEach(function (e) { ctx.fillRect(e[0], e[1], 2, 2); });
+    /* Escuela del Saber, al fondo a la izquierda */
+    ctx.fillStyle = '#26315c'; ctx.fillRect(14, G - 62, 76, 62);
+    ctx.beginPath(); ctx.moveTo(8, G - 62); ctx.lineTo(52, G - 92); ctx.lineTo(96, G - 62); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = S.fin ? C.oro : '#39467a';
+    ctx.fillRect(24, G - 50, 12, 14); ctx.fillRect(46, G - 50, 12, 14); ctx.fillRect(68, G - 50, 12, 14);
+    ctx.fillStyle = '#1b2444'; ctx.fillRect(44, G - 24, 16, 24);
+    ctx.fillStyle = C.gris; ctx.fillRect(51, G - 108, 2, 18);
+    ctx.fillStyle = C.menta; ctx.fillRect(53, G - 108, 12, 8);
+    /* plataforma */
+    ctx.fillStyle = C.morado; ctx.fillRect(0, G, W, H - G);
+    ctx.fillStyle = C.morado2; ctx.fillRect(0, G, W, 4);
+    ctx.fillStyle = '#4a2a94';
+    for (var x = 0; x < W; x += 40) ctx.fillRect(x, G + 4, 2, H - G - 4);
+    ctx.fillRect(0, G + 30, W, 2);
+  }
+  function dibujarMarcadores(ctx, api) {
+    var i;
+    A.caja(ctx, 0, 0, W, 48, C.noche);
+    A.texto(ctx, 'ENERGÍA', 8, 14, { tam: 13, alin: 'left', negrita: true });
+    for (i = 0; i < EMAX; i++) A.caja(ctx, 76 + i * 19, 6, 16, 16, i < S.energia ? C.menta : null, i < S.energia ? C.blanco : C.gris, 2);
+    A.texto(ctx, 'ESCUDO', 8, 36, { tam: 13, alin: 'left', negrita: true, color: S.escBloq ? C.gris : C.blanco });
+    A.caja(ctx, 76, 29, 92, 14, null, S.escBloq ? C.gris : C.blanco, 2);
+    ctx.fillStyle = S.escBloq ? C.gris : C.morado2; ctx.fillRect(79, 32, Math.round(86 * S.esc), 8);
+    A.texto(ctx, 'PLUMAS', SLOT_X - 20, 14, { tam: 13, alin: 'right', negrita: true, color: C.oro });
+    for (i = 0; i < 4; i++) {
+      var sx = SLOT_X + i * SLOT_DX;
+      A.caja(ctx, sx - 10, 4, 20, 26, i < S.plumas ? '#3a2f10' : null, i < S.plumas ? C.oro : C.gris, 2);
+      if (i < S.plumas) A.pluma(ctx, sx, SLOT_Y + 1, 18, C.oro);
+      else A.texto(ctx, String(i + 1), sx, SLOT_Y + 1, { tam: 13, color: C.gris });
+    }
+    A.texto(ctx, S.plumas + ' de 4', SLOT_X + 1.5 * SLOT_DX, 39, { tam: 13, color: C.oro });
+  }
+  function dibujarJefe(ctx, api) {
+    var F = FASES[Math.min(S.fase, 3)], abierto = S.modo === 'ventana' || S.modo === 'liberar' || S.fin;
+    var by = G - 51 + (S.fin ? 6 : Math.round(Math.sin(api.t * 2) * 2));
+    var ojo = S.fin ? C.gris : abierto ? C.oro : C.rojo;
+    /* hombreras y brazos-cañón (formas propias) */
+    ctx.fillStyle = C.gris; ctx.fillRect(BX - 50, by - 30, 100, 12);
+    ctx.fillStyle = '#5b6488'; ctx.fillRect(BX - 56, by - 34, 16, 20); ctx.fillRect(BX + 40, by - 34, 16, 20);
+    ctx.fillStyle = C.gris; ctx.fillRect(BX - 52, G - 70, 8, 12); ctx.fillRect(BX - 52, G - 16, 8, 12);
+    ctx.fillStyle = '#5b6488'; ctx.fillRect(BX - 60, G - 68, 12, 8); ctx.fillRect(BX - 60, G - 14, 12, 8);
+    A.robot(ctx, BX, by, 96, { color: S.fin ? '#2a2f48' : F.color, ojo: ojo });
+    /* corona de engranaje viejo */
+    ctx.fillStyle = C.oro;
+    ctx.fillRect(BX - 24, by - 46, 8, 8); ctx.fillRect(BX + 16, by - 46, 8, 8); ctx.fillRect(BX - 24, by - 40, 48, 4);
+    /* placa del pecho con el error que defiende */
+    A.caja(ctx, BX - 34, by + 18, 68, 22, '#101629', S.fin ? C.gris : C.oro, 2);
+    A.texto(ctx, S.fin ? 'APAGADO' : F.chapa, BX, by + 30, { tam: 13, negrita: true, color: S.fin ? C.gris : C.oro, sombra: false });
+    if (S.fin) return;
+    /* núcleo: resistencia de la fase */
+    var n = F.hp, w0 = Math.min(11, Math.floor(96 / n)), x0 = BX - (n * w0) / 2, i;
+    for (i = 0; i < n; i++) A.caja(ctx, x0 + i * w0, 106, w0 - 2, 10, i < S.hp ? C.rojo : null, i < S.hp ? C.blanco : C.gris, 1);
+    A.texto(ctx, 'NÚCLEO', BX, 96, { tam: 13, negrita: true });
+    /* escudo del jefe */
+    if (!abierto) {
+      ctx.fillStyle = 'rgba(169,139,240,0.28)'; ctx.fillRect(272, 120, 10, G - 120);
+      ctx.strokeStyle = C.morado2; ctx.lineWidth = 2; ctx.strokeRect(273, 121, 8, G - 122);
+      ctx.fillStyle = C.morado2;
+      for (i = 0; i < 6; i++) ctx.fillRect(275, 128 + i * 19 + (Math.floor(api.t * 3) % 2) * 2, 4, 9);
+      etiqueta(ctx, 'ESCUDO ACTIVO', BX - 4, 70, C.morado2);
+    } else if (S.modo === 'ventana') {
+      ctx.fillStyle = C.morado2; ctx.fillRect(272, G - 6, 4, 6); ctx.fillRect(279, G - 10, 3, 10);
+      etiqueta(ctx, '¡ESCUDO CAÍDO!', BX - 4, 62, C.oro);
+      if (!api.tranquilo) {
+        A.caja(ctx, BX - 52, 76, 96, 8, null, C.oro, 1);
+        ctx.fillStyle = C.oro; ctx.fillRect(BX - 50, 78, Math.round(92 * Math.max(0, S.vent) / VENTANA), 4);
+      }
+    }
+  }
+  function dibujarAvisos(ctx) {
+    S.avisos.forEach(function (a) {
+      var p = Math.min(1, a.v / a.dur), g = 4 + Math.round(p * 8), y;
+      ctx.strokeStyle = C.rojo; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      if (a.tipo === 'caida') {
+        ctx.strokeRect(a.x - 14, 50, 28, G - 50); ctx.setLineDash([]);
+        ctx.fillStyle = C.rojo; ctx.fillRect(a.x - g / 2, 50, g, g);
+        ctx.beginPath(); ctx.moveTo(a.x - 9, G - 16); ctx.lineTo(a.x + 9, G - 16); ctx.lineTo(a.x, G - 4); ctx.closePath(); ctx.fill();
+        etiqueta(ctx, 'APARTA', A.limitar(a.x, 34, 240), 66, C.rojo);
+      } else {
+        y = a.tipo === 'bajo' ? G - 7 : G - 60;
+        ctx.beginPath(); ctx.moveTo(12, y); ctx.lineTo(276, y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = C.rojo; ctx.fillRect(278 - g, y - g / 2, g, g);
+        etiqueta(ctx, a.tipo === 'bajo' ? 'SALTA' : 'NO SALTES', 190, a.tipo === 'bajo' ? G - 28 : G - 80, C.rojo);
+      }
+    });
+    ctx.setLineDash([]);
+  }
+  function dibujarProyectiles(ctx) {
+    S.proy.forEach(function (p) {
+      if (p.tipo === 'bajo') {            /* engranaje rodante */
+        A.caja(ctx, p.x, p.y, p.w, p.h, C.rojo, C.blanco, 2); ctx.fillStyle = '#101629'; ctx.fillRect(p.x + 5, p.y + 4, 4, 4);
+      } else if (p.tipo === 'alto') {     /* sello volador */
+        A.caja(ctx, p.x, p.y, p.w, p.h, C.oro, C.blanco, 2); ctx.fillStyle = C.rojo; ctx.fillRect(p.x + p.w, p.y + 3, 6, 6);
+      } else {                            /* libro pesado que cae */
+        A.caja(ctx, p.x, p.y, p.w, p.h, '#b06a3a', C.blanco, 2); ctx.fillStyle = C.blanco; ctx.fillRect(p.x + 4, p.y + 5, 10, 2); ctx.fillRect(p.x + 4, p.y + 10, 10, 2);
+      }
+    });
+    ctx.fillStyle = C.menta;
+    S.tiros.forEach(function (t) { ctx.fillRect(t.x - 5, t.y - 2, 10, 4); ctx.fillRect(t.x + 3, t.y - 4, 4, 8); });
+  }
+
+  A.crear({
+    numero: '08', titulo: 'La batalla final contra Obsoletus', pluma: 'PLUMA-OBSOLETUS',
+    ancho: W, alto: H,
+    objetivo: 'Repasar cuatro errores pedagógicos frecuentes y elegir, con criterio, la herramienta que responde a cada uno: autorregulación, feedback y autonomía, diversidad de motivaciones y evaluación formativa.',
+    instrucciones: [
+      'Mueve a la oca por la plataforma: salta, cúbrete con el escudo o apártate según el aviso que precede a cada proyectil.',
+      'En cada fase Obsoletus proclama un error: elige una herramienta pedagógica adecuada para tumbar su escudo y dispara a su núcleo.',
+      'Cada fase vencida libera una Pluma de Conocimiento. Con las cuatro, la Pluma Dorada se consigue con tu decisión de transferencia.'
+    ],
+    teclas: 'Teclado: ←/→ o A/D para moverte, Espacio o ↑ para saltar, X para el escudo y Z para disparar. En móvil: botones táctiles.',
+    transferencia: 'Elige un error real de una propuesta gamificada y rediseña qué haría el estudiante, qué feedback recibiría y cómo comprobarías el aprendizaje',
+    ayuda: '<ul><li><b>Aviso «SALTA»:</b> un engranaje rodará por el suelo. Salta o usa el escudo.</li>' +
+      '<li><b>Aviso «NO SALTES»:</b> un sello volará alto. Quédate en el suelo.</li>' +
+      '<li><b>Aviso «APARTA»:</b> un libro caerá en la columna marcada. Muévete o usa el escudo.</li>' +
+      '<li><b>Escudo de la oca:</b> bloquea todo, pero se gasta y no deja disparar; se recarga solo.</li>' +
+      '<li><b>Escudo de Obsoletus:</b> solo cae con una herramienta pedagógica adecuada (a veces hay más de una). Equivocarse da una pista y no resta nada.</li></ul>' +
+      '<p><b>Herramientas:</b> autorregulación y metacognición · feedback útil y autonomía · diversidad de motivaciones · evaluación formativa.</p>',
+    controles: {
+      cruceta: ['izq', 'der'],
+      acciones: [{ id: 'saltar', etiqueta: 'Saltar' }, { id: 'escudo', etiqueta: 'Escudo', teclas: ['x', 'm'] }, { id: 'disparar', etiqueta: 'Disparar', teclas: ['z', 'n'] }]
+    },
+    depurar: function () { return { S: S, FASES: FASES, G: G }; },
+
+    iniciar: function (api) {
+      S = { fase: 0, plumas: 0, puntos: 0, primeras: 0, fallos: 0, derrotas: 0, elegida: [], fin: false, activa: false };
+      empezarFase(api, false);
+    },
+
+    alPulsar: function (id) { if (S && (id === 'saltar' || id === 'arriba')) S.buf = 0.14; },
+
+    actualizar: function (dt, api) {
+      if (!S.activa) return;
+      var F = FASES[S.fase], j = S.j, i, p, cj;
+      if (S.modo === 'liberar') {
+        S.tm -= dt;
+        if (j.y > 0) { j.y = Math.max(0, j.y + j.vy * dt); j.vy -= 900 * dt; }
+        if (S.tm <= 0) faseVencida(api); else pintarHud(api);
+        return;
+      }
+      /* oca */
+      var dx = (api.teclas.der ? 1 : 0) - (api.teclas.izq ? 1 : 0);
+      j.anda = !!dx;
+      if (dx) { j.x = A.limitar(j.x + dx * 125 * dt, 16, 250); j.dir = dx; }
+      S.buf = Math.max(0, S.buf - dt);
+      if (S.buf > 0 && j.y === 0) { j.vy = 330; j.y = 0.01; S.buf = 0; api.sonido('salto'); }
+      if (j.y > 0) { j.y += j.vy * dt; j.vy -= 900 * dt; if (j.y <= 0) { j.y = 0; j.vy = 0; } }
+      j.inm = Math.max(0, j.inm - dt);
+      if (S.escBloq && S.esc >= 0.4) S.escBloq = false;
+      j.escudo = !!(api.teclas.escudo || api.teclas.abajo) && !S.escBloq && S.esc > 0;
+      if (j.escudo) {
+        S.esc -= 0.7 * dt;
+        if (S.esc <= 0) { S.esc = 0; S.escBloq = true; j.escudo = false; api.mensaje('Escudo agotado: se recarga solo en un par de segundos.'); }
+      } else S.esc = Math.min(1, S.esc + 0.4 * dt);
+      S.cad = Math.max(0, S.cad - dt);
+      if (api.teclas.disparar && !j.escudo && S.cad === 0) {
+        S.tiros.push({ x: j.x + 16, y: G - j.y - 19 }); S.cad = 0.38; j.dir = 1; api.sonido('disparo');
+      }
+      /* jefe */
+      if (S.modo === 'asedio') {
+        S.tm -= dt;
+        if (S.tm <= 0) { if (S.sabe) abrirVentana(api, false); else { preguntar(api); return; } }
+      } else if (!api.tranquilo) {
+        S.vent -= dt;
+        if (S.vent <= 0) {
+          S.modo = 'asedio'; S.tm = 3.5;
+          api.mensaje('Obsoletus recompone su escudo unos segundos. Tu herramienta sigue activa: aguanta y volverá a caer.');
+        }
+      }
+      S.sig -= dt * api.vel;
+      if (S.sig <= 0) { lanzarAviso(F.patron[S.np % F.patron.length]); S.np++; S.sig = F.inter; }
+      for (i = S.avisos.length - 1; i >= 0; i--) {
+        S.avisos[i].v += dt * api.vel;
+        if (S.avisos[i].v >= S.avisos[i].dur) { disparaJefe(S.avisos[i], api); S.avisos.splice(i, 1); }
+      }
+      cj = cajaJ();
+      for (i = S.proy.length - 1; i >= 0; i--) {
+        p = S.proy[i];
+        if (p.tipo === 'caida') p.y += 230 * api.vel * dt; else p.x -= 115 * api.vel * dt;
+        if (p.x < -20 || p.y + p.h >= G) { S.proy.splice(i, 1); continue; }
+        if (!A.choca(cj, p)) continue;
+        if (j.escudo) { S.proy.splice(i, 1); S.puntos += 5; api.flotar('¡Bloqueado!', j.x, G - j.y - 40, { color: C.menta }); api.sonido('punto'); continue; }
+        if (j.inm > 0) continue;
+        S.proy.splice(i, 1); S.energia--; j.inm = 1.3; api.sonido('golpe');
+        api.flotar('-1 energía', j.x, G - j.y - 40, { color: C.rojo });
+        if (S.energia <= 0) { pintarHud(api); derrota(api); return; }
+      }
+      for (i = S.tiros.length - 1; i >= 0; i--) {
+        p = S.tiros[i]; p.x += 280 * dt;
+        if (S.modo !== 'ventana') {
+          if (p.x >= 270) {
+            S.tiros.splice(i, 1);
+            if (api.t - S.avisoEscudo > 4) {
+              S.avisoEscudo = api.t;
+              api.mensaje(S.sabe ? 'El escudo ha vuelto: espera a que caiga otra vez.' : 'El escudo rebota tus disparos: hará falta una herramienta pedagógica.');
+            }
+          }
+        } else if (p.x >= BX - 40) {
+          S.tiros.splice(i, 1); S.hp--; S.puntos += 10; api.sonido('punto');
+          api.flotar('¡Impacto!', BX - 40, p.y - 8, { color: C.oro });
+          if (S.hp <= 0) { S.modo = 'liberar'; S.tm = 1.4; S.proy = []; S.avisos = []; S.tiros = []; break; }
+        }
+      }
+      pintarHud(api);
+    },
+
+    dibujar: function (ctx, api) {
+      if (!S || !S.j) return;
+      var j = S.j, jy = G - j.y;
+      dibujarFondo(ctx);
+      dibujarJefe(ctx, api);
+      dibujarAvisos(ctx);
+      dibujarProyectiles(ctx);
+      /* oca defensora */
+      if (j.inm > 0 && !S.fin) { ctx.strokeStyle = C.blanco; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.strokeRect(j.x - 15, jy - 34, 30, 36); ctx.setLineDash([]); }
+      A.oca(ctx, j.x, jy - 15, 30, { dir: j.dir, paso: j.anda && j.y === 0 && Math.floor(api.t * 8) % 2 });
+      ctx.fillStyle = C.morado2; ctx.fillRect(j.x - 9 * j.dir - 2, jy - 15, 4, 9);      /* capa de defensora */
+      if (j.escudo) {
+        ctx.strokeStyle = C.menta; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(j.x, jy - 15, 23, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(66,214,164,0.18)'; ctx.fill();
+      }
+      /* pluma liberada volando hacia su hueco */
+      if (S.modo === 'liberar' && !S.fin) {
+        var q = A.limitar(1 - S.tm / 1.4, 0, 1), sx = SLOT_X + S.plumas * SLOT_DX;
+        A.pluma(ctx, BX + (sx - BX) * q, (G - 60) + (SLOT_Y - (G - 60)) * q - Math.sin(q * Math.PI) * 30, 22, C.oro);
+      }
+      dibujarMarcadores(ctx, api);
+    }
+  });
+})();
+
+</script>
+</body>
+</html>

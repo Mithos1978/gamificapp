@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Misión  · Obsoletus y la Gran Oca del Saber</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#101629;color:#f4f1e8;
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;display:grid;gap:6px;
+  padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto auto;
+  grid-template-areas:"barra barra barra" "escena escena escena" "herr herr herr" "cruceta . acciones"}
+#barra{grid-area:barra;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+#titulo{margin:0;font-size:clamp(15px,2.6vw,24px);letter-spacing:.06em;text-transform:uppercase;color:#F1C453;
+  text-shadow:2px 2px 0 #6D42C7;line-height:1.1;flex:1 1 220px}
+#hud{display:flex;flex-wrap:wrap;gap:4px;font-size:13px}
+.chip{background:#1b2444;border:2px solid #6D42C7;padding:2px 7px;white-space:nowrap}
+.chip b{color:#42D6A4;font-weight:700;margin-right:4px}
+#botones{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;color:#f4f1e8;background:#1b2444;border:2px solid #6D42C7;padding:6px 10px;cursor:pointer;
+  border-radius:0;touch-action:manipulation;min-height:36px;box-shadow:2px 2px 0 #000}
+button:hover{background:#2a3566}
+button:focus-visible,textarea:focus-visible{outline:3px solid #F1C453;outline-offset:2px}
+button:active{transform:translate(1px,1px);box-shadow:1px 1px 0 #000}
+button[disabled]{opacity:.45;cursor:not-allowed}
+button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
+#botones button{font-size:12px;padding:4px 8px}
+#escena{grid-area:escena;position:relative;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center}
+#lienzo{display:block;background:#101629;border:3px solid #6D42C7;image-rendering:pixelated;touch-action:none}
+#avisos{position:absolute;left:0;right:0;top:8px;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;padding:0 8px}
+.aviso{background:#101629ee;border:2px solid #42D6A4;color:#f4f1e8;padding:5px 10px;font-size:14px;line-height:1.3;max-width:560px;text-align:center}
+#herramientas{grid-area:herr;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#herramientas:empty{display:none}
+#herramientas button{flex:1 1 130px;max-width:230px;font-size:13px;line-height:1.2;min-height:44px;padding:4px 6px}
+#herramientas button[aria-pressed="true"]::before{content:"\25B6 "}
+#cruceta{grid-area:cruceta;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,44px);gap:3px}
+#acciones{grid-area:acciones;display:flex;gap:8px;align-items:center}
+#cruceta button,#acciones button{touch-action:none;user-select:none;-webkit-user-select:none;font-size:18px;padding:0}
+#acciones button{min-width:76px;height:76px;font-size:14px;border-radius:0;padding:4px}
+#cruceta:empty,#acciones:empty{display:none}
+.pulsado{background:#6D42C7!important}
+@media (hover:hover) and (pointer:fine) and (min-width:900px){#cruceta,#acciones{display:none}}
+@media (orientation:landscape) and (max-height:560px){
+  #app{grid-template-rows:auto 1fr auto;grid-template-areas:"barra barra barra" "cruceta escena acciones" "herr herr herr"}
+  #cruceta,#acciones{align-self:end}
+  #acciones{flex-direction:column}
+  #acciones button{height:56px}
+  #titulo{font-size:14px;flex:0 1 auto}
+  #herramientas button{min-height:36px}
+}
+@media (max-width:520px){#botones{width:100%}#botones button{flex:1;padding:4px 2px}#hud{font-size:12px}}
+#capa{position:fixed;inset:0;background:#080b16d9;display:flex;align-items:center;justify-content:center;padding:10px;z-index:10}
+#capa[hidden]{display:none}
+#panel{background:#1b2444;border:3px solid #6D42C7;box-shadow:6px 6px 0 #000;max-width:660px;width:100%;max-height:100%;
+  overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45;outline:none}
+#panel h2{margin:0 0 8px;color:#F1C453;font-size:clamp(18px,4vw,26px);text-transform:uppercase;letter-spacing:.05em;text-shadow:2px 2px 0 #6D42C7}
+#panel h3{margin:14px 0 4px;color:#42D6A4;font-size:15px;text-transform:uppercase}
+#panel p{margin:6px 0}
+#panel ol,#panel ul{margin:6px 0;padding-left:22px}
+#panel .opciones{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#panel .opciones.fila{flex-direction:row;flex-wrap:wrap}
+#panel .opciones.fila button{flex:1;min-width:48px;text-align:center}
+#panel .opciones button{text-align:left;min-height:44px;font-size:15px}
+#panel .opciones button small{display:block;color:#c9cfe8;font-size:13px;margin-top:2px}
+#panel .principal{background:#6D42C7;border-color:#F1C453;font-weight:700;font-size:17px;min-height:48px;text-align:center}
+#panel textarea{width:100%;font:inherit;font-size:16px;background:#101629;color:#f4f1e8;border:2px solid #42D6A4;padding:8px;min-height:74px;resize:vertical;border-radius:0}
+#panel label{display:block;margin:10px 0 4px;color:#42D6A4}
+#panel .nota{font-size:13px;color:#c9cfe8}
+#panel .ficha{background:#101629;border:2px dashed #F1C453;padding:10px;white-space:pre-wrap;word-break:break-word;
+  user-select:text;-webkit-user-select:text;font-size:14px;margin:8px 0}
+#panel .conmutadores{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.barras{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:8px 0}
+.barras .b{height:18px;background:repeating-linear-gradient(90deg,#42D6A4 0 8px,#2fae84 8px 10px);border:2px solid #f4f1e8}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="barra">
+    <h1 id="titulo"></h1>
+    <div id="hud"></div>
+    <div id="botones">
+      <button type="button" id="bPausa">Pausa</button>
+      <button type="button" id="bReiniciar">Reiniciar</button>
+      <button type="button" id="bSonido" aria-pressed="false">Sonido: no</button>
+      <button type="button" id="bTranquilo" aria-pressed="false">Tranquilo: no</button>
+    </div>
+  </header>
+  <main id="escena"><canvas id="lienzo" aria-label="Zona de juego"></canvas><div id="avisos" aria-live="polite"></div></main>
+  <div id="herramientas"></div>
+  <div id="cruceta"></div>
+  <div id="acciones"></div>
+  <div id="capa" hidden><div id="panel" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+</div>
+<script>
+/* Motor común de las recreativas de «Obsoletus y la Gran Oca del Saber».
+   Sin dependencias externas ni almacenamiento: todo vive en memoria durante la sesión. */
+(function () {
+  'use strict';
+  var C = { noche: '#101629', noche2: '#1b2444', morado: '#6D42C7', morado2: '#a98bf0', menta: '#42D6A4',
+    oro: '#F1C453', blanco: '#f4f1e8', rojo: '#ff8a8a', gris: '#8791b5' };
+  var FUENTE = 'ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","Courier New",monospace';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  /* ---------- Ayudas de dibujo ---------- */
+  function texto(ctx, s, x, y, o) {
+    o = o || {};
+    var tam = o.tam || 14;
+    ctx.font = (o.negrita ? '700 ' : '') + tam + 'px ' + FUENTE;
+    ctx.textAlign = o.alin || 'center';
+    ctx.textBaseline = o.base || 'middle';
+    var lineas = [String(s)];
+    if (o.ancho) {
+      lineas = [];
+      var pal = String(s).split(' '), l = '';
+      pal.forEach(function (p) {
+        var t = l ? l + ' ' + p : p;
+        if (ctx.measureText(t).width > o.ancho && l) { lineas.push(l); l = p; } else l = t;
+      });
+      lineas.push(l);
+    }
+    var alto = tam * 1.25, y0 = y - (lineas.length - 1) * alto / 2;
+    lineas.forEach(function (ln, i) {
+      if (o.sombra !== false) { ctx.fillStyle = o.sombraColor || '#000'; ctx.fillText(ln, x + 1, y0 + i * alto + 1); }
+      ctx.fillStyle = o.color || C.blanco;
+      ctx.fillText(ln, x, y0 + i * alto);
+    });
+    return lineas.length;
+  }
+  function caja(ctx, x, y, w, h, relleno, borde, grosor) {
+    if (relleno) { ctx.fillStyle = relleno; ctx.fillRect(x, y, w, h); }
+    if (borde) { ctx.strokeStyle = borde; ctx.lineWidth = grosor || 2; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2); }
+  }
+  /* Oca exploradora: centrada en (x,y), altura aproximada t. o = {dir:-1|1, paso:bool, color:gorro} */
+  function oca(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y); ctx.scale(o.dir < 0 ? -1 : 1, 1);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r('#f4f1e8', -3.5, -0.5, 5.5, 3.5);
+    r('#d9d4c4', -3, 0.3, 3, 1.6);
+    r('#f4f1e8', 0.8, -3.5, 2, 4);
+    r(o.color || C.menta, 0.3, -4.5, 3, 1);
+    r('#101629', 1.9, -2.8, 0.7, 0.7);
+    r(C.oro, 2.8, -2.4, 1.6, 0.9);
+    var p = o.paso ? 0.8 : 0;
+    r(C.oro, -2 + p, 3, 1, 1.4); r(C.oro, 0 - p, 3, 1, 1.4);
+    ctx.restore();
+  }
+  /* Robot de Obsoletus: centrado en (x,y), altura aproximada t. o = {color, ojo, enfado} */
+  function robot(ctx, x, y, t, o) {
+    o = o || {};
+    var u = t / 9;
+    ctx.save(); ctx.translate(x, y);
+    function r(c, a, b, w, h) { ctx.fillStyle = c; ctx.fillRect(a * u, b * u, w * u, h * u); }
+    r(C.gris, -0.3, -4.5, 0.6, 1.2); r(o.ojo || C.rojo, -0.7, -5, 1.4, 0.8);
+    r(C.blanco, -3.8, -3.6, 7.6, 5.9); r(o.color || '#3b2a78', -3.5, -3.3, 7, 5.3);
+    r('#000', -2.6, -2.2, 5.2, 1.8);
+    r(o.ojo || C.rojo, -2, -1.8, 1.2, 1); r(o.ojo || C.rojo, 0.8, -1.8, 1.2, 1);
+    r('#000', -2, 0.6, 4, 0.6);
+    r(C.gris, -2.8, 2, 2, 2.4); r(C.gris, 0.8, 2, 2, 2.4);
+    ctx.restore();
+  }
+  function pluma(ctx, x, y, t, color) {
+    var u = t / 8;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.5);
+    ctx.fillStyle = color || C.oro;
+    ctx.fillRect(-1.5 * u, -4 * u, 3 * u, 6 * u); ctx.fillRect(-0.8 * u, -5 * u, 1.6 * u, 1 * u);
+    ctx.fillStyle = '#000'; ctx.fillRect(-0.2 * u, -3.5 * u, 0.4 * u, 7.5 * u);
+    ctx.restore();
+  }
+  function choca(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function limitar(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+  /* ---------- Motor ---------- */
+  function crear(J) {
+    var lienzo = $('lienzo'), ctx = lienzo.getContext('2d'), capa = $('capa'), panel = $('panel');
+    var W = J.ancho || 480, H = J.alto || 360, k = 1;
+    var estado = 'inicio', gen = 0, tranquilo = false, sonido = false, audio = null;
+    var registro = [], hudCache = '', herr = null, herrSel = null, alHerr = null;
+    var cola = Promise.resolve(), botonesModal = null, flotantes = [];
+    var ctl = J.controles || {};
+    var dirs = ctl.cruceta || ['arriba', 'abajo', 'izq', 'der'];
+    var acciones = ctl.acciones || [];
+    var teclas = { arriba: false, abajo: false, izq: false, der: false };
+    var TECLAS_DEF = [[' '], ['x', 'm'], ['z', 'n']];
+    var mapa = { arrowup: 'arriba', w: 'arriba', arrowdown: 'abajo', s: 'abajo', arrowleft: 'izq', a: 'izq', arrowright: 'der', d: 'der' };
+    acciones.forEach(function (a, i) {
+      teclas[a.id] = false;
+      (a.teclas || TECLAS_DEF[i] || []).forEach(function (t) { mapa[t.toLowerCase()] = a.id; });
+    });
+
+    var api = {
+      W: W, H: H, C: C, t: 0, teclas: teclas,
+      get tranquilo() { return tranquilo; },
+      get vel() { return tranquilo ? 0.6 : 1; },
+      get herramienta() { return herrSel; },
+      get jugando() { return estado === 'jugando'; },
+      hud: function (o) {
+        var h = '';
+        Object.keys(o).forEach(function (kk) {
+          if (o[kk] == null || o[kk] === '') return;
+          h += '<span class="chip"><b>' + esc(kk) + '</b>' + esc(o[kk]) + '</span>';
+        });
+        if (h !== hudCache) { hudCache = h; $('hud').innerHTML = h; }
+      },
+      sonido: bip,
+      mensaje: function (txt, ms) {
+        var cont = $('avisos'), a = el('div', 'aviso', txt);
+        while (cont.children.length >= 2) cont.removeChild(cont.firstChild);
+        cont.appendChild(a);
+        setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, ms || 3200);
+      },
+      flotar: function (txt, x, y, o) {
+        o = o || {};
+        flotantes.push({ txt: txt, x: x, y: y, v: 0, dur: o.dur || 1.1, color: o.color || C.oro, tam: o.tam || 13 });
+        if (flotantes.length > 8) flotantes.shift();
+      },
+      registrar: function (txt) { registro.push(String(txt)); },
+      elegir: function (cfg) {
+        var g = gen;
+        cola = cola.then(function () { return g === gen ? modal(cfg, g) : new Promise(function () {}); });
+        return cola;
+      },
+      informar: function (cfg) {
+        return api.elegir({ titulo: cfg.titulo, texto: cfg.texto, html: cfg.html, opciones: [cfg.boton || 'Continuar'] });
+      },
+      herramientas: function (lista, alElegir) {
+        herr = lista && lista.length ? lista : null; alHerr = alElegir || null;
+        herrSel = null; pintarHerr(); ajustar();
+      },
+      seleccionar: function (id) { elegirHerr(id, true); },
+      ayuda: function (html) { J.ayuda = html; },
+      terminar: fin
+    };
+
+    /* --- Sonido (apagado por defecto) --- */
+    function bip(tipo) {
+      if (!sonido) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        var f = { punto: 880, ok: 660, error: 200, golpe: 150, salto: 520, disparo: 740, gana: 990 }[tipo] || 440;
+        var o = audio.createOscillator(), gn = audio.createGain();
+        o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.05;
+        o.connect(gn); gn.connect(audio.destination);
+        o.start(); o.stop(audio.currentTime + 0.09);
+      } catch (e) { /* sin audio disponible */ }
+    }
+
+    /* --- Tamaño del lienzo --- */
+    function ajustar() {
+      var r = $('escena').getBoundingClientRect();
+      var s = Math.max(0.2, Math.min((r.width - 6) / W, (r.height - 6) / H));
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      lienzo.style.width = Math.floor(W * s) + 'px';
+      lienzo.style.height = Math.floor(H * s) + 'px';
+      lienzo.width = Math.round(W * s * dpr); lienzo.height = Math.round(H * s * dpr);
+      k = lienzo.width / W;
+    }
+    window.addEventListener('resize', ajustar);
+    if (window.ResizeObserver) new ResizeObserver(ajustar).observe($('escena'));
+
+    /* --- Entrada --- */
+    function soltar() { Object.keys(teclas).forEach(function (t) { teclas[t] = false; }); }
+    function pulsar(id) {
+      if (estado !== 'jugando') return;
+      if (id in teclas) teclas[id] = true;
+      if (J.alPulsar) J.alPulsar(id, api);
+    }
+    function escribiendo(e) { var t = e.target && e.target.tagName; return t === 'TEXTAREA' || t === 'INPUT'; }
+    window.addEventListener('keydown', function (e) {
+      if (escribiendo(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+      var key = e.key.toLowerCase();
+      if (estado === 'modal') {
+        var n = parseInt(key, 10);
+        if (botonesModal && n >= 1 && n <= botonesModal.length) { e.preventDefault(); botonesModal[n - 1].click(); }
+        return;
+      }
+      if (key === 'p' || key === 'escape') { if (estado === 'jugando' || estado === 'pausa') { e.preventDefault(); pausa(); } return; }
+      if (estado !== 'jugando') return;
+      var id = mapa[key];
+      if (id) { e.preventDefault(); if (!e.repeat) pulsar(id); return; }
+      var d = parseInt(key, 10);
+      if (d >= 1 && d <= 9) {
+        if (herr && d <= herr.length) elegirHerr(herr[d - 1].id);
+        if (J.alPulsar) J.alPulsar(String(d), api);
+      }
+    });
+    window.addEventListener('keyup', function (e) {
+      var id = mapa[e.key.toLowerCase()];
+      if (id) teclas[id] = false;
+    });
+    window.addEventListener('blur', soltar);
+    lienzo.addEventListener('pointerdown', function (e) {
+      if (estado !== 'jugando' || !J.alPuntero) return;
+      var r = lienzo.getBoundingClientRect();
+      J.alPuntero((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H, api);
+    });
+    function botonTactil(id, etiqueta, aria) {
+      var b = el('button', null, etiqueta);
+      b.type = 'button'; b.setAttribute('aria-label', aria || etiqueta);
+      function baja(e) { e.preventDefault(); b.classList.add('pulsado'); pulsar(id); }
+      function sube(e) { e.preventDefault(); b.classList.remove('pulsado'); if (id in teclas) teclas[id] = false; }
+      b.addEventListener('pointerdown', baja);
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { b.addEventListener(n, sube); });
+      b.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      return b;
+    }
+    (function montarTactil() {
+      var cr = $('cruceta'), ac = $('acciones');
+      if (dirs.length) {
+        var pos = { arriba: [2, 1, '▲', 'Arriba'], izq: [1, 2, '◀', 'Izquierda'], der: [3, 2, '▶', 'Derecha'], abajo: [2, 3, '▼', 'Abajo'] };
+        var soloLR = dirs.indexOf('arriba') < 0 && dirs.indexOf('abajo') < 0;
+        if (soloLR) { cr.style.gridTemplateRows = '56px'; cr.style.gridTemplateColumns = 'repeat(2,64px)'; }
+        dirs.forEach(function (dd) {
+          var p = pos[dd], b = botonTactil(dd, p[2], p[3]);
+          if (!soloLR) { b.style.gridColumn = p[0]; b.style.gridRow = p[1]; }
+          cr.appendChild(b);
+        });
+      }
+      acciones.forEach(function (a) { ac.appendChild(botonTactil(a.id, a.etiqueta)); });
+    })();
+
+    /* --- Barra de herramientas del juego --- */
+    function pintarHerr() {
+      var c = $('herramientas'); c.innerHTML = '';
+      if (!herr) return;
+      herr.forEach(function (h, i) {
+        var b = el('button', null, (i + 1) + ' · ' + (h.icono ? h.icono + ' ' : '') + h.etiqueta);
+        b.type = 'button'; b.setAttribute('aria-pressed', String(h.id === herrSel));
+        b.addEventListener('click', function () { if (estado === 'jugando') elegirHerr(h.id); b.blur(); });
+        c.appendChild(b);
+      });
+    }
+    function elegirHerr(id, silencioso) {
+      if (!herr) return;
+      herrSel = id; pintarHerr();
+      if (alHerr && !silencioso) alHerr(id, api);
+    }
+
+    /* --- Paneles --- */
+    function abrirPanel() { capa.hidden = false; panel.scrollTop = 0; }
+    function cerrarPanel() { capa.hidden = true; panel.innerHTML = ''; botonesModal = null; }
+    function parrafos(dest, txt) {
+      String(txt).split('\n').forEach(function (p) { if (p.trim()) dest.appendChild(el('p', null, p)); });
+    }
+    function modal(cfg, g) {
+      return new Promise(function (res) {
+        soltar(); estado = 'modal';
+        var abierto = performance.now(), ta = null;
+        panel.innerHTML = '';
+        if (cfg.titulo) panel.appendChild(el('h2', null, cfg.titulo));
+        if (cfg.texto) parrafos(panel, cfg.texto);
+        if (cfg.html) { var d = el('div'); d.innerHTML = cfg.html; panel.appendChild(d); }
+        if (cfg.campo) {
+          var lb = el('label', null, cfg.campo); lb.htmlFor = 'campoModal';
+          ta = el('textarea'); ta.id = 'campoModal'; ta.maxLength = 300;
+          panel.appendChild(lb); panel.appendChild(ta);
+        }
+        var cont = el('div', 'opciones' + (cfg.enFila ? ' fila' : ''));
+        botonesModal = [];
+        (cfg.opciones || ['Continuar']).forEach(function (o, i) {
+          var b = el('button'); b.type = 'button';
+          var et = typeof o === 'string' ? o : o.etiqueta;
+          b.appendChild(document.createTextNode((cfg.opciones && cfg.opciones.length > 1 && !cfg.enFila ? (i + 1) + ' · ' : '') + et));
+          if (o.detalle) b.appendChild(el('small', null, o.detalle));
+          b.addEventListener('click', function () {
+            if (performance.now() - abierto < 350 || g !== gen) return;
+            cerrarPanel(); estado = 'jugando';
+            res({ i: i, texto: ta ? ta.value.trim() : '' });
+          });
+          cont.appendChild(b); botonesModal.push(b);
+        });
+        panel.appendChild(cont);
+        abrirPanel();
+        setTimeout(function () { if (g === gen && estado === 'modal' && !ta) panel.focus(); }, 50);
+      });
+    }
+    function pausa() {
+      if (estado === 'jugando') {
+        soltar(); estado = 'pausa';
+        panel.innerHTML = '<h2>Pausa</h2><p>El juego está detenido. Nada se mueve hasta que reanudes.</p>' +
+          (J.ayuda ? '<h3>Ayuda y conceptos</h3>' + J.ayuda : '');
+        var b = el('button', 'principal', 'Reanudar'); b.type = 'button'; b.addEventListener('click', pausa);
+        var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+        abrirPanel(); $('bPausa').textContent = 'Reanudar';
+      } else if (estado === 'pausa') {
+        cerrarPanel(); estado = 'jugando'; $('bPausa').textContent = 'Pausa';
+      }
+    }
+    function conmutadores() {
+      var c = el('div', 'conmutadores');
+      var bt = el('button'), bs = el('button'); bt.type = bs.type = 'button';
+      function pinta() {
+        bt.textContent = 'Modo tranquilo: ' + (tranquilo ? 'sí' : 'no'); bt.setAttribute('aria-pressed', String(tranquilo));
+        bs.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); bs.setAttribute('aria-pressed', String(sonido));
+        $('bTranquilo').textContent = 'Tranquilo: ' + (tranquilo ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(tranquilo));
+        $('bSonido').textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); $('bSonido').setAttribute('aria-pressed', String(sonido));
+      }
+      bt.addEventListener('click', function () { tranquilo = !tranquilo; pinta(); });
+      bs.addEventListener('click', function () { sonido = !sonido; pinta(); bip('ok'); });
+      pinta(); c.appendChild(bt); c.appendChild(bs);
+      return c;
+    }
+    function ponTranquilo(v) {
+      tranquilo = v;
+      $('bTranquilo').textContent = 'Tranquilo: ' + (v ? 'sí' : 'no'); $('bTranquilo').setAttribute('aria-pressed', String(v));
+    }
+    api.activarTranquilo = function () { ponTranquilo(true); };
+
+    function portada() {
+      estado = 'inicio';
+      panel.innerHTML = '<p class="nota">Obsoletus y la Gran Oca del Saber · Recreativa ' + esc(J.numero || '') + '</p>' +
+        '<h2>' + esc(J.titulo) + '</h2>' +
+        '<h3>Objetivo pedagógico</h3><p>' + esc(J.objetivo) + '</p>' +
+        '<h3>Cómo se juega</h3><ol>' + (J.instrucciones || []).map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ol>' +
+        '<p class="nota">' + esc(J.teclas || 'Teclado: flechas o WASD. En móvil o tableta: botones táctiles en pantalla.') +
+        ' P o Esc: pausa. El modo tranquilo quita la presión de tiempo y reduce la velocidad.</p>';
+      panel.appendChild(conmutadores());
+      var b = el('button', 'principal', 'Iniciar'); b.type = 'button'; b.id = 'bIniciar';
+      b.addEventListener('click', comenzar);
+      var c = el('div', 'opciones'); c.appendChild(b); panel.appendChild(c);
+      abrirPanel();
+    }
+    function comenzar() {
+      gen++; cola = Promise.resolve();
+      registro = []; flotantes = []; herr = null; herrSel = null; alHerr = null; pintarHerr();
+      hudCache = ''; $('hud').innerHTML = ''; $('avisos').innerHTML = '';
+      api.t = 0; soltar(); cerrarPanel();
+      $('bPausa').textContent = 'Pausa';
+      estado = 'jugando'; ajustar();
+      J.iniciar(api);
+    }
+
+    /* --- Pantalla final y Pluma Dorada --- */
+    function fin(r) {
+      r = r || {};
+      soltar(); estado = 'fin'; bip('gana');
+      var decisiones = registro.slice();
+      panel.innerHTML = '<h2>' + esc(r.titulo || '¡Reto superado!') + '</h2>' +
+        '<p><b>Puntuación lúdica:</b> ' + esc(r.puntos != null ? r.puntos : 0) + ' <span class="nota">(solo mide la partida, no tu aprendizaje)</span></p>' +
+        (r.html || '') +
+        '<h3>Decisiones que tomaste</h3>' +
+        (decisiones.length ? '<ul>' + decisiones.map(function (d) { return '<li>' + esc(d) + '</li>'; }).join('') + '</ul>' : '<p>Sin decisiones registradas.</p>') +
+        (r.feedback ? '<h3>Comentario sobre esta partida</h3><p>' + esc(r.feedback) + '</p>' : '') +
+        '<h3>Pregunta de transferencia</h3><p><b>' + esc(J.transferencia) + '</b></p>';
+      var lb = el('label', null, 'Tu respuesta (1–2 frases):'); lb.htmlFor = 'reflexion';
+      var ta = el('textarea'); ta.id = 'reflexion'; ta.maxLength = 600;
+      var reclamar = el('button', 'principal', 'Reclamar Pluma Dorada'); reclamar.type = 'button'; reclamar.id = 'bReclamar'; reclamar.disabled = true;
+      var aviso = el('p', 'nota', 'Escribe tu reflexión (al menos 20 caracteres) para activar la Pluma Dorada.');
+      var zona = el('div');
+      var otra = el('button', null, 'Jugar de nuevo'); otra.type = 'button'; otra.addEventListener('click', comenzar);
+      var ops = el('div', 'opciones'); ops.appendChild(reclamar); ops.appendChild(otra);
+      ta.addEventListener('input', function () { reclamar.disabled = ta.value.trim().length < 20; });
+      reclamar.addEventListener('click', function () {
+        var f = new Date(), fecha = f.toLocaleDateString('es-ES') + ' ' + f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        var lineas = ['✦ ' + J.pluma + ' ✦', 'Pluma Dorada · Obsoletus y la Gran Oca del Saber',
+          'Recreativa ' + (J.numero || '') + ': ' + J.titulo, 'Fecha: ' + fecha,
+          'Puntuación lúdica: ' + (r.puntos != null ? r.puntos : 0) + (tranquilo ? ' (modo tranquilo)' : ''), '', 'Decisiones en esta partida:'];
+        decisiones.forEach(function (d) { lineas.push('- ' + d); });
+        (r.ficha || []).forEach(function (d) { lineas.push('- ' + d); });
+        lineas.push('', 'Pregunta: ' + J.transferencia, 'Mi reflexión: ' + ta.value.trim(), '',
+          'Repaso formativo: esta ficha no certifica competencia docente.');
+        zona.innerHTML = '<h3>Pluma Dorada reclamada: ' + esc(J.pluma) + '</h3>';
+        var ficha = el('div', 'ficha', lineas.join('\n')); ficha.id = 'ficha'; ficha.tabIndex = 0;
+        zona.appendChild(ficha);
+        var copiar = el('button', null, 'Seleccionar y copiar ficha'); copiar.type = 'button';
+        var nota = el('p', 'nota', 'Esta ficha solo existe en tu pantalla: no se ha enviado al profesorado ni se guarda en ningún servidor. Cópiala o haz una captura para conservarla.');
+        copiar.addEventListener('click', function () {
+          var rg = document.createRange(); rg.selectNodeContents(ficha);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          copiar.textContent = ok ? 'Ficha copiada' : 'Ficha seleccionada: cópiala con Ctrl/Cmd + C';
+        });
+        zona.appendChild(copiar); zona.appendChild(nota);
+        reclamar.disabled = true; reclamar.textContent = 'Pluma Dorada reclamada'; ta.readOnly = true; aviso.textContent = '';
+        ficha.scrollIntoView({ block: 'nearest' });
+      });
+      panel.appendChild(lb); panel.appendChild(ta); panel.appendChild(aviso); panel.appendChild(ops); panel.appendChild(zona);
+      abrirPanel();
+    }
+
+    /* --- Botones fijos --- */
+    $('titulo').textContent = J.titulo;
+    $('bPausa').addEventListener('click', function () { pausa(); this.blur(); });
+    $('bReiniciar').addEventListener('click', function () { this.blur(); comenzar(); });
+    $('bSonido').addEventListener('click', function () {
+      sonido = !sonido; this.textContent = 'Sonido: ' + (sonido ? 'sí' : 'no'); this.setAttribute('aria-pressed', String(sonido)); this.blur(); bip('ok');
+    });
+    $('bTranquilo').addEventListener('click', function () { ponTranquilo(!tranquilo); this.blur(); });
+
+    /* --- Bucle --- */
+    var previo = 0;
+    function cuadro(ts) {
+      requestAnimationFrame(cuadro);
+      var dt = Math.min(0.05, (ts - previo) / 1000 || 0); previo = ts;
+      if (estado === 'jugando') {
+        api.t += dt;
+        J.actualizar(dt, api);
+        for (var i = flotantes.length - 1; i >= 0; i--) { flotantes[i].v += dt; if (flotantes[i].v > flotantes[i].dur) flotantes.splice(i, 1); }
+      }
+      if (estado === 'inicio') return;
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = C.noche; ctx.fillRect(0, 0, W, H);
+      J.dibujar(ctx, api);
+      flotantes.forEach(function (f) { texto(ctx, f.txt, f.x, f.y - f.v * 22, { tam: f.tam, color: f.color, negrita: true }); });
+    }
+    ajustar(); portada(); requestAnimationFrame(cuadro);
+    Arcade._ = { api: api, juego: J, estado: function () { return estado; } };
+    return api;
+  }
+
+  window.Arcade = { crear: crear, C: C, esc: esc, texto: texto, caja: caja, oca: oca, robot: robot, pluma: pluma, choca: choca, limitar: limitar };
+})();
+
+</script>
+<script>
+/* 04 · El arquitecto de la gamificación */
+(function () {
+  'use strict';
+  var A = Arcade, C = A.C;
+  var COLS = 8, FILAS = 12, T = 34, GX = 14, GY = 54, W = 360, H = 500, PX = GX + COLS * T + 6;
+
+  /* Los ocho componentes: abreviatura visible en cada celda, icono, color y definición de una línea */
+  var CON = {
+    obj:  { ab: 'OBJ',  nom: 'objetivo',    f: '#5f460d', b: C.oro,     def: 'qué se quiere aprender y para qué sirve la tarea.',
+            falta: 'sin objetivo no se sabe para qué sirve la tarea' },
+    reto: { ab: 'RETO', nom: 'reto',        f: '#7a2c33', b: C.rojo,    def: 'desafío ajustado que exige poner en práctica lo que se aprende.',
+            falta: 'sin reto no hay nada que superar ni que practicar' },
+    narr: { ab: 'NARR', nom: 'narrativa',   f: '#43278a', b: C.morado2, def: 'historia o contexto que da sentido a lo que se hace.',
+            falta: 'sin narrativa el reto se queda sin contexto' },
+    feed: { ab: 'FEED', nom: 'feedback',    f: '#0e5a45', b: C.menta,   def: 'información sobre cómo vas y qué hacer para mejorar.',
+            falta: 'sin feedback nadie sabe cómo va ni cómo mejorar' },
+    auto: { ab: 'AUTO', nom: 'autonomía',   f: '#1c4a80', b: '#8cc4ff', def: 'opciones reales para decidir cómo, cuándo o con qué trabajar.',
+            falta: 'sin autonomía el alumnado no decide nada' },
+    coop: { ab: 'COOP', nom: 'cooperación', f: '#6f3266', b: '#f2a6de', def: 'meta compartida que solo se alcanza trabajando con otras personas.',
+            falta: 'sin cooperación se pierde el aprender con otras personas' },
+    reco: { ab: 'RECO', nom: 'recompensa',  f: '#4c5216', b: '#dbe46a', def: 'reconocimiento (puntos, insignias, acceso) ligado a lo conseguido.',
+            falta: 'esta misión trata de dar sentido a la recompensa, así que tiene que aparecer' },
+    eval: { ab: 'EVAL', nom: 'evaluación',  f: '#39425f', b: C.blanco,  def: 'comprobar con evidencias qué se ha aprendido.',
+            falta: 'sin evaluación no se comprueba qué se ha aprendido' }
+  };
+  var ORDEN = ['obj', 'reto', 'narr', 'feed', 'auto', 'coop', 'reco', 'eval'];
+
+  var MISIONES = [
+    { nombre: 'Da sentido al reto', intervalo: 0.85,
+      idea: 'Un reto aislado es solo un obstáculo. Reúne en UNA MISMA FILA completa los componentes que le dan sentido.',
+      linea: 'OBJ+RETO+NARR · OBJ+RETO+FEED · RETO+NARR+AUTO', nota: 'en la misma fila; las demás casillas son libres',
+      combos: [
+        { c: ['obj', 'reto', 'narr'], por: 'El objetivo dice para qué, el reto qué hay que superar y la narrativa lo sitúa en un contexto con sentido.' },
+        { c: ['obj', 'reto', 'feed'], por: 'Hay una meta clara, un desafío y feedback para saber si te acercas a ella.' },
+        { c: ['reto', 'narr', 'auto'], por: 'El reto tiene una historia detrás y deja margen para elegir cómo afrontarlo.' }
+      ],
+      bolsa: { obj: 3, reto: 3, narr: 3, feed: 2, auto: 2, coop: 1, reco: 1, eval: 1 } },
+    { nombre: 'Haz visible el progreso', intervalo: 0.75,
+      idea: 'Avanzar sin saber cuánto se avanza desanima. Reúne en una misma fila completa lo que hace visible el progreso.',
+      linea: 'FEED+EVAL + uno de: OBJ, RETO, AUTO, COOP', nota: 'en la misma fila; las demás casillas son libres',
+      combos: [
+        { c: ['obj', 'feed', 'eval'], por: 'El objetivo sirve de referencia, el feedback orienta por el camino y la evaluación comprueba lo logrado.' },
+        { c: ['reto', 'feed', 'eval'], por: 'El reto genera evidencias, el feedback las devuelve a tiempo y la evaluación las recoge.' },
+        { c: ['feed', 'auto', 'eval'], por: 'Es una autoevaluación: el alumnado decide, recibe feedback y revisa su propio avance.' },
+        { c: ['feed', 'coop', 'eval'], por: 'Es una coevaluación: el grupo se da feedback y comprueba junto lo que ha aprendido.' }
+      ],
+      bolsa: { feed: 3, eval: 3, obj: 2, reto: 2, auto: 2, coop: 2, narr: 2, reco: 2 } },
+    { nombre: 'Evita la recompensa vacía', intervalo: 0.65, maxReco: 2,
+      idea: 'Un premio que no informa de nada es puro adorno. Une la recompensa a lo que se aprende, sin que lo ocupe todo.',
+      linea: 'RECO+OBJ+FEED · RECO+RETO+EVAL · RECO+OBJ+EVAL', nota: 'en la misma fila y con 2 casillas RECO como máximo',
+      combos: [
+        { c: ['reco', 'obj', 'feed'], por: 'La recompensa reconoce un objetivo concreto y llega acompañada de información para seguir mejorando.' },
+        { c: ['reco', 'reto', 'eval'], por: 'La recompensa se gana superando un reto y la evaluación comprueba que detrás hay aprendizaje.' },
+        { c: ['reco', 'obj', 'eval'], por: 'La recompensa certifica un objetivo logrado y comprobado, no la mera participación.' }
+      ],
+      bolsa: { reco: 4, obj: 2, feed: 2, reto: 2, eval: 2, narr: 2, auto: 1, coop: 1 } }
+  ];
+
+  /* Figuras propias de 1 a 3 celdas (ninguna de cuatro) */
+  var FORMAS = [
+    { id: 'punto', f: [[0, 0]], peso: 2 },
+    { id: 'par',   f: [[0, 0], [1, 0]], peso: 4 },
+    { id: 'barra', f: [[0, 0], [1, 0], [2, 0]], peso: 4 },
+    { id: 'codo',  f: [[0, 0], [0, 1], [1, 1]], peso: 4 },
+    { id: 'salto', f: [[0, 0], [1, 1]], peso: 1 }
+  ];
+  var S;
+
+  function nombres(l) { return l.map(function (k) { return CON[k].nom; }); }
+  function unir(l) { return l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1]; }
+  function sorteo(pesos, excepto) {
+    var tot = 0, k, r;
+    for (k in pesos) if (k !== excepto) tot += pesos[k];
+    r = Math.random() * tot;
+    for (k in pesos) if (k !== excepto) { r -= pesos[k]; if (r < 0) return k; }
+    return k;
+  }
+  function ancho(f) { return Math.max.apply(null, f.map(function (c) { return c[0]; })) + 1; }
+  function alto(f) { return Math.max.apply(null, f.map(function (c) { return c[1]; })) + 1; }
+  function girada(f) {
+    var r = f.map(function (c) { return [-c[1], c[0]]; });
+    var mx = Math.min.apply(null, r.map(function (c) { return c[0]; })), my = Math.min.apply(null, r.map(function (c) { return c[1]; }));
+    return r.map(function (c) { return [c[0] - mx, c[1] - my]; });
+  }
+  function choca(f, x, y) {
+    for (var i = 0; i < f.length; i++) {
+      var cx = x + f[i][0], cy = y + f[i][1];
+      if (cx < 0 || cx >= COLS || cy < 0 || cy >= FILAS || S.g[cy][cx]) return true;
+    }
+    return false;
+  }
+  function crearPieza() {
+    var pesos = {}, m = MISIONES[S.m];
+    FORMAS.forEach(function (fo, i) { pesos[i] = fo.peso; });
+    var fo = FORMAS[sorteo(pesos)], a = sorteo(m.bolsa), b = sorteo(m.bolsa, a);
+    return { id: fo.id, f: fo.f.map(function (c) { return c.slice(); }), con: [a, b], sel: 0, x: 0, y: 0 };
+  }
+  function rejillaVacia() {
+    var g = [];
+    for (var y = 0; y < FILAS; y++) { g.push([]); for (var x = 0; x < COLS; x++) g[y].push(null); }
+    return g;
+  }
+
+  /* ¿Cumple esta fila (lista de conceptos, con huecos null) el criterio de la misión m? */
+  function evaluar(fila, m) {
+    var pres = {}, mejor = null;
+    fila.forEach(function (k) { if (k) pres[k] = (pres[k] || 0) + 1; });
+    m.combos.forEach(function (cb, i) {
+      var faltan = cb.c.filter(function (k) { return !pres[k]; });
+      if (!mejor || faltan.length < mejor.faltan.length) mejor = { i: i, faltan: faltan };
+    });
+    var exceso = !!(m.maxReco && (pres.reco || 0) > m.maxReco);
+    return { ok: !mejor.faltan.length && !exceso, i: mejor.i, faltan: mejor.faltan, exceso: exceso, pres: pres };
+  }
+  function tarjeta(ev, m) {
+    var hay = unir(nombres(ORDEN.filter(function (k) { return ev.pres[k]; })));
+    if (!ev.faltan.length && ev.exceso) {
+      return 'Fila eliminada sin bonificación: la combinación estaba, pero con ' + ev.pres.reco +
+        ' casillas de recompensa el premio ocupa casi toda la fila y tapa lo demás (máximo 2).';
+    }
+    return 'Fila eliminada sin bonificación. Tenía ' + hay + '; para «' + m.nombre + '» faltaba ' +
+      unir(nombres(ev.faltan)) + ': ' + CON[ev.faltan[0]].falta + '.';
+  }
+
+  function criterioHtml(m) {
+    return '<p>Completa una fila de 8 casillas que contenga, como mínimo, una de estas combinaciones:</p><ul>' +
+      m.combos.map(function (cb) { return '<li><b>' + nombres(cb.c).join(' + ') + '</b></li>'; }).join('') + '</ul>' +
+      (m.maxReco ? '<p>Además, esa fila puede tener <b>como máximo ' + m.maxReco + ' casillas de recompensa</b>: si el premio lo ocupa todo, desplaza al aprendizaje.</p>' : '') +
+      '<p class="nota">Las demás casillas de la fila pueden ser de cualquier componente. Las filas que no cumplan se eliminan igual, pero sin bonificación. ' +
+      'Una marca ✓ a la izquierda de una fila indica que ya reúne la combinación.</p>';
+  }
+
+  function sacarPieza(api) {
+    var p = S.sig; S.sig = crearPieza();
+    p.x = Math.floor((COLS - ancho(p.f)) / 2); p.y = 0;
+    S.caida = 0; S.suelo = 0; S.soltarBajar = true; S.piezas++;
+    if (choca(p.f, p.x, p.y)) { S.p = null; derrota(api); return; }
+    S.p = p;
+  }
+  function empezarMision(api, previo) {
+    var m = MISIONES[S.m];
+    S.activa = false; S.g = rejillaVacia(); S.p = null; S.limpia = null; S.sig = crearPieza();
+    api.informar({
+      titulo: 'Misión ' + (S.m + 1) + ' de 3 · ' + m.nombre,
+      html: (previo || '') + '<p>' + A.esc(m.idea) + '</p>' + criterioHtml(m),
+      boton: 'Empezar misión ' + (S.m + 1)
+    }).then(function () { S.activa = true; sacarPieza(api); });
+  }
+  function derrota(api) {
+    S.activa = false; S.reintentos++; api.sonido('golpe');
+    api.elegir({
+      titulo: 'La pila ha llegado arriba',
+      texto: 'No pasa nada: se vacía la cuadrícula y repites la misión ' + (S.m + 1) + '. Conservas las ' + S.logros.length +
+        ' combinación(es) que ya habías logrado y no hay ninguna penalización.',
+      opciones: [{ etiqueta: 'Reintentar la misión' }, { etiqueta: 'Reintentar en modo tranquilo', detalle: 'Las piezas caen más despacio.' }]
+    }).then(function (r) {
+      if (r.i === 1) api.activarTranquilo();
+      S.g = rejillaVacia(); S.limpia = null; S.sig = crearPieza(); S.activa = true; sacarPieza(api);
+    });
+  }
+
+  function fijar(api) {
+    var p = S.p, k = p.con[p.sel], m = MISIONES[S.m];
+    p.f.forEach(function (c) { S.g[p.y + c[1]][p.x + c[0]] = k; });
+    S.p = null; S.puntos += 5; api.sonido('punto');
+    var llenas = [], y;
+    for (y = 0; y < FILAS; y++) if (S.g[y].every(function (c) { return c; })) llenas.push(y);
+    if (!llenas.length) { sacarPieza(api); return; }
+    var evs = llenas.map(function (yy) { return evaluar(S.g[yy], m); }), buena = -1;
+    evs.forEach(function (e, i) { if (e.ok && buena < 0) buena = i; });
+    S.limpia = { filas: llenas, evs: evs, buena: buena, t: 0.5 };
+    S.filas += llenas.length; S.puntos += 40 * llenas.length;
+    if (buena >= 0) {
+      api.sonido('ok'); S.puntos += 300;
+      api.flotar('+300 combinación', GX + COLS * T / 2, GY + llenas[buena] * T + 6, { tam: 14 });
+    } else {
+      S.sinBono += llenas.length; api.sonido('error');
+      api.mensaje(tarjeta(evs[0], m), 6500);
+    }
+  }
+  function terminarLimpieza(api) {
+    var L = S.limpia, m = MISIONES[S.m];
+    S.limpia = null;
+    L.filas.forEach(function (y) {
+      S.g.splice(y, 1);
+      var v = []; for (var x = 0; x < COLS; x++) v.push(null);
+      S.g.unshift(v);
+    });
+    if (L.buena < 0) { sacarPieza(api); return; }
+    var cb = m.combos[L.evs[L.buena].i], nom = nombres(cb.c).join(' + ');
+    S.logros.push({ m: S.m, nom: nom, por: cb.por });
+    api.registrar('Misión ' + (S.m + 1) + ' «' + m.nombre + '»: completé una fila con ' + nom + '.');
+    var previo = '<p><b>Combinación justificada: ' + A.esc(nom) + '.</b> ' + A.esc(cb.por) + '</p>';
+    S.m++;
+    if (S.m < MISIONES.length) {
+      empezarMision(api, '<h3>Misión ' + S.m + ' lograda</h3>' + previo + '<h3>Siguiente misión</h3>');
+    } else {
+      S.activa = false; S.m = MISIONES.length - 1; S.fin = true;
+      api.informar({ titulo: '¡Tres combinaciones justificadas!', html: previo +
+        '<p>Has reunido las tres combinaciones. Queda la reflexión final para reclamar la Pluma Dorada.</p>', boton: 'Ver pantalla final' })
+        .then(function () { cierre(api); });
+    }
+  }
+  function cierre(api) {
+    var html = '<h3>Combinaciones logradas</h3><ol>' + S.logros.map(function (l) {
+      return '<li><b>' + A.esc(MISIONES[l.m].nombre) + ':</b> ' + A.esc(l.nom) + '. ' + A.esc(l.por) + '</li>';
+    }).join('') + '</ol><p class="nota"><b>Advertencia:</b> encajar componentes no es diseñar. Un diseño real exige considerar el contexto, ' +
+      'el alumnado concreto y cómo se va a evaluar, además de los componentes aislados. Estas combinaciones son ejemplos coherentes, no recetas.</p>';
+    api.registrar('Cambié de concepto ' + S.cambios + ' vez/veces antes de colocar una pieza.');
+    if (S.sinBono) api.registrar('Eliminé ' + S.sinBono + ' fila(s) sin bonificación porque les faltaba algún componente del criterio.');
+    api.terminar({
+      titulo: '¡Diseño con sentido!', puntos: S.puntos, html: html,
+      feedback: 'En esta partida reuniste una combinación coherente en cada misión. ' +
+        (S.sinBono ? 'También completaste ' + S.sinBono + ' fila(s) que no cumplían el criterio: llenar la fila no bastaba, había que reunir componentes que se justifican entre sí. '
+          : 'Todas las filas que completaste cumplían el criterio de su misión. ') +
+        (S.reintentos ? 'Reintentaste ' + S.reintentos + ' vez/veces: forma parte del juego. ' : '') +
+        'Es el resultado de una partida, no una medida de tu capacidad para diseñar.',
+      ficha: ['Recuerda: el diseño real requiere considerar contexto, alumnado y evaluación, además de componentes aislados.']
+    });
+  }
+
+  /* ---------- Acciones del jugador ---------- */
+  function mover(dx) {
+    var p = S.p;
+    if (!p || choca(p.f, p.x + dx, p.y)) return false;
+    p.x += dx; return true;
+  }
+  function girar(api) {
+    var p = S.p; if (!p) return;
+    var nf = girada(p.f), nx = p.x + Math.floor((ancho(p.f) - ancho(nf)) / 2);
+    var saltos = [[0, 0], [-1, 0], [1, 0], [0, -1], [-2, 0], [2, 0]];
+    for (var i = 0; i < saltos.length; i++) {
+      if (!choca(nf, nx + saltos[i][0], p.y + saltos[i][1])) {
+        p.f = nf; p.x = nx + saltos[i][0]; p.y += saltos[i][1]; api.sonido('salto'); return;
+      }
+    }
+  }
+  function cambiar(api) {
+    if (!S.p) return;
+    S.p.sel = 1 - S.p.sel; S.cambios++; api.sonido('disparo');
+  }
+  function destino(p) { var y = p.y; while (!choca(p.f, p.x, y + 1)) y++; return y; }
+
+  /* ---------- Dibujo ---------- */
+  function icono(ctx, k, cx, cy, u, color, fondo) {
+    function r(a, b, w, h, c) { ctx.fillStyle = c || color; ctx.fillRect(cx + a * u, cy + b * u, w * u, h * u); }
+    if (k === 'obj') { r(-4, -4, 8, 8); r(-3, -3, 6, 6, fondo); r(-1, -1, 2, 2); }
+    else if (k === 'reto') { r(-5, 2, 10, 2); r(-3, 0, 6, 2); r(-1, -2, 2, 2); r(-1, -4, 1, 2); r(0, -4, 2, 1); }
+    else if (k === 'narr') { r(-5, -3, 4, 7); r(1, -3, 4, 7); r(-1, -2, 2, 6, fondo); r(-4, -1, 2, 1, fondo); r(2, -1, 2, 1, fondo); }
+    else if (k === 'feed') { r(-5, -4, 10, 6); r(-3, 2, 2, 2); r(-3, -2, 6, 1, fondo); r(-3, 0, 4, 1, fondo); }
+    else if (k === 'auto') { r(-1, 0, 2, 4); r(-5, -1, 10, 2); r(-5, -4, 2, 3); r(3, -4, 2, 3); }
+    else if (k === 'coop') { r(-4, -4, 2, 2); r(2, -4, 2, 2); r(-5, -1, 4, 5); r(1, -1, 4, 5); r(-1, 1, 2, 1); }
+    else if (k === 'reco') { r(-3, -4, 2, 3); r(1, -4, 2, 3); r(-3, -1, 6, 5); r(-1, 1, 2, 1, fondo); }
+    else { r(-5, 0, 2, 2); r(-3, 2, 2, 2); r(-1, 0, 2, 2); r(1, -2, 2, 2); r(3, -4, 2, 2); }
+  }
+  function celda(ctx, x, y, t, k) {
+    var c = CON[k];
+    A.caja(ctx, x + 1, y + 1, t - 2, t - 2, c.f, c.b, 2);
+    if (t >= 30) {
+      icono(ctx, k, x + t / 2, y + 10, 1, c.b, c.f);
+      A.texto(ctx, c.ab, x + t / 2, y + t - 10, { tam: 12, negrita: true });
+    } else icono(ctx, k, x + t / 2, y + t / 2, 1, c.b, c.f);
+  }
+  function marca(ctx, x, y, color) {         /* ✓ dibujada con trazos */
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+    ctx.moveTo(x - 4, y); ctx.lineTo(x - 1, y + 4); ctx.lineTo(x + 5, y - 5); ctx.stroke();
+  }
+
+  function dibujar(ctx, api) {
+    if (!S || !S.g) return;
+    var m = MISIONES[S.m], x, y, i;
+    /* Criterio de la misión, siempre a la vista */
+    A.texto(ctx, 'MISIÓN ' + (S.m + 1) + '/3 · ' + m.nombre.toUpperCase(), 6, 12, { tam: 12, alin: 'left', negrita: true, color: C.oro });
+    A.texto(ctx, m.linea, 6, 29, { tam: 11, alin: 'left', negrita: true });
+    A.texto(ctx, m.nota, 6, 44, { tam: 11, alin: 'left', color: '#c9cfe8' });
+
+    /* Cuadrícula */
+    A.caja(ctx, GX - 2, GY - 2, COLS * T + 4, FILAS * T + 4, C.noche2, C.morado, 2);
+    ctx.fillStyle = '#26315c';
+    for (x = 1; x < COLS; x++) ctx.fillRect(GX + x * T, GY, 1, FILAS * T);
+    for (y = 1; y < FILAS; y++) ctx.fillRect(GX, GY + y * T, COLS * T, 1);
+    for (y = 0; y < FILAS; y++) {
+      var algo = false;
+      for (x = 0; x < COLS; x++) if (S.g[y][x]) { celda(ctx, GX + x * T, GY + y * T, T, S.g[y][x]); algo = true; }
+      if (algo && !S.limpia) {
+        var ev = evaluar(S.g[y], m);
+        if (ev.ok) marca(ctx, 6, GY + y * T + T / 2, C.oro);
+        else if (ev.exceso) A.texto(ctx, '!', 6, GY + y * T + T / 2, { tam: 13, negrita: true, color: C.rojo });
+      }
+    }
+    if (S.limpia) S.limpia.filas.forEach(function (fy, n) {
+      var ok = n === S.limpia.buena;
+      ctx.strokeStyle = ok ? C.oro : C.blanco; ctx.lineWidth = 4;
+      ctx.strokeRect(GX + 2, GY + fy * T + 2, COLS * T - 4, T - 4);
+      if (ok) marca(ctx, 6, GY + fy * T + T / 2, C.oro);
+    });
+    var p = S.p;
+    if (p) {
+      var k = p.con[p.sel], dy = destino(p);
+      if (dy > p.y) {
+        ctx.strokeStyle = CON[k].b; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+        p.f.forEach(function (c) { ctx.strokeRect(GX + (p.x + c[0]) * T + 4, GY + (dy + c[1]) * T + 4, T - 8, T - 8); });
+        ctx.setLineDash([]);
+      }
+      p.f.forEach(function (c) { celda(ctx, GX + (p.x + c[0]) * T, GY + (p.y + c[1]) * T, T, k); });
+    }
+
+    /* Panel lateral: siguiente pieza, concepto alternativo, logros y puntos */
+    var cx = PX + (W - PX) / 2 - 1;
+    A.texto(ctx, 'SIGUE', cx, GY + 8, { tam: 11, color: C.menta, negrita: true });
+    A.caja(ctx, PX, GY + 18, W - PX - 2, 66, C.noche2, C.morado, 2);
+    var s = S.sig;
+    if (s) {
+      var t = 20, ox = cx - ancho(s.f) * t / 2, oy = GY + 51 - alto(s.f) * t / 2;
+      s.f.forEach(function (c) { celda(ctx, ox + c[0] * t, oy + c[1] * t, t, s.con[0]); });
+      A.texto(ctx, CON[s.con[0]].ab, cx, GY + 96, { tam: 12, negrita: true, color: CON[s.con[0]].b });
+      A.texto(ctx, 'o ' + CON[s.con[1]].ab, cx, GY + 111, { tam: 11, color: '#c9cfe8' });
+    }
+    A.texto(ctx, 'CAMBIAR', cx, GY + 140, { tam: 11, color: C.menta, negrita: true });
+    A.texto(ctx, 'a (X):', cx, GY + 154, { tam: 11, color: '#c9cfe8' });
+    if (p) celda(ctx, cx - T / 2, GY + 164, T, p.con[1 - p.sel]);
+    else A.caja(ctx, cx - T / 2 + 1, GY + 165, T - 2, T - 2, C.noche2, C.gris, 2);
+    A.texto(ctx, 'LOGROS', cx, GY + 226, { tam: 11, color: C.menta, negrita: true });
+    for (i = 0; i < 3; i++) {
+      var hecho = i < S.logros.length, ly = GY + 238 + i * 30;
+      A.caja(ctx, cx - 26, ly, 52, 26, C.noche2, hecho ? C.oro : (i === S.m && !S.fin ? C.menta : C.gris), 2);
+      A.texto(ctx, 'M' + (i + 1), cx - 11, ly + 13, { tam: 12, negrita: true, color: hecho ? C.oro : C.blanco });
+      if (hecho) marca(ctx, cx + 12, ly + 13, C.oro);
+      else if (i === S.m) A.texto(ctx, '…', cx + 12, ly + 12, { tam: 12 });
+    }
+    A.texto(ctx, 'PUNTOS', cx, GY + 348, { tam: 11, color: C.menta, negrita: true });
+    A.texto(ctx, String(S.puntos), cx, GY + 364, { tam: 14, negrita: true, color: C.oro });
+    A.pluma(ctx, cx, GY + 392, 20, S.logros.length === 3 ? C.oro : C.gris);
+
+    /* Leyenda: icono → componente */
+    var ly0 = GY + FILAS * T + 6;
+    ORDEN.forEach(function (kk, n) {
+      var lx = [3, 85, 184, 272][n % 4], yy = ly0 + 8 + Math.floor(n / 4) * 17;
+      A.caja(ctx, lx, yy - 7, 14, 14, CON[kk].f, CON[kk].b, 1);
+      icono(ctx, kk, lx + 7, yy, 1, CON[kk].b, CON[kk].f);
+      A.texto(ctx, CON[kk].nom, lx + 17, yy, { tam: 11, alin: 'left' });
+    });
+  }
+
+  A.crear({
+    numero: '04', titulo: 'El arquitecto de la gamificación', pluma: 'PLUMA-DISENO',
+    ancho: W, alto: H,
+    objetivo: 'Comprobar que una gamificación funciona cuando sus componentes se justifican entre sí, no cuando simplemente se apilan.',
+    instrucciones: [
+      'Caen piezas con un componente de diseño (objetivo, reto, narrativa, feedback…). Muévelas, gíralas y completa filas de 8 casillas.',
+      'Cada misión muestra antes qué combinación debe contener la fila: solo esa fila da bonificación. Puedes cambiar el concepto de la pieza que cae.',
+      'Las filas que no cumplen se eliminan igual, con una explicación. Ganas al lograr las tres combinaciones y escribir tu reflexión.'
+    ],
+    teclas: 'Teclado: ←/→ o A/D mueven, ↑ o Espacio giran, ↓ o S bajan y X cambia el concepto. En móvil o tableta: botones táctiles en pantalla.',
+    transferencia: '¿Qué elementos unirías para transformar un cuestionario con puntos en una experiencia de aprendizaje significativa?',
+    ayuda: '<ul>' + ORDEN.map(function (k) {
+      return '<li><b>' + CON[k].ab + ' · ' + CON[k].nom + ':</b> ' + CON[k].def + '</li>';
+    }).join('') + '</ul><h3>Criterios de las misiones</h3><ol>' + MISIONES.map(function (m) {
+      return '<li><b>' + m.nombre + ':</b> ' + m.combos.map(function (cb) { return nombres(cb.c).join(' + '); }).join('; o ') +
+        (m.maxReco ? ' (máximo ' + m.maxReco + ' casillas de recompensa en la fila)' : '') + '.</li>';
+    }).join('') + '</ol><p>La combinación debe estar en la misma fila completa. «Cambiar» alterna la pieza que cae entre sus dos conceptos posibles. ' +
+      'Una ✓ a la izquierda marca las filas que ya reúnen la combinación; un «!» avisa de demasiadas recompensas.</p>',
+    controles: {
+      cruceta: ['izq', 'der'],
+      acciones: [{ id: 'girar', etiqueta: 'Girar' }, { id: 'bajar', etiqueta: 'Bajar', teclas: [] }, { id: 'cambiar', etiqueta: 'Cambiar', teclas: ['x', 'c'] }]
+    },
+    depurar: function () { return S; },
+
+    iniciar: function (api) {
+      S = { m: 0, g: null, p: null, sig: null, limpia: null, activa: false, fin: false, puntos: 0, filas: 0, sinBono: 0,
+        cambios: 0, reintentos: 0, piezas: 0, logros: [], caida: 0, suelo: 0, rep: 0, soltarBajar: false };
+      api.hud({ 'Misión': '1/3', Logradas: '0/3', Puntos: 0 });
+      empezarMision(api, '');
+    },
+
+    alPulsar: function (id, api) {
+      if (!S.activa || !S.p) return;
+      if (id === 'izq' || id === 'der') { if (mover(id === 'izq' ? -1 : 1)) api.sonido('punto'); S.rep = 0.22; }
+      else if (id === 'arriba' || id === 'girar') girar(api);
+      else if (id === 'cambiar') cambiar(api);
+    },
+
+    actualizar: function (dt, api) {
+      if (!S.activa) return;
+      if (S.limpia) {
+        S.limpia.t -= dt;
+        if (S.limpia.t <= 0) terminarLimpieza(api);
+      } else if (S.p) {
+        var p = S.p, tk = api.teclas, baja = tk.abajo || tk.bajar;
+        if (!baja) S.soltarBajar = false;
+        var rapida = baja && !S.soltarBajar, base = MISIONES[S.m].intervalo / api.vel;
+        if (tk.izq !== tk.der) {                     /* repetición lateral al mantener pulsado */
+          S.rep -= dt;
+          if (S.rep <= 0) { mover(tk.izq ? -1 : 1); S.rep = 0.1; }
+        }
+        if (!choca(p.f, p.x, p.y + 1)) {
+          S.suelo = 0; S.caida += dt;
+          var paso = rapida ? 0.045 : base;
+          while (S.caida >= paso && !choca(p.f, p.x, p.y + 1)) { p.y++; S.caida -= paso; }
+        } else {
+          S.caida = 0; S.suelo += dt;
+          if (S.suelo >= (rapida ? 0.12 : base)) fijar(api);
+        }
+      }
+      api.hud({ 'Misión': (S.m + 1) + '/3', Logradas: S.logros.length + '/3', Puntos: S.puntos, 'Sin bono': S.sinBono || null });
+    },
+
+    dibujar: dibujar
+  });
+})();
+
+</script>
+</body>
+</html>
