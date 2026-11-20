@@ -136,6 +136,11 @@
     S.caida = 0; S.suelo = 0; S.soltarBajar = true; S.piezas++;
     if (choca(p.f, p.x, p.y)) { S.p = null; derrota(api); return; }
     S.p = p;
+    /* Los dos conceptos posibles de la pieza, como botones bajo el lienzo (teclas 1 y 2) */
+    api.herramientas(p.con.map(function (k, i) {
+      return { id: 'c' + i, etiqueta: CON[k].nom.charAt(0).toUpperCase() + CON[k].nom.slice(1) + ' (' + CON[k].ab + ')' };
+    }), function (id) { elegirConcepto(id === 'c1' ? 1 : 0, api); });
+    api.seleccionar('c0');
   }
   function empezarMision(api, previo) {
     var m = MISIONES[S.m];
@@ -206,7 +211,7 @@
       return '<li><b>' + A.esc(MISIONES[l.m].nombre) + ':</b> ' + A.esc(l.nom) + '. ' + A.esc(l.por) + '</li>';
     }).join('') + '</ol><p class="nota"><b>Advertencia:</b> encajar componentes no es diseñar. Un diseño real exige considerar el contexto, ' +
       'el alumnado concreto y cómo se va a evaluar, además de los componentes aislados. Estas combinaciones son ejemplos coherentes, no recetas.</p>';
-    api.registrar('Cambié de concepto ' + S.cambios + ' vez/veces antes de colocar una pieza.');
+    api.registrar('Elegí el concepto alternativo de la pieza ' + S.cambios + ' vez/veces.');
     if (S.sinBono) api.registrar('Eliminé ' + S.sinBono + ' fila(s) sin bonificación porque les faltaba algún componente del criterio.');
     api.terminar({
       titulo: '¡Diseño con sentido!', puntos: S.puntos, html: html,
@@ -235,9 +240,9 @@
       }
     }
   }
-  function cambiar(api) {
-    if (!S.p) return;
-    S.p.sel = 1 - S.p.sel; S.cambios++; api.sonido('disparo');
+  function elegirConcepto(i, api) {
+    if (!S.activa || !S.p) { if (S.p) api.seleccionar('c' + S.p.sel); return; }
+    if (S.p.sel !== i) { S.p.sel = i; S.cambios++; api.sonido('disparo'); }
   }
   function destino(p) { var y = p.y; while (!choca(p.f, p.x, y + 1)) y++; return y; }
 
@@ -316,10 +321,12 @@
       A.texto(ctx, CON[s.con[0]].ab, cx, GY + 96, { tam: 12, negrita: true, color: CON[s.con[0]].b });
       A.texto(ctx, 'o ' + CON[s.con[1]].ab, cx, GY + 111, { tam: 11, color: '#c9cfe8' });
     }
-    A.texto(ctx, 'CAMBIAR', cx, GY + 140, { tam: 11, color: C.menta, negrita: true });
-    A.texto(ctx, 'a (X):', cx, GY + 154, { tam: 11, color: '#c9cfe8' });
-    if (p) celda(ctx, cx - T / 2, GY + 164, T, p.con[1 - p.sel]);
-    else A.caja(ctx, cx - T / 2 + 1, GY + 165, T - 2, T - 2, C.noche2, C.gris, 2);
+    A.texto(ctx, 'CONCEPTO', cx, GY + 140, { tam: 11, color: C.menta, negrita: true });
+    for (i = 0; i < 2; i++) {
+      var oy2 = GY + 150 + i * 26, el = p && p.sel === i;
+      A.caja(ctx, PX, oy2, W - PX - 2, 23, C.noche2, el ? C.oro : C.gris, 2);
+      if (p) A.texto(ctx, (el ? '▶' : ' ') + (i + 1) + ' ' + CON[p.con[i]].ab, PX + 5, oy2 + 12, { tam: 12, alin: 'left', negrita: el, color: el ? C.blanco : '#c9cfe8' });
+    }
     A.texto(ctx, 'LOGROS', cx, GY + 226, { tam: 11, color: C.menta, negrita: true });
     for (i = 0; i < 3; i++) {
       var hecho = i < S.logros.length, ly = GY + 238 + i * 30;
@@ -348,21 +355,21 @@
     objetivo: 'Comprobar que una gamificación funciona cuando sus componentes se justifican entre sí, no cuando simplemente se apilan.',
     instrucciones: [
       'Caen piezas con un componente de diseño (objetivo, reto, narrativa, feedback…). Muévelas, gíralas y completa filas de 8 casillas.',
-      'Cada misión muestra antes qué combinación debe contener la fila: solo esa fila da bonificación. Puedes cambiar el concepto de la pieza que cae.',
+      'Cada misión muestra antes qué combinación debe contener la fila: solo esa fila da bonificación. Tú eliges cuál de sus dos conceptos lleva la pieza que cae.',
       'Las filas que no cumplen se eliminan igual, con una explicación. Ganas al lograr las tres combinaciones y escribir tu reflexión.'
     ],
-    teclas: 'Teclado: ←/→ o A/D mueven, ↑ o Espacio giran, ↓ o S bajan y X cambia el concepto. En móvil o tableta: botones táctiles en pantalla.',
+    teclas: 'Teclado: ←/→ o A/D mueven, ↑ o Espacio giran, ↓ o S bajan; 1 y 2 eligen el concepto de la pieza. En móvil o tableta: botones táctiles en pantalla.',
     transferencia: '¿Qué elementos unirías para transformar un cuestionario con puntos en una experiencia de aprendizaje significativa?',
     ayuda: '<ul>' + ORDEN.map(function (k) {
       return '<li><b>' + CON[k].ab + ' · ' + CON[k].nom + ':</b> ' + CON[k].def + '</li>';
     }).join('') + '</ul><h3>Criterios de las misiones</h3><ol>' + MISIONES.map(function (m) {
       return '<li><b>' + m.nombre + ':</b> ' + m.combos.map(function (cb) { return nombres(cb.c).join(' + '); }).join('; o ') +
         (m.maxReco ? ' (máximo ' + m.maxReco + ' casillas de recompensa en la fila)' : '') + '.</li>';
-    }).join('') + '</ol><p>La combinación debe estar en la misma fila completa. «Cambiar» alterna la pieza que cae entre sus dos conceptos posibles. ' +
+    }).join('') + '</ol><p>La combinación debe estar en la misma fila completa. Los dos botones bajo la cuadrícula (teclas 1 y 2) eligen cuál de sus dos conceptos lleva la pieza que cae. ' +
       'Una ✓ a la izquierda marca las filas que ya reúnen la combinación; un «!» avisa de demasiadas recompensas.</p>',
     controles: {
       cruceta: ['izq', 'der'],
-      acciones: [{ id: 'girar', etiqueta: 'Girar' }, { id: 'bajar', etiqueta: 'Bajar', teclas: [] }, { id: 'cambiar', etiqueta: 'Cambiar', teclas: ['x', 'c'] }]
+      acciones: [{ id: 'girar', etiqueta: 'Girar' }, { id: 'bajar', etiqueta: 'Bajar', teclas: [] }]
     },
     depurar: function () { return S; },
 
@@ -377,7 +384,6 @@
       if (!S.activa || !S.p) return;
       if (id === 'izq' || id === 'der') { if (mover(id === 'izq' ? -1 : 1)) api.sonido('punto'); S.rep = 0.22; }
       else if (id === 'arriba' || id === 'girar') girar(api);
-      else if (id === 'cambiar') cambiar(api);
     },
 
     actualizar: function (dt, api) {

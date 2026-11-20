@@ -350,7 +350,7 @@
 
       if (b.pegada) { b.x = p.x; b.y = PALA_Y - R; }
       else {
-        var rest = (170 + 5 * S.rotos) * api.vel * dt, lista = vivos();
+        var rest = (150 + 5 * S.rotos) * api.vel * dt, lista = vivos();
         S.sinPala += dt;
         if (S.sinPala > 10) { b.uy = Math.abs(b.uy); S.sinPala = 4; }   /* salvaguarda: nunca se queda rebotando arriba indefinidamente */
         while (rest > 0 && S.activa && !b.pegada) {

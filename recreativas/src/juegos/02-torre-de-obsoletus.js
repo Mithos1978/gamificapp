@@ -4,7 +4,7 @@
   var A = Arcade, C = A.C, W = 360, H = 480;
   var L = [466, 370, 274, 178, 82];              /* altura del suelo de cada nivel (0 = base, 4 = azotea) */
   var FASES = ['Plan', 'Actúo', 'Reviso', 'Ajusto'];
-  var ANDAR = 95, TREPAR = 85, SALTO = -250, GRAV = 640, VMIN = 50;
+  var ANDAR = 95, TREPAR = 85, SALTO = -250, GRAV = 640, VMIN = 56;
   var TABLON = { a: 150, b: 176 }, ANTENA = 300;
   var PISOS = [
     { ini: 40, esc: 300, boca: 346, dir: -1, vel: 62, cada: 2.9, barril: 'plan poco realista', sim: '?', banda: C.morado2 },
@@ -206,11 +206,11 @@
 
   function moverBarriles(dt, api) {
     var n = S.piso, P = PISOS[n], j = S.j;
-    var v = Math.max(VMIN, P.vel * api.vel * (S.ef === 'bloques' ? 0.6 : 1));
-    var k = S.ef === 'prisa' || S.ef === 'multi' ? 0.72 : S.ef === 'correr' ? 0.75 : S.ef === 'bloques' ? 1.5 : 1;
+    var v = Math.max(VMIN, P.vel * api.vel * (S.ef === 'bloques' ? 0.8 : 1));
+    var k = S.ef === 'prisa' || S.ef === 'multi' ? 0.72 : S.ef === 'correr' ? 0.75 : S.ef === 'bloques' ? 1.6 : 1;
     S.sig -= dt;
     if (S.sig <= 0) { S.barriles.push({ x: P.boca, hecho: false }); S.sig = P.cada * k / api.vel; }
-    var caja = { x: j.x - 5, y: j.y - 22, w: 10, h: 22 };
+    var caja = { x: j.x - 4, y: j.y - 22, w: 8, h: 22 };
     for (var i = S.barriles.length - 1; i >= 0; i--) {
       var b = S.barriles[i], by;
       b.x += P.dir * v * dt;
@@ -219,7 +219,7 @@
       if (!b.hecho && !j.suelo && !j.esc && Math.abs(b.x - j.x) < 7 && j.y < by - 13) {
         b.hecho = true; S.puntos += 10; S.saltados++; api.sonido('punto'); api.flotar('+10', j.x, j.y - 30);
       }
-      if (S.inmune <= 0 && A.choca(caja, { x: b.x - 5, y: by - 11, w: 10, h: 11 })) { tropezar(api, false); return; }
+      if (S.inmune <= 0 && A.choca(caja, { x: b.x - 4, y: by - 11, w: 8, h: 11 })) { tropezar(api, false); return; }
     }
   }
 

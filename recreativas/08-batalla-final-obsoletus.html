@@ -536,7 +536,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 (function () {
   'use strict';
   var A = Arcade, C = A.C, W = 400, H = 300, G = 240, BX = 338, EMAX = 5, VENTANA = 7;
-  var SLOT_X = 306, SLOT_Y = 17, SLOT_DX = 23;
+  var SLOT_X = 306, SLOT_Y = 263, SLOT_DX = 23;
   var FASES = [
     { error: 'Memorizar equivale a aprender', chapa: 'MEMORIA', pluma: 'Pluma de la Metacognición', color: '#3b2a78',
       hp: 5, inter: 2.0, patron: ['bajo'],
@@ -712,7 +712,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     A.texto(ctx, s, x, y + 1, { tam: 13, color: color, negrita: true, sombra: false });
   }
   function dibujarFondo(ctx) {
-    ctx.fillStyle = C.noche2; ctx.fillRect(0, 48, W, G - 48);
+    ctx.fillStyle = C.noche2; ctx.fillRect(0, 0, W, G);
     ctx.fillStyle = '#2a3560';
     ESTRELLAS.forEach(function (e) { ctx.fillRect(e[0], e[1], 2, 2); });
     /* Escuela del Saber, al fondo a la izquierda */
@@ -724,28 +724,27 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     ctx.fillStyle = C.gris; ctx.fillRect(51, G - 108, 2, 18);
     ctx.fillStyle = C.menta; ctx.fillRect(53, G - 108, 12, 8);
     /* plataforma */
-    ctx.fillStyle = C.morado; ctx.fillRect(0, G, W, H - G);
-    ctx.fillStyle = C.morado2; ctx.fillRect(0, G, W, 4);
+    ctx.fillStyle = C.morado; ctx.fillRect(0, G, W, 8);
+    ctx.fillStyle = C.morado2; ctx.fillRect(0, G, W, 3);
     ctx.fillStyle = '#4a2a94';
-    for (var x = 0; x < W; x += 40) ctx.fillRect(x, G + 4, 2, H - G - 4);
-    ctx.fillRect(0, G + 30, W, 2);
+    for (var x = 0; x < W; x += 40) ctx.fillRect(x, G + 3, 2, 5);
   }
   function dibujarMarcadores(ctx, api) {
     var i;
-    A.caja(ctx, 0, 0, W, 48, C.noche);
-    A.texto(ctx, 'ENERGÍA', 8, 14, { tam: 13, alin: 'left', negrita: true });
-    for (i = 0; i < EMAX; i++) A.caja(ctx, 76 + i * 19, 6, 16, 16, i < S.energia ? C.menta : null, i < S.energia ? C.blanco : C.gris, 2);
-    A.texto(ctx, 'ESCUDO', 8, 36, { tam: 13, alin: 'left', negrita: true, color: S.escBloq ? C.gris : C.blanco });
-    A.caja(ctx, 76, 29, 92, 14, null, S.escBloq ? C.gris : C.blanco, 2);
-    ctx.fillStyle = S.escBloq ? C.gris : C.morado2; ctx.fillRect(79, 32, Math.round(86 * S.esc), 8);
-    A.texto(ctx, 'PLUMAS', SLOT_X - 20, 14, { tam: 13, alin: 'right', negrita: true, color: C.oro });
+    A.caja(ctx, 0, G + 8, W, H - G - 8, C.noche);
+    A.texto(ctx, 'ENERGÍA', 8, 262, { tam: 13, alin: 'left', negrita: true });
+    for (i = 0; i < EMAX; i++) A.caja(ctx, 76 + i * 19, 254, 16, 16, i < S.energia ? C.menta : null, i < S.energia ? C.blanco : C.gris, 2);
+    A.texto(ctx, 'ESCUDO', 8, 285, { tam: 13, alin: 'left', negrita: true, color: S.escBloq ? C.gris : C.blanco });
+    A.caja(ctx, 76, 278, 92, 14, null, S.escBloq ? C.gris : C.blanco, 2);
+    ctx.fillStyle = S.escBloq ? C.gris : C.morado2; ctx.fillRect(79, 281, Math.round(86 * S.esc), 8);
+    A.texto(ctx, 'PLUMAS', SLOT_X - 20, SLOT_Y, { tam: 13, alin: 'right', negrita: true, color: C.oro });
     for (i = 0; i < 4; i++) {
       var sx = SLOT_X + i * SLOT_DX;
-      A.caja(ctx, sx - 10, 4, 20, 26, i < S.plumas ? '#3a2f10' : null, i < S.plumas ? C.oro : C.gris, 2);
+      A.caja(ctx, sx - 10, SLOT_Y - 13, 20, 26, i < S.plumas ? '#3a2f10' : null, i < S.plumas ? C.oro : C.gris, 2);
       if (i < S.plumas) A.pluma(ctx, sx, SLOT_Y + 1, 18, C.oro);
       else A.texto(ctx, String(i + 1), sx, SLOT_Y + 1, { tam: 13, color: C.gris });
     }
-    A.texto(ctx, S.plumas + ' de 4', SLOT_X + 1.5 * SLOT_DX, 39, { tam: 13, color: C.oro });
+    A.texto(ctx, S.plumas + ' de 4', SLOT_X + 1.5 * SLOT_DX, SLOT_Y + 24, { tam: 13, color: C.oro });
   }
   function dibujarJefe(ctx, api) {
     var F = FASES[Math.min(S.fase, 3)], abierto = S.modo === 'ventana' || S.modo === 'liberar' || S.fin;
@@ -914,7 +913,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
           }
         } else if (p.x >= BX - 40) {
           S.tiros.splice(i, 1); S.hp--; S.puntos += 10; api.sonido('punto');
-          api.flotar('¡Impacto!', BX - 40, p.y - 8, { color: C.oro });
+          api.flotar('¡Impacto!', 232, p.y - 12, { color: C.oro });
           if (S.hp <= 0) { S.modo = 'liberar'; S.tm = 1.4; S.proy = []; S.avisos = []; S.tiros = []; break; }
         }
       }
@@ -945,6 +944,14 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       dibujarMarcadores(ctx, api);
     }
   });
+
+  /* Tres acciones + cruceta no caben en un móvil de 360–390 px con el ancho por defecto del motor:
+     se estrechan un poco los botones táctiles de ESTE juego (ver informe: mejor resolverlo en core.css). */
+  try {
+    var ac = document.getElementById('acciones'), cr = document.getElementById('cruceta');
+    ac.style.gap = '4px'; cr.style.gridTemplateColumns = 'repeat(2,56px)';
+    Array.prototype.forEach.call(ac.children, function (b) { b.style.minWidth = '70px'; b.style.fontSize = '13px'; b.style.padding = '2px'; });
+  } catch (e) { /* sin controles táctiles */ }
 })();
 
 </script>

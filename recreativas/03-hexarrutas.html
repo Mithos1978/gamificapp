@@ -859,8 +859,8 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       D.prox -= dt * api.vel;
       if (D.prox <= 0) {
         col = PATRON[D.n % PATRON.length];
-        D.bloques.push({ x: col * 60 + 8, y: TOP - 16, w: 44, h: 16, v: [115, 150, 185][niv] });
-        if (niv === 2 && D.n % 3 === 0) D.bloques.push({ x: ((col + 3) % 6) * 60 + 8, y: TOP - 16, w: 44, h: 16, v: 185 });
+        D.bloques.push({ x: col * 60 + 3, y: TOP - 16, w: 54, h: 16, v: [115, 150, 185][niv] });
+        if (niv === 2 && D.n % 3 === 0) D.bloques.push({ x: ((col + 3) % 6) * 60 + 3, y: TOP - 16, w: 54, h: 16, v: 185 });
         D.n++; D.prox = [0.8, 0.62, 0.5][niv];
       }
       r = { x: j.x - 7, y: j.y - 7, w: 14, h: 14 };
@@ -884,7 +884,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
       for (i = 0; i < D.bloques.length; i++) {
         b = D.bloques[i];
         A.caja(ctx, b.x, b.y, b.w, b.h, C.morado, C.morado2, 2);
-        ctx.fillStyle = C.blanco; ctx.fillRect(b.x + 8, b.y + 5, 28, 2); ctx.fillRect(b.x + 8, b.y + 9, 20, 2);
+        ctx.fillStyle = C.blanco; ctx.fillRect(b.x + 8, b.y + 5, 38, 2); ctx.fillRect(b.x + 8, b.y + 9, 26, 2);
       }
     }
   };
@@ -932,7 +932,7 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
     palanca: function (api) {
       var i = cerca();
       if (i < 0) { api.mensaje('Acércate a una palanca para cambiar la regla.', 1800); return; }
-      D.inv = !D.inv; D.cambios++; D.cp = { x: PAL[i].x, y: PAL[i].y + (i ? 0 : 0) };
+      D.inv = !D.inv; D.cambios++; D.cp = { x: PAL[i].x, y: PAL[i].y };
       api.sonido('ok');
       api.mensaje('Regla cambiada: ahora la franja A empuja hacia ' + (D.inv ? 'arriba' : 'abajo') + ' y la B hacia ' + (D.inv ? 'abajo' : 'arriba') + '.', 2600);
     },

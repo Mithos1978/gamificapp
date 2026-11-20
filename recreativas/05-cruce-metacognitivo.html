@@ -886,14 +886,14 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
 
     dibujar: function (ctx, api) {
       if (!S || !S.carriles) return;
-      var r, i, y, c, xs, x, Z = ZONAS[S.zona];
+      var r, i, y, c, xs, x;
       for (r = 0; r < FILAS; r++) {
         c = S.carriles[r]; y = filaY(r);
         if (c.tipo === 'S') {
           A.caja(ctx, 0, y, W, T, r === META ? '#3a2f10' : '#1d3a3a');
           ctx.fillStyle = r === META ? C.oro : C.menta;
           for (i = 0; i < COLS * 2; i++) ctx.fillRect(i * 20 + 8, y + (i % 2 ? 6 : T - 9), 3, 3);
-          if (r === 0) A.texto(ctx, 'ZONA ' + (S.zona + 1) + ' · ' + Z.nombre.toUpperCase(), W / 2, y + T / 2 + 12, { tam: 13, color: C.gris, negrita: true });
+          if (r === 0) A.texto(ctx, 'SALIDA', 10, y + T / 2, { tam: 13, color: C.gris, alin: 'left', negrita: true });
           if (r === META) {
             A.texto(ctx, 'META', W / 2, y + T / 2, { tam: 16, color: C.oro, negrita: true });
             A.pluma(ctx, 70, y + T / 2 + 2, 22); A.pluma(ctx, W - 70, y + T / 2 + 2, 22);
@@ -934,17 +934,6 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
             ctx.fillStyle = C.rojo; ctx.fillRect(c.dir > 0 ? 0 : W - 5, y + T - 4 - hb, 5, hb);
           }
         }
-        c.fijas.forEach(function (f) {
-          var px = f.col * T;
-          if (f.clase === 'puente') {
-            A.caja(ctx, px + 2, y, T - 4, T, '#7a5a1c', C.oro, 2);
-            ctx.fillStyle = C.oro; ctx.fillRect(px + 6, y + 12, T - 12, 2); ctx.fillRect(px + 6, y + 26, T - 12, 2);
-          } else {
-            A.caja(ctx, px + 4, y + 5, T - 8, T - 10, '#5d6685', f.clase === 'ajuste' ? C.menta : C.blanco, 2);
-            if (f.clase === 'ajuste') { ctx.fillStyle = C.menta; ctx.fillRect(px + 18, y + 12, 4, 16); ctx.fillRect(px + 12, y + 18, 16, 4); }
-            else { ctx.fillStyle = '#8791b5'; ctx.fillRect(px + 10, y + 12, 8, 4); ctx.fillRect(px + 20, y + 22, 8, 4); }
-          }
-        });
         for (i = 0; i < xs.length; i++) {
           x = Math.round(xs[i]);
           if (x >= W || x + c.w <= 0) continue;
@@ -965,6 +954,17 @@ button[aria-pressed="true"]{background:#6D42C7;border-color:#F1C453}
             ctx.fillStyle = C.blanco; ctx.fillRect(x + c.w / 2 - 2, y + 10, 4, 10); ctx.fillRect(x + c.w / 2 - 2, y + 22, 4, 4);
           }
         }
+        c.fijas.forEach(function (f) {
+          var px = f.col * T;
+          if (f.clase === 'puente') {
+            A.caja(ctx, px + 2, y, T - 4, T, '#7a5a1c', C.oro, 2);
+            ctx.fillStyle = C.oro; ctx.fillRect(px + 6, y + 12, T - 12, 2); ctx.fillRect(px + 6, y + 26, T - 12, 2);
+          } else {
+            A.caja(ctx, px + 4, y + 5, T - 8, T - 10, '#5d6685', f.clase === 'ajuste' ? C.menta : C.blanco, 2);
+            if (f.clase === 'ajuste') { ctx.fillStyle = C.menta; ctx.fillRect(px + 18, y + 12, 4, 16); ctx.fillRect(px + 12, y + 18, 16, 4); }
+            else { ctx.fillStyle = '#8791b5'; ctx.fillRect(px + 10, y + 12, 8, 4); ctx.fillRect(px + 20, y + 22, 8, 4); }
+          }
+        });
         if (c.enPausa) {
           A.caja(ctx, W / 2 - 46, y + 9, 92, 22, '#101629', C.oro, 2);
           ctx.fillStyle = C.oro; ctx.fillRect(W / 2 - 38, y + 14, 4, 12); ctx.fillRect(W / 2 - 31, y + 14, 4, 12);
