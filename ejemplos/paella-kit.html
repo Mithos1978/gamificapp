@@ -1,0 +1,446 @@
+<title>Kit PAELLA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&family=Permanent+Marker&display=swap">
+<style>
+/* Layout: una columna de lectura (máx. 820px) sobre blanco de cal. Azul de cúpula valenciana como acento;
+   naranja solo para lo que el lector tiene que cambiar (los [huecos] de los prompts). La pieza llamativa es
+   el "cristal" con la palabra a rotulador, igual que el último plano del reel. */
+:root{
+  --cal:#F4F6F5; --tinta:#13203A; --suau:#55627E; --linia:#D7DEE7; --panel:#FFFFFF; --codi:#ECF0F6;
+  --cupula:#1B4FA8; --cupula-suau:rgba(27,79,168,.09); --sobre-cupula:#FFFFFF; --taronja:#B8501A; --ok:#1F7A4D;
+  --f-disp:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-text:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-marker:"Permanent Marker","Segoe Print","Comic Sans MS",cursive;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --cal:#0B1321; --tinta:#E5EAF2; --suau:#9AA7BF; --linia:#22304A; --panel:#101B2E; --codi:#08101C;
+  --cupula:#7EA5FF; --cupula-suau:rgba(126,165,255,.12); --sobre-cupula:#0B1321; --taronja:#FF9A62; --ok:#5BD69A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --cal:#0B1321; --tinta:#E5EAF2; --suau:#9AA7BF; --linia:#22304A; --panel:#101B2E; --codi:#08101C;
+  --cupula:#7EA5FF; --cupula-suau:rgba(126,165,255,.12); --sobre-cupula:#0B1321; --taronja:#FF9A62; --ok:#5BD69A; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--cal);color:var(--tinta);font-family:var(--f-text);font-size:17px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.wrap{max-width:820px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-disp);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.015em}
+p{margin:0}
+a{color:var(--cupula);text-underline-offset:3px}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--codi);padding:1px 5px;border-radius:4px}
+button{font:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--cupula);outline-offset:2px}
+
+/* barra superior */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:18px;border-bottom:1px solid var(--linia)}
+.brand{display:flex;align-items:center;gap:10px;font:600 14px var(--f-mono);letter-spacing:.04em;min-width:0}
+.brand svg{flex:none;color:var(--cupula)}
+.langs{display:flex;border:1px solid var(--linia);border-radius:999px;padding:3px;background:var(--panel)}
+.langs button{border:0;background:transparent;color:var(--suau);padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;min-height:34px}
+.langs button[aria-pressed="true"]{background:var(--cupula);color:var(--sobre-cupula)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:36px;align-items:center;padding-block:44px 36px}
+.eyebrow{font:600 12px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--cupula)}
+.hero h1{font-size:clamp(36px,6.6vw,56px);font-weight:800;margin-top:10px}
+.strike{color:var(--suau);text-decoration:line-through;text-decoration-color:var(--cupula);text-decoration-thickness:.09em}
+.then{display:block}
+.lede{color:var(--suau);margin-top:16px;max-width:56ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.fact{font:500 13px var(--f-mono);border:1px solid var(--linia);background:var(--panel);padding:5px 10px;border-radius:6px}
+.reel{display:block;width:100%;max-width:100%;aspect-ratio:9/16;border-radius:18px;border:1px solid var(--linia);background:#000;object-fit:cover}
+
+/* el cristal: marcador de posición del reel y de los planos */
+.cristal{container-type:inline-size;position:relative;width:100%;max-width:100%;aspect-ratio:9/16;border-radius:18px;overflow:hidden;color:var(--sobre-cupula);
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 30%,color-mix(in srgb,var(--sobre-cupula) 14%,transparent) 31% 33%,transparent 34%) 0 0/34px 34px,
+    conic-gradient(from 45deg,color-mix(in srgb,var(--sobre-cupula) 7%,transparent) 0 25%,transparent 0 50%,color-mix(in srgb,var(--sobre-cupula) 7%,transparent) 0 75%,transparent 0) 0 0/34px 34px,
+    var(--cupula);
+  display:grid;place-content:center;text-align:center;gap:2px;padding:18px}
+.cristal::after{content:"";position:absolute;inset:0;background:linear-gradient(125deg,color-mix(in srgb,var(--sobre-cupula) 18%,transparent) 0 18%,transparent 18% 100%);pointer-events:none}
+.cristal .m1{font:400 clamp(20px,4.4vw,30px)/1.1 var(--f-marker)}
+.cristal .m2{font:400 min(44px,calc(128cqi / var(--n,8)))/1.1 var(--f-marker);white-space:nowrap}
+.cristal .m3{font:400 30px/1 var(--f-marker);margin-top:6px}
+.cristal .cap{position:absolute;left:0;right:0;bottom:12px;font:500 11px var(--f-mono);letter-spacing:.08em;opacity:.8}
+@media (max-width:680px){.hero{grid-template-columns:1fr;gap:24px}.hero-media{order:-1;max-width:210px;justify-self:center;width:100%}}
+
+/* secciones */
+section.block{padding-block:34px;border-top:1px solid var(--linia)}
+.sec-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:baseline;margin-bottom:18px}
+.num{font:600 13px var(--f-mono);color:var(--cupula);border:1.5px solid var(--cupula);padding:1px 8px;border-radius:6px}
+h2{font-size:clamp(25px,4.2vw,32px);font-weight:800}
+.sub{color:var(--suau);margin-top:6px;max-width:62ch}
+.need{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.need div{background:var(--panel);border:1px solid var(--linia);border-radius:10px;padding:16px;min-width:0}
+.need b{display:block;font-family:var(--f-disp);font-size:18px;margin-bottom:4px}
+.need span{color:var(--suau);font-size:15.5px}
+@media (max-width:640px){.need{grid-template-columns:1fr}}
+
+/* planos */
+.shot{display:grid;grid-template-columns:140px minmax(0,1fr);gap:22px;align-items:start;margin-top:22px}
+.shot+.shot{padding-top:26px;border-top:1px dashed var(--linia)}
+.thumb{display:block;width:100%;max-width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:10px;border:1px solid var(--linia)}
+.thumb.cristal{display:grid;border-radius:10px;padding:8px}
+.thumb.cristal .tn{font:800 46px/1 var(--f-disp)}
+.thumb.cristal .tl{font:600 10.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-top:6px}
+.shot-body{min-width:0}
+.shot h3{font-size:22px;font-weight:800}
+.shot .what{color:var(--suau);margin-top:4px;font-size:16px}
+.settings{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.settings span{font:500 12.5px var(--f-mono);padding:2px 8px;background:var(--panel);border:1px solid var(--linia);border-radius:5px}
+.settings span.cost{color:var(--cupula);border-color:var(--cupula)}
+.note{margin-top:14px;padding:12px 14px;background:var(--cupula-suau);border-radius:8px;font-size:15.5px}
+@media (max-width:640px){
+  .sec-head{grid-template-columns:1fr;gap:10px}.num{justify-self:start}
+  .shot{grid-template-columns:84px minmax(0,1fr);column-gap:14px;row-gap:0}
+  .shot-body{display:contents}
+  .shot .thumb{grid-row:1 / span 3}
+  .shot h3,.shot .what,.shot .settings{grid-column:2}
+  .shot h3{font-size:19px}.shot .what{font-size:15px}
+  .shot .prompt,.shot .note{grid-column:1 / -1}
+  .thumb.cristal .tn{font-size:34px}.thumb.cristal .tl{display:none}
+}
+
+/* caja de prompt / texto copiable */
+.prompt{margin-top:14px;border:1px solid var(--linia);border-radius:10px;background:var(--codi);min-width:0;overflow:hidden}
+.ptabs{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:7px 8px 7px 10px;border-bottom:1px solid var(--linia);background:var(--panel)}
+.plabel{font:600 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--suau)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:1px solid transparent;background:transparent;color:var(--suau);padding:4px 10px;border-radius:6px;font-weight:700;font-size:13.5px}
+.tab[aria-pressed="true"]{color:var(--tinta);border-color:var(--linia);background:var(--codi)}
+.copy{border:0;background:var(--tinta);color:var(--cal);padding:6px 14px;border-radius:6px;font-weight:700;font-size:13.5px;min-height:32px}
+.copy.done{background:var(--ok);color:var(--cal)}
+.prompt pre{margin:0;padding:14px 16px;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;font:13.5px/1.7 var(--f-mono)}
+.prompt pre.txt{font:16px/1.7 var(--f-text)}
+.ph{color:var(--taronja);font-weight:600}
+
+/* tablas */
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:14px}
+th{font:600 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--suau);text-align:start;padding:8px 6px;border-bottom:1px solid var(--linia)}
+td{padding:10px 6px;border-bottom:1px solid var(--linia);vertical-align:top}
+td.t,td.v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.t{color:var(--cupula)}
+td.v{text-align:end}
+td.line{font-weight:700}
+tr.total td{font-weight:700;border-bottom:0}
+
+/* listas */
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;counter-increment:s}
+.steps li::before{content:counter(s);font:600 13px var(--f-mono);color:var(--sobre-cupula);background:var(--cupula);height:26px;border-radius:6px;display:grid;place-items:center;margin-top:2px}
+.tips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.tips li{background:var(--panel);border:1px solid var(--linia);border-radius:10px;padding:14px 16px;min-width:0}
+.tips b{display:block;font-family:var(--f-disp);font-size:17px;line-height:1.3;margin-bottom:4px}
+.tips span{color:var(--suau);font-size:15.5px}
+@media (max-width:640px){.tips{grid-template-columns:1fr}}
+
+footer{padding-top:30px;border-top:1px solid var(--linia);color:var(--suau);font-size:15px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer .mono{font-family:var(--f-mono)}
+
+/* kit */
+.kit-hero{padding-block:40px 30px}
+.kit-hero h1{font-size:clamp(32px,6vw,48px);font-weight:800;margin-top:10px}
+.kit-hero h1 .pal{font-family:var(--f-marker);font-weight:400;color:var(--cupula);letter-spacing:0}
+.tl-wrap{margin-top:18px;overflow-x:auto}
+.tl{position:relative;min-width:520px;padding-top:30px}
+.tl-bar{display:flex;height:48px;border-radius:8px;overflow:hidden;border:1px solid var(--linia)}
+.tl-seg{display:grid;place-items:center;font:600 12.5px var(--f-mono);color:var(--sobre-cupula);background:var(--cupula);border-inline-end:2px solid var(--cal);text-align:center;line-height:1.2;padding:2px}
+.tl-seg:nth-child(even){background:color-mix(in srgb,var(--cupula) 72%,var(--cal))}
+.tl-seg:last-child{border-inline-end:0;background:var(--tinta);color:var(--cal)}
+.tl-vo{position:absolute;top:0;transform:translateX(-50%);font:600 11px var(--f-mono);color:var(--suau);white-space:nowrap}
+.tl-vo::after{content:"";display:block;width:1.5px;height:12px;background:var(--suau);margin:2px auto 0}
+.tl-axis{display:flex;justify-content:space-between;font:500 11.5px var(--f-mono);color:var(--suau);margin-top:6px;font-variant-numeric:tabular-nums}
+.why{display:grid;gap:10px;margin:18px 0 0;padding:0;list-style:none}
+.why li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start}
+.why li i{font:800 22px/1.2 var(--f-disp);font-style:normal;color:var(--cupula);text-align:center}
+.why b{font-family:var(--f-disp)}
+.why span{color:var(--suau)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.two>div{min-width:0}
+.two .prompt{margin-top:8px}
+.mini{font:600 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--suau);margin-top:18px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.flow{display:grid;gap:0;margin:18px 0 0;padding:0;list-style:none}
+.flow li{position:relative;background:var(--panel);border:1px solid var(--linia);border-radius:10px;padding:12px 14px}
+.flow li+li{margin-top:22px}
+.flow li+li::before{content:"↓";position:absolute;top:-22px;left:22px;font:600 15px/22px var(--f-mono);color:var(--cupula)}
+.flow b{font-family:var(--f-disp)}
+.flow span{display:block;color:var(--suau);font-size:15.5px}
+.warn{margin-top:14px;padding:12px 14px;border:1.5px solid var(--taronja);border-radius:8px;font-size:15.5px}
+.check{display:grid;gap:8px;margin:14px 0 0;padding:0;list-style:none}
+.check label{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--linia);border-radius:8px;padding:10px 12px;cursor:pointer}
+.check input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:var(--cupula)}
+.check input:checked+span{color:var(--suau);text-decoration:line-through}
+.src{font-size:14px;color:var(--suau);margin-top:14px}
+@media (prefers-reduced-motion:no-preference){.copy,.langs button,.tab{transition:background .15s,color .15s}}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(function () {
+  "use strict";
+  var MODE = "kit";
+  var C = {"slug": "paella", "palabra": "PAELLA", "titulo": {"es": "Los prompts PAELLA", "va": "Els prompts PAELLA"}, "marca": {"nombre": "Tu marca", "usuario": "@tu_cuenta", "web": ""}, "video": null, "textos": {"eyebrow": {"es": "Vídeo IA · Higgsfield · 4 hooks + CTA", "va": "Vídeo IA · Higgsfield · 4 hooks + CTA"}, "titular": {"es": "Esto es un hook de IA", "va": "Açò és un hook d'IA"}, "titular2": {"es": "Y aquí tienes todos los prompts.", "va": "I ací tens tots els prompts."}, "entradilla": {"es": "¿Has comentado PAELLA? Esta es la guía completa del reel: cuatro hooks imposibles en la misma habitación y un último plano en el que escribes la palabra en un cristal. Los prompts están en inglés porque los modelos los siguen con más precisión; en cada uno tienes también la versión en castellano. Cambia el personaje y la palabra, y haz tu versión.", "va": "Has comentat PAELLA? Ací tens la guia completa del reel: quatre hooks impossibles en la mateixa habitació i un últim pla en què escrius la paraula en un vidre. Els prompts estan en anglés perquè els models els seguixen amb més precisió; en cadascun tens també la versió en castellà. Canvia el personatge i la paraula, i fes la teua versió."}}, "datos": ["Higgsfield", "Seedance 2.5", "~22 s", {"es": "≈ 355 créditos", "va": "≈ 355 crèdits"}], "necesitas": {"sub": {"es": "Solo tres cosas. Todos los hooks salen de la misma imagen, así que el reel parece una sola habitación en la que pasa algo imposible cada cuatro segundos.", "va": "Només tres coses. Tots els hooks ixen de la mateixa imatge, així que el reel pareix una sola habitació on passa alguna cosa impossible cada quatre segons."}, "items": [{"titulo": {"es": "Una cuenta de Higgsfield", "va": "Un compte de Higgsfield"}, "texto": {"es": "Soul o Nano Banana Pro para las imágenes y Seedance 2.5 para el vídeo.", "va": "Soul o Nano Banana Pro per a les imatges i Seedance 2.5 per al vídeo."}}, {"titulo": {"es": "Tu personaje", "va": "El teu personatge"}, "texto": {"es": "Un Soul entrenado con tu cara o una foto clara tuya como referencia.", "va": "Un Soul entrenat amb la teua cara o una foto clara teua com a referència."}}, {"titulo": {"es": "Tu voz", "va": "La teua veu"}, "texto": {"es": "Graba la voz en off con el móvil o clónala en ElevenLabs.", "va": "Grava la veu en off amb el mòbil o clona-la en ElevenLabs."}}]}, "secciones": [{"titulo": {"es": "Dos imágenes de inicio", "va": "Dues imatges d'inici"}, "sub": {"es": "La imagen A sirve para los cuatro hooks: detrás de la mesa. La imagen B es solo para el último plano: en el borde de la mesa, para que puedas saltar hacia delante sin atravesarla.", "va": "La imatge A servix per als quatre hooks: darrere de la taula. La imatge B és només per a l'últim pla: a la vora de la taula, perquè pugues botar cap avant sense travessar-la."}, "planos": [{"id": "A", "titulo": {"es": "A · Detrás de la mesa", "va": "A · Darrere de la taula"}, "que": {"es": "Un piso luminoso en València: mesa de roble, monitor, un vaso de horchata con fartons en el borde, una pared blanca vacía con un interruptor y un balcón con vistas a una cúpula de tejas azules.", "va": "Un pis lluminós a València: taula de roure, monitor, un got d'orxata amb fartons a la vora, una paret blanca buida amb un interruptor i un balcó amb vistes a una cúpula de teules blaves."}, "ajustes": ["Soul 2", "9:16", "2K"], "coste": "≈ 1 cr", "prompt": {"en": "Cinematic film still, 35mm, vertical 9:16, locked wide shot straight on at desk height, centered composition, whole scene visible from the floor up. [The presenter: e.g. a person in their forties with short grey hair and round glasses] sits on a simple wooden stool behind a light oak desk in a bright apartment in Valencia, Spain, in the late afternoon, facing the camera, relaxed and natural, hands resting on the desk, calm half-smile, looking just past the camera, not posing.\nOutfit: [a navy linen shirt with sleeves rolled up, beige chinos, white sneakers].\nOn the desk: a slim monitor on the left angled slightly toward camera showing a soft blue screen, a tall clear glass full of white horchata with a straw near the front right edge of the desk, a small plate with two long glazed sweet buns, a small notebook and a pen. Directly behind: a large smooth plain white plaster wall, completely empty, with a single white light switch at shoulder height to the right. To the far right of the frame: a tall open balcony door with sheer white curtains showing Valencia rooftops, a church dome covered in glossy blue glazed tiles and a few palm trees in warm golden light.\nFloor of traditional Valencian hydraulic cement tiles with a geometric pattern. Warm natural daylight, soft shadows, a few green plants. Film grain, true-to-life skin texture, no retouching. No text, no logos, no other people.", "es": "Fotograma cinematográfico, 35 mm, vertical 9:16, plano general fijo y frontal a la altura de la mesa, composición centrada, toda la escena visible desde el suelo. [La persona protagonista: p. ej. alguien de unos cuarenta años con el pelo corto canoso y gafas redondas] está sentada en un taburete de madera sencillo detrás de una mesa de roble claro, en un piso luminoso de València a última hora de la tarde, de frente a cámara, relajada y natural, con las manos apoyadas en la mesa, media sonrisa tranquila, mirando justo al lado de la cámara, sin posar.\nRopa: [camisa de lino azul marino remangada, chinos beis, zapatillas blancas].\nSobre la mesa: un monitor fino a la izquierda, algo girado hacia cámara, con la pantalla en azul suave; un vaso alto de cristal lleno de horchata con pajita cerca del borde delantero derecho; un platito con dos fartons; una libreta pequeña y un bolígrafo. Justo detrás: una pared grande y lisa de yeso blanco, totalmente vacía, con un único interruptor blanco a la altura del hombro, a la derecha. En el extremo derecho del encuadre: un balcón alto abierto con cortinas blancas finas y vistas a los tejados de València, una cúpula de tejas azules vidriadas y algunas palmeras con luz dorada.\nSuelo de baldosa hidráulica valenciana con dibujo geométrico. Luz natural cálida, sombras suaves, algunas plantas. Grano de película, piel realista, sin retoques. Sin texto, sin logotipos, sin otras personas."}}, {"id": "B", "titulo": {"es": "B · En el borde de la mesa", "va": "B · A la vora de la taula"}, "que": {"es": "La misma habitación y la misma ropa, con la persona sentada en el borde delantero de la mesa y el rotulador en la mano. Solo para el CTA.", "va": "La mateixa habitació i la mateixa roba, amb la persona asseguda a la vora davantera de la taula i el retolador a la mà. Només per al CTA."}, "ajustes": ["Soul 2", "9:16", "2K"], "coste": "≈ 1 cr", "prompt": {"en": "Cinematic film still, 35mm, vertical 9:16, locked wide shot straight on at desk height, centered composition, whole scene visible from the floor up. [The presenter] sits casually on the front edge of a light oak desk in a bright apartment in Valencia, Spain, in the late afternoon, facing the camera, legs dangling over the front of the desk, holding a capped white marker loosely in one hand, relaxed playful half-smile, looking into the camera. The open floor between the presenter and the camera is completely clear, nothing in front.\nOutfit: [same outfit as frame A].\nOn the desk behind: a slim monitor on the left showing a soft blue screen, a small notebook, an empty wooden stool pushed aside. Behind the desk: a large smooth plain white plaster wall with a single white light switch. To the far right: a tall open balcony door with sheer white curtains showing Valencia rooftops, a dome of glossy blue glazed tiles and palm trees in warm golden light.\nFloor of traditional Valencian hydraulic cement tiles, warm natural daylight, film grain, true-to-life skin texture. No text, no logos, no other people.", "es": "Fotograma cinematográfico, 35 mm, vertical 9:16, plano general fijo y frontal a la altura de la mesa, composición centrada, toda la escena visible desde el suelo. [La persona protagonista] está sentada de forma informal en el borde delantero de una mesa de roble claro, en un piso luminoso de València a última hora de la tarde, de frente a cámara, con las piernas colgando por delante de la mesa, un rotulador blanco tapado en una mano, media sonrisa divertida, mirando a cámara. El suelo entre la persona y la cámara está completamente despejado.\nRopa: [la misma que en la imagen A].\nSobre la mesa, detrás: un monitor fino a la izquierda con la pantalla en azul suave, una libreta pequeña, un taburete de madera vacío apartado. Detrás de la mesa: una pared grande y lisa de yeso blanco con un único interruptor blanco. En el extremo derecho: un balcón alto abierto con cortinas blancas finas y vistas a los tejados de València, una cúpula de tejas azules vidriadas y palmeras con luz dorada.\nSuelo de baldosa hidráulica valenciana, luz natural cálida, grano de película, piel realista. Sin texto, sin logotipos, sin otras personas."}, "nota": {"es": "Si tienes un Soul entrenado, elígelo y no subas ninguna imagen de referencia. Si no, usa Nano Banana Pro y sube una foto clara tuya.", "va": "Si tens un Soul entrenat, tria'l i no puges cap imatge de referència. Si no, utilitza Nano Banana Pro i puja una foto clara teua."}}]}, {"titulo": {"es": "Los cuatro hooks", "va": "Els quatre hooks"}, "sub": {"es": "En cada plano, **Start image** = imagen A. Genera un plano, revísalo y después sigue con los demás.", "va": "En cada pla, **Start image** = imatge A. Genera un pla, revisa'l i després continua amb la resta."}, "planos": [{"id": "1", "corto": "Congelar", "segundos": 4, "titulo": {"es": "1 · Congelar", "va": "1 · Congelar"}, "que": {"es": "Tiras el vaso de horchata, chasqueas los dedos y la horchata se queda congelada en el aire. Bebes de ella.", "va": "Tires el got d'orxata, petes els dits i l'orxata es queda congelada en l'aire. En beus."}, "ajustes": ["Seedance 2.5", "4 s", "1080p", "9:16", "Audio on"], "coste": "≈ 64 cr", "prompt": {"en": "Continue exactly from the first frame: same bright apartment, same locked camera, same desk, same outfit and hair, the presenter's face and likeness unchanged.\n0–1s: the presenter casually nudges the tall glass of horchata with an elbow; it tips off the front edge of the desk and falls, white horchata splashing out in a wide liquid arc.\n1–1.5s: without looking, the presenter snaps their fingers once, and everything freezes completely in mid-air: the falling glass, the white splash, every droplet suspended and glistening in the sunlight; the curtain stops moving.\n1.5–4s: in the frozen world the presenter calmly leans down and sips straight from the frozen arc of horchata, then looks into the camera with one raised eyebrow, unbothered. The frozen glass and splash stay perfectly still in mid-air until the end.\nRealistic natural motion, correct hands with five fingers, camera does not move, no zoom, no morphing, no text, no other people.\nSound: a glass clink, a sharp finger snap, then sudden total silence, then a small sip.", "es": "Continúa exactamente desde el primer fotograma: el mismo piso luminoso, la misma cámara fija, la misma mesa, la misma ropa y el mismo pelo, la cara de la persona sin cambios.\n0–1 s: la persona empuja sin querer con el codo el vaso alto de horchata; cae por el borde delantero de la mesa y la horchata sale en un arco amplio de líquido blanco.\n1–1,5 s: sin mirar, la persona chasquea los dedos una vez y todo se congela en el aire: el vaso cayendo, la salpicadura, cada gota suspendida y brillando al sol; la cortina deja de moverse.\n1,5–4 s: en el mundo congelado, la persona se inclina con calma y bebe directamente del arco de horchata congelado; luego mira a cámara con una ceja levantada, como si nada. El vaso y la salpicadura siguen quietos en el aire hasta el final.\nMovimiento natural y realista, manos correctas con cinco dedos, la cámara no se mueve, sin zoom, sin deformaciones, sin texto, sin otras personas.\nSonido: un tintineo de cristal, un chasquido de dedos seco, luego silencio total y un pequeño sorbo."}}, {"id": "2", "corto": "Cremallera", "segundos": 4, "titulo": {"es": "2 · La cremallera", "va": "2 · La cremallera"}, "que": {"es": "Encuentras una cremallera en la pared, la abres y detrás aparece la Albufera al atardecer.", "va": "Trobes una cremallera en la paret, l'obris i darrere apareix l'Albufera a la posta de sol."}, "ajustes": ["Seedance 2.5", "4 s", "1080p", "9:16", "Audio on"], "coste": "≈ 64 cr", "prompt": {"en": "Continue exactly from the first frame: same bright apartment, same locked camera, same desk, same outfit and hair, the presenter's face and likeness unchanged.\n0–1s: the presenter turns on the stool and notices a small silver metal zipper pull sticking out of the plain white plaster wall behind.\n1–3s: the presenter stands, grabs the zipper and pulls it in one long smooth line across the wall; the wall opens like fabric, the two plaster flaps curl apart, and behind them is the Albufera lagoon of Valencia at sunset: calm water, tall reeds and a small traditional wooden boat with a triangular sail, orange and pink light flooding the room, a light breeze moving the presenter's hair.\n3–4s: the presenter glances back at the camera with a tiny shrug, as if this is completely normal.\nRealistic natural motion, correct hands with five fingers, camera does not move, no zoom, no morphing, no text, no other people.\nSound: a long zipper rip, then gentle lapping water, distant birds and a soft rush of wind.", "es": "Continúa exactamente desde el primer fotograma: el mismo piso luminoso, la misma cámara fija, la misma mesa, la misma ropa y el mismo pelo, la cara de la persona sin cambios.\n0–1 s: la persona se gira en el taburete y ve el tirador plateado de una cremallera que asoma de la pared lisa de yeso blanco que tiene detrás.\n1–3 s: se levanta, agarra la cremallera y la abre de un tirón largo y suave a lo ancho de la pared; la pared se abre como si fuera tela, las dos solapas de yeso se enrollan hacia los lados y detrás aparece la Albufera de València al atardecer: agua en calma, cañas altas y una pequeña barca tradicional de madera con vela triangular; la luz naranja y rosa inunda la habitación y una brisa suave mueve el pelo de la persona.\n3–4 s: mira a cámara por encima del hombro y se encoge un poco de hombros, como si fuera lo más normal del mundo.\nMovimiento natural y realista, manos correctas con cinco dedos, la cámara no se mueve, sin zoom, sin deformaciones, sin texto, sin otras personas.\nSonido: el rasgado largo de una cremallera, luego agua que chapotea suave, pájaros a lo lejos y un soplo de viento."}}, {"id": "3", "corto": "Clones", "segundos": 4, "titulo": {"es": "3 · Ejército de clones", "va": "3 · Exèrcit de clons"}, "que": {"es": "Das una palmada y aparecen cuatro copias de ti: una corrige exámenes, otra está en una videollamada, otra bebe horchata y otra graba un reel. Las cinco miran a cámara a la vez.", "va": "Fas una palmada i apareixen quatre còpies de tu: una corregix exàmens, una altra està en una videotrucada, una altra beu orxata i una altra grava un reel. Les cinc miren a càmera alhora."}, "ajustes": ["Seedance 2.5", "4 s", "1080p", "9:16", "Audio on"], "coste": "≈ 64 cr", "prompt": {"en": "Continue exactly from the first frame: same bright apartment, same locked camera, same desk, same outfit and hair, the presenter's face and likeness unchanged.\n0–1s: the presenter sits at the desk, looks into the camera and claps once.\n1–2s: with a soft pop and a small puff of air, four identical copies of the presenter appear around the desk, each with exactly the same face, outfit and hair: one sits correcting a stack of exam papers with a red pen, one stands by the balcony on a phone video call, one leans against the desk sipping horchata, one holds up a smartphone filming a vertical reel.\n2–3.5s: all of them busily carry on with their tasks.\n3.5–4s: all five, including the original, suddenly freeze and turn to stare straight into the camera at the same moment with identical deadpan expressions. All five are clearly the same person.\nRealistic natural motion, correct hands with five fingers, camera does not move, no zoom, no morphing, no text, nobody else in the room.\nSound: one sharp clap, a soft pop, a pen scratching on paper and muffled video-call chatter, then sudden total silence on the stare.", "es": "Continúa exactamente desde el primer fotograma: el mismo piso luminoso, la misma cámara fija, la misma mesa, la misma ropa y el mismo pelo, la cara de la persona sin cambios.\n0–1 s: la persona, sentada a la mesa, mira a cámara y da una palmada.\n1–2 s: con un pop suave y una bocanada de aire aparecen alrededor de la mesa cuatro copias idénticas de la persona, con la misma cara, la misma ropa y el mismo pelo: una sentada corrigiendo un montón de exámenes con boli rojo, otra de pie junto al balcón en una videollamada con el móvil, otra apoyada en la mesa bebiendo horchata y otra sujetando un móvil mientras graba un reel en vertical.\n2–3,5 s: todas siguen muy ocupadas con lo suyo.\n3,5–4 s: las cinco, incluida la original, se quedan quietas de golpe y miran fijamente a cámara a la vez con la misma cara seria. Las cinco son claramente la misma persona.\nMovimiento natural y realista, manos correctas con cinco dedos, la cámara no se mueve, sin zoom, sin deformaciones, sin texto, nadie más en la habitación.\nSonido: una palmada seca, un pop suave, un boli rascando papel y la charla apagada de una videollamada; después, silencio total en la mirada."}}, {"id": "4", "corto": "Sin gravedad", "segundos": 4, "titulo": {"es": "4 · Sin gravedad", "va": "4 · Sense gravetat"}, "que": {"es": "Apagas el interruptor y desaparece la gravedad. Todo flota, y tú también.", "va": "Apagues l'interruptor i desapareix la gravetat. Tot sura, i tu també."}, "ajustes": ["Seedance 2.5", "4 s", "1080p", "9:16", "Audio on"], "coste": "≈ 64 cr", "prompt": {"en": "Continue exactly from the first frame: same bright apartment, same locked camera, same desk, same outfit and hair, the presenter's face and likeness unchanged.\n0–1s: the presenter stands up, steps to the white light switch on the wall and flicks it with one finger.\n1–3s: gravity switches off; everything slowly lifts and floats upward: the notebook, the pen, the glass of horchata, the two sweet buns, plant leaves, the curtain, the presenter's hair rising softly; then the presenter's feet leave the floor and the presenter drifts gently upward, calm and amused.\n3–4s: the presenter floats in mid-air, cross-legged, a little above the desk, and gives the camera a relaxed little wave.\nRealistic natural motion, correct hands with five fingers, camera does not move, no zoom, no morphing, no text, no other people.\nSound: a light-switch click, a low whoosh, then a soft dreamy hum.", "es": "Continúa exactamente desde el primer fotograma: el mismo piso luminoso, la misma cámara fija, la misma mesa, la misma ropa y el mismo pelo, la cara de la persona sin cambios.\n0–1 s: la persona se levanta, va hasta el interruptor blanco de la pared y lo pulsa con un dedo.\n1–3 s: la gravedad se apaga; todo empieza a elevarse y a flotar despacio: la libreta, el boli, el vaso de horchata, los dos fartons, las hojas de las plantas, la cortina y el pelo de la persona, que sube suavemente; después sus pies se despegan del suelo y la persona sube flotando, tranquila y divertida.\n3–4 s: flota en el aire con las piernas cruzadas, un poco por encima de la mesa, y saluda a cámara con la mano, relajada.\nMovimiento natural y realista, manos correctas con cinco dedos, la cámara no se mueve, sin zoom, sin deformaciones, sin texto, sin otras personas.\nSonido: el clic de un interruptor, un zumbido grave de aire y después un murmullo suave, como de sueño."}}]}, {"titulo": {"es": "El CTA con rotulador", "va": "El CTA amb retolador"}, "sub": {"es": "Aquí **Start image** = imagen B. Saltas de la mesa y escribes en un cristal delante de la cámara.", "va": "Ací **Start image** = imatge B. Botes de la taula i escrius en un vidre davant de la càmera."}, "planos": [{"id": "5", "corto": "CTA", "segundos": 6, "titulo": {"es": "5 · Comenta “PAELLA”", "va": "5 · Comenta “PAELLA”"}, "que": {"es": "Saltas, te acercas al objetivo, escribes con rotulador blanco y señalas los comentarios.", "va": "Botes, t'acostes a l'objectiu, escrius amb retolador blanc i assenyales els comentaris."}, "ajustes": ["Seedance 2.5", "6 s", "1080p", "9:16", "Audio on"], "coste": "≈ 96 cr", "prompt": {"en": "Continue exactly from the first frame: same bright apartment, same locked camera, same outfit and hair, the presenter's face and likeness unchanged. The presenter is sitting on the front edge of the desk, and the floor between the presenter and the camera is clear. There is an invisible clear glass pane right in front of the camera lens.\n0–1s: the presenter hops down off the front edge of the desk, landing lightly, and takes one step toward the camera; the desk stays behind the whole time and the presenter never passes through the desk or any object.\n1–4.5s: the presenter uncaps the white marker and writes on the glass in front of the lens in big, neat, clearly legible capital letters, reading correctly from the viewer's side, in two lines:\nline 1: {{COMENTA}}\nline 2: {{\"PAELLA\"}}\nthen draws a short arrow pointing down under the word.\nExact spelling, white marker ink, letters stay sharp and do not change once written, the writing sits across the middle of the frame so the presenter's face stays visible behind it.\n4.5–6s: the presenter caps the marker, steps back a little and points down toward the bottom of the screen with a small, natural smile.\nRealistic natural motion and solid physical contact with the floor and desk, correct hands with five fingers, camera does not move, no morphing, no other text anywhere, no other people.\nSound: quiet room tone, a soft thud on landing, the squeak of a marker on glass, the marker cap clicking, no music, no speech.", "es": "Continúa exactamente desde el primer fotograma: el mismo piso luminoso, la misma cámara fija, la misma ropa y el mismo pelo, la cara de la persona sin cambios. La persona está sentada en el borde delantero de la mesa y el suelo entre ella y la cámara está despejado. Justo delante del objetivo hay un cristal transparente invisible.\n0–1 s: la persona salta del borde de la mesa, cae con suavidad y da un paso hacia la cámara; la mesa se queda siempre detrás y la persona nunca atraviesa la mesa ni ningún objeto.\n1–4,5 s: destapa el rotulador blanco y escribe en el cristal delante del objetivo con letras mayúsculas grandes, limpias y muy legibles, que se leen bien desde el lado de quien mira, en dos líneas:\nlínea 1: {{COMENTA}}\nlínea 2: {{\"PAELLA\"}}\ny después dibuja una flecha corta hacia abajo debajo de la palabra.\nOrtografía exacta, tinta blanca de rotulador, las letras se quedan nítidas y no cambian una vez escritas, el texto ocupa el centro del encuadre y la cara de la persona se sigue viendo detrás.\n4,5–6 s: tapa el rotulador, da un pequeño paso atrás y señala hacia la parte de abajo de la pantalla con una sonrisa natural.\nMovimiento natural y realista, contacto físico sólido con el suelo y la mesa, manos correctas con cinco dedos, la cámara no se mueve, sin deformaciones, ningún otro texto, sin otras personas.\nSonido: ambiente tranquilo de habitación, un golpe suave al caer, el chirrido del rotulador en el cristal y el clic del capuchón; sin música, sin voz."}, "nota": {"es": "Cambia PAELLA por tu palabra. «Comenta» se escribe igual en castellano y en valenciano, así que el mismo vídeo sirve para los dos idiomas. Que la palabra sea corta, en mayúsculas y sin tildes, ñ, ç ni apóstrofos: la IA los dibuja mal. Si aun así sale torcida, tápala en la edición con un texto de letra manuscrita.", "va": "Canvia PAELLA per la teua paraula. «Comenta» s'escriu igual en castellà i en valencià, així que el mateix vídeo servix per als dos idiomes. Que la paraula siga curta, en majúscules i sense accents, ñ, ç ni apòstrofs: la IA els dibuixa malament. Si tot i així ix torta, tapa-la en l'edició amb un text de lletra manuscrita."}}]}], "voz": {"sub": {"es": "Una frase corta por hook, con voz seca, como si nada. Ese contraste con las imágenes imposibles es lo que hace gracia.", "va": "Una frase curta per hook, amb veu seca, com si res. Eixe contrast amb les imatges impossibles és el que fa gràcia."}, "guion": {"es": "Esto es un hook de IA… Sí, y esto otro también… Espera… y esto, otro hook… ¿Y esto? Otro hook… Vale: comenta PAELLA y te mando los prompts.", "va": "Açò és un hook d'IA… Sí, i açò també… Espera… i açò, un altre hook… I açò? Un altre hook… Vinga: comenta PAELLA i t'envie els prompts."}, "tabla": [{"t": "0:01", "plano": {"es": "Congelar · justo después del chasquido", "va": "Congelar · just després de petar els dits"}, "frase": {"es": "Esto es un hook de IA", "va": "Açò és un hook d'IA"}}, {"t": "0:05", "plano": {"es": "Cremallera · cuando se abre la pared", "va": "Cremallera · quan s'obri la paret"}, "frase": {"es": "Sí, y esto otro también", "va": "Sí, i açò també"}}, {"t": "0:08", "plano": {"es": "Clones · «Espera» con la palmada", "va": "Clons · «Espera» amb la palmada"}, "frase": {"es": "Espera… y esto, otro hook", "va": "Espera… i açò, un altre hook"}}, {"t": "0:14", "plano": {"es": "Gravedad · cuando despegas", "va": "Gravetat · quan t'enlaires"}, "frase": {"es": "¿Y esto? Otro hook", "va": "I açò? Un altre hook"}}, {"t": "0:17", "plano": {"es": "CTA · mientras escribes", "va": "CTA · mentre escrius"}, "frase": {"es": "Vale: comenta PAELLA y te mando los prompts", "va": "Vinga: comenta PAELLA i t'envie els prompts"}}]}, "montaje": {"sub": {"es": "En CapCut o en el editor de Instagram.", "va": "En CapCut o en l'editor d'Instagram."}, "pasos": [{"es": "Ordena los planos: congelar, cremallera, clones, gravedad y CTA. Cortes secos, sin transiciones.", "va": "Ordena els plans: congelar, cremallera, clons, gravetat i CTA. Talls secs, sense transicions."}, {"es": "Corta la voz en frases y pon cada una en su plano según la tabla. No la pongas en un solo bloque: se adelanta a las imágenes.", "va": "Talla la veu en frases i posa cadascuna en el seu pla segons la taula. No la poses en un sol bloc: s'avança a les imatges."}, {"es": "Baja los efectos de sonido por debajo de tu voz y vuelve a subirlos entre frases.", "va": "Abaixa els efectes de so per davall de la teua veu i torna a pujar-los entre frases."}, {"es": "Repite la llamada en el texto del post: «Comenta PAELLA y te mando los prompts».", "va": "Repetix la crida en el text de la publicació: «Comenta PAELLA i t'envie els prompts»."}]}, "reglas": [{"titulo": {"es": "No pidas que nada atraviese una pantalla o una pared", "va": "No demanes que res travesse una pantalla o una paret"}, "texto": {"es": "Los planos en los que algo pasa a través de un objeto sólido suelen fallar. Los hooks de esta guía evitan ese caso.", "va": "Els plans en què alguna cosa passa a través d'un objecte sòlid solen fallar. Els hooks d'esta guia eviten eixe cas."}}, {"titulo": {"es": "Una segunda imagen de inicio para el CTA", "va": "Una segona imatge d'inici per al CTA"}, "texto": {"es": "Desde detrás de la mesa, el modelo tiende a hacerte caminar a través de ella. Por eso existe la imagen B: desde el borde, saltando hacia delante.", "va": "Des de darrere de la taula, el model tendix a fer-te caminar a través d'ella. Per això existix la imatge B: des de la vora, botant cap avant."}}, {"titulo": {"es": "La misma imagen de inicio para los cuatro hooks", "va": "La mateixa imatge d'inici per als quatre hooks"}, "texto": {"es": "Así la habitación, la ropa y la cámara no cambian y el reel parece un solo lugar.", "va": "Així l'habitació, la roba i la càmera no canvien i el reel pareix un sol lloc."}}, {"titulo": {"es": "Siempre 9:16, y rechaza el preset que te sugiera", "va": "Sempre 9:16, i rebutja el preset que et suggerisca"}, "texto": {"es": "Higgsfield a veces propone un preset. Recházalo para que se ejecute tu prompt tal cual.", "va": "Higgsfield a vegades proposa un preset. Rebutja'l perquè s'execute el teu prompt tal com està."}}, {"titulo": {"es": "Prueba un plano antes que nada", "va": "Prova un pla abans de res"}, "texto": {"es": "Revisa la cara y las manos antes de gastar créditos en el resto. Cuenta con repetir uno o dos planos.", "va": "Revisa la cara i les mans abans de gastar crèdits en la resta. Compta amb repetir un o dos plans."}}, {"titulo": {"es": "Prompts en inglés si puedes", "va": "Prompts en anglés si pots"}, "texto": {"es": "Los modelos de vídeo siguen el inglés con más precisión. El castellano también funciona; el valenciano lo entienden peor, por eso la traducción de los prompts es en castellano.", "va": "Els models de vídeo seguixen l'anglés amb més precisió. El castellà també funciona; el valencià l'entenen pitjor, per això la traducció dels prompts és en castellà."}}], "coste": {"nota": {"es": "Precios aproximados de Higgsfield en octubre de 2026; cambian con el tiempo.", "va": "Preus aproximats de Higgsfield a l'octubre de 2026; canvien amb el temps."}, "filas": [{"concepto": {"es": "Dos imágenes de inicio · Soul 2", "va": "Dues imatges d'inici · Soul 2"}, "valor": "2 × ~1 cr"}, {"concepto": {"es": "Cuatro hooks · Seedance 2.5 · 4 s · 1080p", "va": "Quatre hooks · Seedance 2.5 · 4 s · 1080p"}, "valor": "4 × 64 cr"}, {"concepto": {"es": "CTA · Seedance 2.5 · 6 s · 1080p", "va": "CTA · Seedance 2.5 · 6 s · 1080p"}, "valor": "96 cr"}], "total": "≈ 355 cr"}, "pie": {"es": "Si haces tu versión, etiquétame 👀", "va": "Si en fas la teua versió, etiqueta'm 👀"}, "publicacion": {"url_guia": "https://claude.ai/artifact/AnPs4qXP7GbEgnr11y9Dyd", "post": {"es": "Esto es un hook de IA. Y esto. Y esto también. 🤯\n👉 Comenta PAELLA y te mando por privado la guía con todos los prompts.\n\nCuatro planos imposibles en la misma habitación, hechos con IA a partir de una sola foto. La guía trae los prompts, la voz en off y los trucos para que te salga a la primera, en castellano y en valenciano.", "va": "Açò és un hook d'IA. I açò. I açò també. 🤯\n👉 Comenta PAELLA i t'envie per privat la guia amb tots els prompts.\n\nQuatre plans impossibles en la mateixa habitació, fets amb IA a partir d'una sola foto. La guia porta els prompts, la veu en off i els trucs perquè t'isca a la primera, en castellà i en valencià."}, "hashtags": "#IA #videoIA #prompts #reels #València #IAenvalencià", "respuestas": ["¡Enviado! · Enviat! 📩 Mira tus mensajes · Mira els missatges", "Te lo acabo de mandar por privado · Te l'acabe d'enviar per privat 🙌", "¡Hecho! · Fet! 📬 Revisa también las solicitudes de mensaje · Revisa també les sol·licituds"], "dm_apertura": "¡Hola! · Hola! 👋\nAquí tienes la guía PAELLA. ¿En qué idioma la quieres?\nAcí tens la guia PAELLA. En quin idioma la vols?", "dm_botones": ["Castellano", "Valencià"], "dm": {"es": {"texto": "¡Perfecto! Aquí la tienes: los seis prompts, la voz en off y los trucos para que te salga a la primera. Si haces tu versión, etiquétame 👀", "boton": "Abrir la guía"}, "va": {"texto": "Perfecte! Ací la tens: els sis prompts, la veu en off i els trucs perquè t'isca a la primera. Si en fas la teua versió, etiqueta'm 👀", "boton": "Obrir la guia"}}}};
+  if (!C) { document.getElementById("app").innerHTML = "<p style='padding:40px 0'>Esta es la plantilla vacía: compílala con scripts/build.py.</p>"; return; }
+
+  var lang = "es";
+  var UI = {
+    es: {copy:"Copiar", done:"Copiado ✓", sel:"Seleccionado: copia con Ctrl/Cmd+C", en:"Inglés · recomendado", es:"Castellano",
+      need:"Qué necesitas", vo:"La voz en off", voLabel:"Voz en off · castellano", time:"Tiempo", shot:"Plano", line:"Frase",
+      edit:"Monta el reel", rules:"Lo que funciona y lo que no", cost:"Cuánto cuesta", total:"Total aproximado",
+      yourShot:"Tu plano", yourReel:"Aquí va tu reel", versions:"Versión del prompt", langGroup:"Idioma"},
+    va: {copy:"Copia", done:"Copiat ✓", sel:"Seleccionat: copia amb Ctrl/Cmd+C", en:"Anglés · recomanat", es:"Castellà",
+      need:"Què necessites", vo:"La veu en off", voLabel:"Veu en off · valencià", time:"Temps", shot:"Pla", line:"Frase",
+      edit:"Munta el reel", rules:"El que funciona i el que no", cost:"Quant costa", total:"Total aproximat",
+      yourShot:"El teu pla", yourReel:"Ací va el teu reel", versions:"Versió del prompt", langGroup:"Idioma"}
+  };
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function fmt(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>"); }
+  function ph(s) { return esc(s).replace(/\{\{(.+?)\}\}/g, '<span class="ph">$1</span>').replace(/\[([^\]\n]+)\]/g, '<span class="ph">[$1]</span>'); }
+  function T(o, l) { if (o == null) return ""; if (typeof o === "string") return o; l = l || lang; return o[l] != null ? o[l] : (o.es || ""); }
+  function u() { return UI[MODE === "kit" ? "es" : lang]; }
+
+  var DOME = '<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="currentColor"/>' +
+    '<path d="M7 22h16M9 22v-4a6 6 0 0 1 12 0v4M15 9.5V12M13.6 9.5h2.8" stroke="var(--cal)" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<path d="M11.5 15.5h7M10.5 18.5h9" stroke="var(--cal)" stroke-width="1" opacity=".7"/></svg>';
+
+  function copyBox(label, text, cls) {
+    return '<div class="prompt" data-prompt><div class="ptabs"><span class="plabel">' + esc(label) + '</span>' +
+      '<button type="button" class="copy">' + u().copy + '</button></div><pre class="' + (cls || "txt") + '">' + esc(text) + "</pre></div>";
+  }
+  function promptBox(p) {
+    var x = u();
+    return '<div class="prompt" data-prompt><div class="ptabs"><div class="tabs" role="group" aria-label="' + x.versions + '">' +
+      '<button type="button" class="tab" data-v="en" aria-pressed="true">' + x.en + "</button>" +
+      '<button type="button" class="tab" data-v="es" aria-pressed="false">' + x.es + "</button></div>" +
+      '<button type="button" class="copy">' + x.copy + "</button></div>" +
+      '<pre class="v-en" lang="en">' + ph(p.prompt.en) + "</pre>" +
+      '<pre class="v-es" lang="es" hidden>' + ph(p.prompt.es) + "</pre></div>";
+  }
+  function thumb(p) {
+    if (p.imagen) return '<img class="thumb" src="' + esc(p.imagen) + '" alt="' + esc(T(p.titulo)) + '" width="540" height="960" loading="lazy">';
+    return '<div class="thumb cristal" aria-hidden="true"><span class="tn">' + esc(p.id) + '</span><span class="tl">' + u().yourShot + "</span></div>";
+  }
+  function cristal() {
+    return '<div class="cristal" role="img" aria-label="Comenta ' + esc(C.palabra) + '"><span class="m1">COMENTA</span>' +
+      '<span class="m2" style="--n:' + (C.palabra.length + 2) + '">“' + esc(C.palabra) + '”</span><span class="m3">↓</span><span class="cap">' + esc(u().yourReel) + "</span></div>";
+  }
+  function head(n, title, sub) {
+    return '<div class="sec-head">' + (n != null ? '<span class="num">' + n + "</span>" : "<span></span>") +
+      "<div><h2>" + esc(title) + "</h2>" + (sub ? '<p class="sub">' + fmt(sub) + "</p>" : "") + "</div></div>";
+  }
+  function brand() {
+    return '<div class="brand">' + DOME + "<span>" + esc(C.marca.usuario || C.marca.nombre || "") + "</span></div>";
+  }
+
+  /* ---------- Guía (lo que recibe quien comenta) ---------- */
+  function renderGuia() {
+    var x = u(), n = 0, h = "";
+    function num() { return String(n++).padStart(2, "0"); }
+    h += '<header class="bar">' + brand() + '<div class="langs" role="group" aria-label="' + x.langGroup + '">' +
+      '<button type="button" data-lang="es" aria-pressed="' + (lang === "es") + '">Castellano</button>' +
+      '<button type="button" data-lang="va" aria-pressed="' + (lang === "va") + '">Valencià</button></div></header>';
+
+    var media = C.video && C.video.src
+      ? '<video class="reel" src="' + esc(C.video.src) + '"' + (C.video.poster ? ' poster="' + esc(C.video.poster) + '"' : "") +
+        ' muted loop playsinline autoplay controls preload="metadata" aria-label="Reel"></video>'
+      : cristal();
+    h += '<div class="hero"><div><p class="eyebrow">' + esc(T(C.textos.eyebrow)) + "</p>" +
+      '<h1><span class="strike">' + esc(T(C.textos.titular)) + '</span><span class="then">' + esc(T(C.textos.titular2)) + "</span></h1>" +
+      '<p class="lede">' + fmt(T(C.textos.entradilla)) + '</p><div class="facts">' +
+      C.datos.map(function (d) { return '<span class="fact">' + esc(T(d)) + "</span>"; }).join("") +
+      '</div></div><div class="hero-media">' + media + "</div></div>";
+
+    h += '<section class="block">' + head(num(), x.need, T(C.necesitas.sub)) + '<div class="need">' +
+      C.necesitas.items.map(function (i) { return "<div><b>" + esc(T(i.titulo)) + "</b><span>" + fmt(T(i.texto)) + "</span></div>"; }).join("") +
+      "</div></section>";
+
+    C.secciones.forEach(function (s) {
+      h += '<section class="block">' + head(num(), T(s.titulo), T(s.sub));
+      s.planos.forEach(function (p) {
+        h += '<div class="shot">' + thumb(p) + '<div class="shot-body"><h3>' + esc(T(p.titulo)) + '</h3><p class="what">' + fmt(T(p.que)) + "</p>" +
+          '<div class="settings">' + p.ajustes.map(function (a) { return "<span>" + esc(a) + "</span>"; }).join("") +
+          (p.coste ? '<span class="cost">' + esc(p.coste) + "</span>" : "") + "</div>" +
+          promptBox(p) + (p.nota ? '<p class="note">' + fmt(T(p.nota)) + "</p>" : "") + "</div></div>";
+      });
+      h += "</section>";
+    });
+
+    h += '<section class="block">' + head(num(), x.vo, T(C.voz.sub)) + copyBox(x.voLabel, T(C.voz.guion)) +
+      '<div class="tbl"><table><thead><tr><th>' + x.time + "</th><th>" + x.shot + "</th><th>" + x.line + "</th></tr></thead><tbody>" +
+      C.voz.tabla.map(function (r) { return '<tr><td class="t">' + esc(r.t) + "</td><td>" + esc(T(r.plano)) + '</td><td class="line">' + esc(T(r.frase)) + "</td></tr>"; }).join("") +
+      "</tbody></table></div></section>";
+
+    h += '<section class="block">' + head(num(), x.edit, T(C.montaje.sub)) + '<ol class="steps">' +
+      C.montaje.pasos.map(function (p) { return "<li><span>" + fmt(T(p)) + "</span></li>"; }).join("") + "</ol></section>";
+
+    h += '<section class="block">' + head(null, x.rules) + '<ul class="tips">' +
+      C.reglas.map(function (r) { return "<li><b>" + esc(T(r.titulo)) + "</b><span>" + fmt(T(r.texto)) + "</span></li>"; }).join("") + "</ul></section>";
+
+    h += '<section class="block">' + head(null, x.cost, T(C.coste.nota)) + '<div class="tbl"><table><tbody>' +
+      C.coste.filas.map(function (f) { return "<tr><td>" + esc(T(f.concepto)) + '</td><td class="v">' + esc(f.valor) + "</td></tr>"; }).join("") +
+      '<tr class="total"><td>' + x.total + '</td><td class="v">' + esc(C.coste.total) + "</td></tr></tbody></table></div></section>";
+
+    h += "<footer><span>" + esc(T(C.pie)) + '</span><span class="mono">' + esc([C.marca.usuario, C.marca.web].filter(Boolean).join(" · ")) + "</span></footer>";
+    document.getElementById("app").innerHTML = h;
+  }
+
+  /* ---------- Kit (solo para quien publica) ---------- */
+  function sec(m) { var p = m.split(":"); return (+p[0]) * 60 + (+p[1]); }
+  function timeline() {
+    var reel = [];
+    C.secciones.forEach(function (s) { s.planos.forEach(function (p) { if (p.segundos) reel.push(p); }); });
+    var total = reel.reduce(function (a, p) { return a + p.segundos; }, 0);
+    var vo = C.voz.tabla.map(function (r, i) {
+      return '<span class="tl-vo" style="left:' + (sec(r.t) / total * 100).toFixed(2) + '%">VO' + (i + 1) + "</span>";
+    }).join("");
+    var segs = reel.map(function (p) {
+      return '<div class="tl-seg" style="flex:' + p.segundos + '">' + esc(p.corto || p.id) + "<br>" + p.segundos + " s</div>";
+    }).join("");
+    var ticks = ""; for (var t = 0; t <= total; t += Math.max(2, Math.round(total / 6))) ticks += "<span>0:" + String(t).padStart(2, "0") + "</span>";
+    return '<div class="tl-wrap"><div class="tl">' + vo + '<div class="tl-bar">' + segs + '</div><div class="tl-axis">' + ticks + "<span>" + total + " s</span></div></div></div>";
+  }
+
+  function renderKit() {
+    var P = C.publicacion, W = C.palabra, h = "";
+    var url = (P.url_guia || "").replace(/#.*$/, "");
+    var urlEs = url ? url + "#es" : "PEGA_AQUÍ_EL_ENLACE#es", urlVa = url ? url + "#va" : "PEGA_AQUÍ_EL_ENLACE#va";
+    var bi = P.post.es + "\n\n— — —\n\n" + P.post.va + (P.hashtags ? "\n\n" + P.hashtags : "");
+
+    h += '<header class="bar">' + brand() + '<span class="eyebrow">Solo para ti · no lo compartas</span></header>';
+    h += '<div class="kit-hero"><p class="eyebrow">Kit de publicación</p><h1>Comenta <span class="pal">“' + esc(W) + '”</span></h1>' +
+      '<p class="lede">Todo para publicar este reel y que, al comentar ' + esc(W) + ', a cada persona le llegue la guía en castellano o en valenciano. ' +
+      'La guía es lo que se envía; esta página es tu chuleta.</p></div>';
+
+    h += '<section class="block">' + head(null, "Cómo está hecho el reel", "Cuatro planos imposibles de unos 4 segundos en la misma habitación y un cierre de 6 segundos con la palabra escrita en un cristal. Una frase de voz en off cae en cada plano (VO1–VO5).") + timeline() +
+      '<ul class="why">' +
+      "<li><i>1</i><div><b>Algo imposible cada 4 segundos.</b> <span>No da tiempo a deslizar el dedo: cada corte trae una sorpresa nueva y el reel se vuelve a ver entero.</span></div></li>" +
+      "<li><i>2</i><div><b>El vídeo es la prueba del regalo.</b> <span>Lo que enseñas (los hooks) es exactamente lo que regalas (los prompts). Quien comenta ya sabe qué va a recibir.</span></div></li>" +
+      "<li><i>3</i><div><b>Imágenes locas, voz aburrida.</b> <span>La voz en off es seca, como si nada. Ese contraste es el humor y lo que hace que se comparta.</span></div></li>" +
+      "<li><i>4</i><div><b>Una habitación, cámara fija.</b> <span>Todos los hooks salen de la misma imagen de inicio: parece un mismo mundo y no un collage de clips.</span></div></li>" +
+      "<li><i>5</i><div><b>El CTA vive dentro de la escena.</b> <span>Escribir la palabra en el cristal no parece un anuncio; la gente lo mira hasta el final.</span></div></li>" +
+      "<li><i>6</i><div><b>Comentar es la puerta.</b> <span>Cada comentario empuja el reel en el algoritmo, y el mensaje privado abre una conversación contigo. La guía tiene valor real, así que se guarda y se reenvía.</span></div></li>" +
+      "</ul></section>";
+
+    h += '<section class="block">' + head(null, "Un vídeo, dos idiomas", "En el cristal solo pone COMENTA “" + W + "”, que se escribe igual en castellano y en valenciano. Generas los planos una vez y exportas dos versiones cambiando solo la voz en off: cero créditos extra.") +
+      '<div class="two"><div><p class="mini">Voz · castellano</p>' + copyBox("Castellano", T(C.voz.guion, "es")) + "</div>" +
+      '<div><p class="mini">Veu · valencià</p>' + copyBox("Valencià", T(C.voz.guion, "va")) + "</div></div>" +
+      '<p class="note">Publica primero la versión de un idioma y, unos días después, la otra (o una en Reels y otra en TikTok). La misma automatización sirve para las dos: la palabra es la misma.</p></section>';
+
+    h += '<section class="block">' + head(null, "Enlaces de la guía", "El enlace termina en #es o #va y la guía se abre directamente en ese idioma.") +
+      (url ? "" : '<p class="warn">Aún no hay enlace. Publica la guía, ponla en <b>Compartir → cualquiera con el enlace</b> y pega la dirección en <code>publicacion.url_guia</code> del config.</p>') +
+      '<div class="two"><div>' + copyBox("Enlace · castellano", urlEs, "v-en") + "</div><div>" + copyBox("Enllaç · valencià", urlVa, "v-en") + "</div></div></section>";
+
+    h += '<section class="block">' + head(null, "Texto del post", "La palabra va en las dos primeras líneas, que son las que se ven sin pulsar «más».") +
+      '<div class="two"><div><p class="mini">Castellano</p>' + copyBox("Post · castellano", P.post.es + (P.hashtags ? "\n\n" + P.hashtags : "")) + "</div>" +
+      '<div><p class="mini">Valencià</p>' + copyBox("Post · valencià", P.post.va + (P.hashtags ? "\n\n" + P.hashtags : "")) + "</div></div>" +
+      '<p class="mini">Bilingüe, en un solo post</p>' + copyBox("Post · bilingüe", bi) +
+      '<p class="note">Fija un comentario tuyo con «Comenta ' + esc(W) + ' 👇» para que la palabra se vea también arriba de los comentarios.</p></section>';
+
+    h += '<section class="block">' + head(null, "La automatización", "Lo que pasa desde que alguien comenta hasta que abre la guía. Como no sabes en qué idioma escribe cada persona, la respuesta pública y el primer mensaje van en los dos.") +
+      '<ol class="flow">' +
+      "<li><b>Alguien comenta “" + esc(W) + "”</b><span>La palabra puede ir sola o dentro de una frase; añade variantes con errores típicos si las hay.</span></li>" +
+      "<li><b>Respuesta pública al comentario</b><span>Rota entre varias frases para no parecer spam (abajo).</span></li>" +
+      "<li><b>Mensaje 1 · elige idioma</b><span>Dos botones: «" + esc(P.dm_botones[0]) + "» y «" + esc(P.dm_botones[1]) + "». Que la persona pulse un botón abre la conversación y mejora la entrega de lo siguiente.</span></li>" +
+      "<li><b>Mensaje 2 · la guía</b><span>Texto en su idioma y botón al enlace #es o #va.</span></li>" +
+      "</ol>" +
+      '<p class="mini">Respuestas públicas (bilingües)</p>' + copyBox("Una por línea", P.respuestas.join("\n")) +
+      '<p class="mini">Mensaje 1</p>' + copyBox("Botones: " + P.dm_botones.join(" / "), P.dm_apertura) +
+      '<div class="two"><div><p class="mini">Mensaje 2 · castellano</p>' + copyBox("Botón: " + P.dm.es.boton + " → #es", P.dm.es.texto) + "</div>" +
+      '<div><p class="mini">Mensaje 2 · valencià</p>' + copyBox("Botó: " + P.dm.va.boton + " → #va", P.dm.va.texto) + "</div></div>" +
+      '<p class="mini">Montarla en ManyChat</p><ol class="steps">' +
+      "<li><span>Pasa tu Instagram a <b>cuenta profesional</b> (Creador o Empresa) y, en los ajustes de mensajes de Instagram, permite el acceso a los mensajes a las <b>herramientas conectadas</b>.</span></li>" +
+      "<li><span>Crea la cuenta en ManyChat y conecta Instagram con el inicio de sesión oficial de Meta. No des nunca tu contraseña a una herramienta que te la pida directamente.</span></li>" +
+      "<li><span>Nueva automatización con el disparador <b>«comentario en tu publicación o reel»</b>. Elige este reel y escribe la palabra <b>" + esc(W) + "</b> (con sus variantes).</span></li>" +
+      "<li><span>Activa la <b>respuesta pública</b> y pega las frases de arriba, una por variante.</span></li>" +
+      "<li><span>Añade el <b>Mensaje 1</b> con dos botones. Cada botón lleva a su <b>Mensaje 2</b>, con un botón de enlace a la guía #es o #va.</span></li>" +
+      "<li><span>Prueba desde otra cuenta: comenta, pulsa cada botón y abre los dos enlaces en el móvil.</span></li>" +
+      "</ol>" +
+      '<p class="warn"><b>Límites a tener en cuenta.</b> Meta solo deja contestar en privado a un comentario durante los 7 días siguientes, y la automatización se dispara con el primer comentario de cada persona. El plan gratis de ManyChat bajó en marzo de 2026 a unos 25 contactos activos al mes: sirve para probar; si el reel funciona, necesitarás un plan de pago (compruébalo en su página de precios). Sin herramienta, puedes contestar a mano con las respuestas guardadas de Instagram.</p>' +
+      '<p class="src">Fuentes: <a href="https://help.manychat.com/hc/en-us/articles/25800197498652" target="_blank" rel="noopener">ayuda de ManyChat</a> · <a href="https://manychat.com/blog/manychat-pricing-explained/" target="_blank" rel="noopener">precios de ManyChat</a> · <a href="https://www.socialpilot.co/es/strategy/instagram-comment-to-dm-automation" target="_blank" rel="noopener">SocialPilot</a></p></section>';
+
+    var checks = [
+      "Guía publicada y compartida como «cualquiera con el enlace».",
+      "Enlaces #es y #va abiertos en el móvil: cada uno sale en su idioma.",
+      "La palabra es idéntica en el cristal, en el texto del post y en ManyChat.",
+      "Automatización activa y probada desde otra cuenta.",
+      "Comentario fijado con «Comenta " + W + " 👇».",
+      "Portada del reel elegida (un fotograma del hook más loco)."
+    ];
+    var key = "kit-" + C.slug, saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (e) {}
+    h += '<section class="block">' + head(null, "Antes de publicar") + '<ul class="check">' +
+      checks.map(function (c, i) { return '<li><label><input type="checkbox" id="chk-' + i + '" data-chk="' + i + '"' + (saved[i] ? " checked" : "") + "><span>" + esc(c) + "</span></label></li>"; }).join("") +
+      "</ul></section>";
+
+    h += '<section class="block">' + head(null, "Ideas para los siguientes", "Hooks de 4 segundos que respetan las reglas: una sola acción, cámara fija, misma imagen de inicio y nada que atraviese un objeto sólido.") +
+      '<ul class="tips">' +
+      [["Rebobinar", "Chasqueas los dedos y el vaso que se acaba de caer vuelve solo a la mesa, marcha atrás."],
+       ["Dibujo vivo", "Dibujas un pájaro en la libreta y sale volando del papel."],
+       ["Mini-tú", "Abres un cajón y sale una versión diminuta de ti que saluda."],
+       ["Cambio de estación", "Bajas la persiana y, al subirla, nieva sobre los tejados de València."],
+       ["Imán", "Abres la mano y los bolis y las tizas de la mesa vuelan hacia ella."],
+       ["Cámara lenta", "Chasqueas y todo va a cámara lenta menos tú."],
+       ["Orden mágico", "Das una palmada y los libros se colocan solos en la estantería por colores."],
+       ["Dado gigante", "Tiras un dado pequeño y cae del techo uno enorme de cartón: guiño a la gamificación."]]
+        .map(function (i) { return "<li><b>" + i[0] + "</b><span>" + i[1] + "</span></li>"; }).join("") + "</ul>" +
+      '<p class="note">La mecánica sirve para cualquier regalo: una plantilla, un juego, un banco de prompts para clase. Solo cambian la palabra y la guía.</p></section>';
+
+    h += "<footer><span>Kit generado con la skill reel-comenta</span><span class=\"mono\">" + esc(C.slug) + "</span></footer>";
+    document.getElementById("app").innerHTML = h;
+  }
+
+  function render() { if (MODE === "kit") renderKit(); else renderGuia(); }
+
+  function setLang(l, remember) {
+    lang = l === "va" ? "va" : "es";
+    document.documentElement.lang = lang === "va" ? "ca-ES-valencia" : "es";
+    document.title = MODE === "kit" ? document.title : T(C.titulo);
+    render();
+    if (remember) {
+      try { history.replaceState(null, "", "#" + lang); } catch (e) {}
+      try { localStorage.setItem("guia-lang", lang); } catch (e) {}
+    }
+  }
+
+  function copyFrom(btn) {
+    var box = btn.closest("[data-prompt]"), pre = box.querySelector("pre:not([hidden])"), x = u(), text = pre.innerText;
+    function ok() { btn.textContent = x.done; btn.classList.add("done"); setTimeout(function () { btn.textContent = x.copy; btn.classList.remove("done"); }, 1600); }
+    function fallback() { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = x.sel; }
+    try { navigator.clipboard.writeText(text).then(ok, fallback); } catch (e) { fallback(); }
+  }
+
+  document.addEventListener("click", function (e) {
+    var l = e.target.closest("[data-lang]");
+    if (l) { setLang(l.getAttribute("data-lang"), true); return; }
+    var tab = e.target.closest(".tab");
+    if (tab) {
+      var box = tab.closest("[data-prompt]");
+      box.querySelectorAll(".tab").forEach(function (b) { b.setAttribute("aria-pressed", String(b === tab)); });
+      box.querySelectorAll("pre").forEach(function (p) { p.hidden = !p.classList.contains("v-" + tab.getAttribute("data-v")); });
+      return;
+    }
+    var cp = e.target.closest(".copy");
+    if (cp) copyFrom(cp);
+  });
+  document.addEventListener("change", function (e) {
+    var c = e.target.closest("[data-chk]"); if (!c) return;
+    var key = "kit-" + C.slug, saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (x) {}
+    saved[c.getAttribute("data-chk")] = c.checked;
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch (x) {}
+  });
+
+  function fromHash() { var h = (location.hash || "").slice(1); return h === "va" || h === "es" ? h : null; }
+  window.addEventListener("hashchange", function () { var h = fromHash(); if (h && h !== lang) setLang(h, false); });
+
+  var start = fromHash();
+  if (!start) { try { start = localStorage.getItem("guia-lang"); } catch (e) {} }
+  setLang(MODE === "kit" ? "es" : (start || "es"), false);
+})();
+</script>
