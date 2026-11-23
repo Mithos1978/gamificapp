@@ -42,6 +42,7 @@
       "planos": [
         {
           "id": "A",
+          "imagen": "media/start-a.jpg",
           "titulo": {"es": "A · Detrás de la mesa", "va": "A · Darrere de la taula"},
           "que": {
             "es": "Un piso luminoso en València: mesa de roble, monitor, un vaso de horchata con fartons en el borde, una pared blanca vacía con un interruptor y un balcón con vistas a una cúpula de tejas azules.",
@@ -56,6 +57,7 @@
         },
         {
           "id": "B",
+          "imagen": "media/start-b.jpg",
           "titulo": {"es": "B · En el borde de la mesa", "va": "B · A la vora de la taula"},
           "que": {
             "es": "La misma habitación y la misma ropa, con la persona sentada en el borde delantero de la mesa y el rotulador en la mano. Solo para el CTA.",
