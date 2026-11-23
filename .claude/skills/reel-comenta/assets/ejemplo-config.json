@@ -3,7 +3,7 @@
   "palabra": "PAELLA",
   "titulo": {"es": "Los prompts PAELLA", "va": "Els prompts PAELLA"},
   "marca": {"nombre": "Tu marca", "usuario": "@tu_cuenta", "web": ""},
-  "video": null,
+  "video": {"src": "media/reel.mp4", "poster": "media/reel-poster.jpg"},
 
   "textos": {
     "eyebrow": {"es": "Vídeo IA · Higgsfield · 4 hooks + CTA", "va": "Vídeo IA · Higgsfield · 4 hooks + CTA"},
