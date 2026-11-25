@@ -72,7 +72,7 @@ def validar(c):
         k.avisos.append("marca.usuario: sigue siendo «@tu_cuenta»; cámbialo por tu usuario real.")
     v = c.get("video")
     if v is not None and not (isinstance(v, dict) and v.get("src")):
-        k.err.append("video: usa null o {\"src\": \"media/reel.mp4\", \"poster\": \"media/portada.jpg\"}.")
+        k.err.append("video: usa null o {\"src\": \"media/reel.mp4\", \"poster\": \"media/portada.jpg\"}; src puede ser {\"es\": …, \"va\": …} si cada idioma tiene su vídeo.")
     elif v is None:
         k.avisos.append("video: sin vídeo; la guía mostrará el cristal con la palabra en su lugar.")
 

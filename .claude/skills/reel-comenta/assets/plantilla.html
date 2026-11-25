@@ -246,8 +246,9 @@ footer .mono{font-family:var(--f-mono)}
       '<button type="button" data-lang="es" aria-pressed="' + (lang === "es") + '">Castellano</button>' +
       '<button type="button" data-lang="va" aria-pressed="' + (lang === "va") + '">Valencià</button></div></header>';
 
-    var media = C.video && C.video.src
-      ? '<video class="reel" src="' + esc(C.video.src) + '"' + (C.video.poster ? ' poster="' + esc(C.video.poster) + '"' : "") +
+    var vsrc = C.video ? T(C.video.src) : "", vposter = C.video ? T(C.video.poster) : "";
+    var media = vsrc
+      ? '<video class="reel" src="' + esc(vsrc) + '"' + (vposter ? ' poster="' + esc(vposter) + '"' : "") +
         ' muted loop playsinline autoplay controls preload="metadata" aria-label="Reel"></video>'
       : cristal();
     h += '<div class="hero"><div><p class="eyebrow">' + esc(T(C.textos.eyebrow)) + "</p>" +
