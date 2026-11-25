@@ -2,7 +2,7 @@
   "slug": "paella",
   "palabra": "PAELLA",
   "titulo": {"es": "Los prompts PAELLA", "va": "Els prompts PAELLA"},
-  "marca": {"nombre": "Tu marca", "usuario": "@tu_cuenta", "web": ""},
+  "marca": {"nombre": "Tu marca", "usuario": "@elcaudelfons", "web": ""},
   "video": {"src": "media/reel.mp4", "poster": "media/reel-poster.jpg"},
 
   "textos": {
@@ -237,8 +237,8 @@
   "publicacion": {
     "url_guia": "https://claude.ai/artifact/AnPs4qXP7GbEgnr11y9Dyd",
     "post": {
-      "es": "Esto es un hook de IA. Y esto. Y esto también. 🤯\n👉 Comenta PAELLA y te mando por privado la guía con todos los prompts.\n\nCuatro planos imposibles en la misma habitación, hechos con IA a partir de una sola foto. La guía trae los prompts, la voz en off y los trucos para que te salga a la primera, en castellano y en valenciano.",
-      "va": "Açò és un hook d'IA. I açò. I açò també. 🤯\n👉 Comenta PAELLA i t'envie per privat la guia amb tots els prompts.\n\nQuatre plans impossibles en la mateixa habitació, fets amb IA a partir d'una sola foto. La guia porta els prompts, la veu en off i els trucs perquè t'isca a la primera, en castellà i en valencià."
+      "es": "Esto es un hook de IA. Y esto. Y esto también. 🤯\n👉 Sígueme y comenta PAELLA: te mando por privado la guía con todos los prompts.\n\nCuatro planos imposibles en la misma habitación, hechos con IA a partir de una sola foto. La guía trae los prompts, la voz en off y los trucos para que te salga a la primera, en castellano y en valenciano.",
+      "va": "Açò és un hook d'IA. I açò. I açò també. 🤯\n👉 Seguix-me i comenta PAELLA: t'envie per privat la guia amb tots els prompts.\n\nQuatre plans impossibles en la mateixa habitació, fets amb IA a partir d'una sola foto. La guia porta els prompts, la veu en off i els trucs perquè t'isca a la primera, en castellà i en valencià."
     },
     "hashtags": "#IA #videoIA #prompts #reels #València #IAenvalencià",
     "respuestas": [
